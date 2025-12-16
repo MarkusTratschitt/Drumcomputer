@@ -1,0 +1,33 @@
+import js from '@eslint/js'
+import tseslint from '@typescript-eslint/eslint-plugin'
+import tsParser from '@typescript-eslint/parser'
+import vue from 'eslint-plugin-vue'
+import vueParser from 'vue-eslint-parser'
+
+export default [
+  {
+    ignores: ['node_modules', '.nuxt', '.output', 'dist']
+  },
+  {
+    files: ['**/*.{ts,tsx,js,jsx,vue}'],
+    languageOptions: {
+      parser: vueParser,
+      parserOptions: {
+        parser: tsParser,
+        ecmaVersion: 'latest',
+        sourceType: 'module',
+        extraFileExtensions: ['.vue']
+      }
+    },
+    plugins: {
+      '@typescript-eslint': tseslint,
+      vue
+    },
+    rules: {
+      ...js.configs.recommended.rules,
+      ...tseslint.configs.recommended.rules,
+      ...vue.configs['vue3-recommended'].rules,
+      '@typescript-eslint/no-explicit-any': 'error'
+    }
+  }
+]

@@ -2,6 +2,7 @@ import { ref } from 'vue'
 import { quantizeToStep } from '~/domain/quantize'
 import { secondsPerStep } from '~/domain/timing'
 import type { DrumPadId, Pattern } from '~/types/drums'
+import type { SampleRef, Soundbank } from '~/types/audio'
 import type { GridSpec, StepAddress } from '~/types/time'
 import { useTransportStore } from '~/stores/transport'
 import { useScheduler } from './useScheduler'
@@ -118,6 +119,14 @@ export function useSequencer(options: SequencerOptions) {
     audio.trigger({ padId, when: ctx.currentTime, velocity })
   }
 
+  const setSampleForPad = async (padId: DrumPadId, sample: SampleRef) => {
+    await audio.setSampleForPad(padId, sample)
+  }
+
+  const applySoundbank = async (bank: Soundbank) => {
+    await audio.applySoundbank(bank)
+  }
+
   return {
     currentStep,
     isRecording,
@@ -125,6 +134,8 @@ export function useSequencer(options: SequencerOptions) {
     start,
     stop,
     toggleStep,
-    recordHit
+    recordHit,
+    setSampleForPad,
+    applySoundbank
   }
 }

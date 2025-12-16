@@ -50,6 +50,7 @@ import SoundbankManager from './SoundbankManager.vue'
 import SampleBrowser from './SampleBrowser.vue'
 import type { DrumPadId } from '~/types/drums'
 import type { TimeDivision } from '~/types/time'
+import type { Soundbank } from '~/types/audio'
 
 export default defineComponent({
   name: 'DrumMachine',
@@ -86,6 +87,30 @@ export default defineComponent({
       'pad16'
     ]
     const divisions: TimeDivision[] = [1, 2, 4, 8, 16, 32, 64]
+    const defaultBank: Soundbank = {
+      id: 'default-kit',
+      name: 'Default Kit',
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      pads: {
+        pad1: { id: 'kick', name: 'Kick', url: '/samples/kick.wav', format: 'wav' },
+        pad5: { id: 'kick-2', name: 'Kick 2', url: '/samples/kick.wav', format: 'wav' },
+        pad9: { id: 'kick-3', name: 'Kick 3', url: '/samples/kick.wav', format: 'wav' },
+        pad13: { id: 'kick-4', name: 'Kick 4', url: '/samples/kick.wav', format: 'wav' },
+        pad2: { id: 'snare', name: 'Snare', url: '/samples/snare.wav', format: 'wav' },
+        pad6: { id: 'snare-2', name: 'Snare 2', url: '/samples/snare.wav', format: 'wav' },
+        pad10: { id: 'snare-3', name: 'Snare 3', url: '/samples/snare.wav', format: 'wav' },
+        pad14: { id: 'snare-4', name: 'Snare 4', url: '/samples/snare.wav', format: 'wav' },
+        pad3: { id: 'hihat', name: 'Hi-Hat', url: '/samples/hihat.wav', format: 'wav' },
+        pad7: { id: 'hihat-2', name: 'Hi-Hat 2', url: '/samples/hihat.wav', format: 'wav' },
+        pad11: { id: 'hihat-3', name: 'Hi-Hat 3', url: '/samples/hihat.wav', format: 'wav' },
+        pad15: { id: 'hihat-4', name: 'Hi-Hat 4', url: '/samples/hihat.wav', format: 'wav' },
+        pad4: { id: 'clap', name: 'Clap', url: '/samples/clap.wav', format: 'wav' },
+        pad8: { id: 'clap-2', name: 'Clap 2', url: '/samples/clap.wav', format: 'wav' },
+        pad12: { id: 'clap-3', name: 'Clap 3', url: '/samples/clap.wav', format: 'wav' },
+        pad16: { id: 'clap-4', name: 'Clap 4', url: '/samples/clap.wav', format: 'wav' }
+      }
+    }
 
     return {
       transport,
@@ -98,6 +123,7 @@ export default defineComponent({
       patternStorage,
       pads,
       divisions,
+      defaultBank,
       unwatchers: [] as Array<() => void>
     }
   },
@@ -106,6 +132,7 @@ export default defineComponent({
     if (storedPatterns.length > 0) {
       this.patterns.setPatterns(storedPatterns)
     }
+    void this.initializeSoundbank()
     const stopWatch = this.$watch(
       () => this.patterns.patterns,
       (value) => this.patternStorage.save(value),
@@ -187,6 +214,13 @@ export default defineComponent({
       const gridSpec = { ...this.gridSpec, division }
       this.transport.setGridSpec(gridSpec)
       this.patterns.updateGridSpec(gridSpec)
+    },
+    async initializeSoundbank() {
+      if (this.soundbanks.banks.length === 0) {
+        this.soundbanks.setBanks([this.defaultBank])
+      }
+      const bank = this.soundbanks.currentBank ?? this.defaultBank
+      await this.sequencer.applySoundbank(bank)
     }
   }
 })
