@@ -2,7 +2,18 @@
 .section.drum-machine
   v-row
     v-col(cols="12")
-      TransportBar(:bpm="bpm" :isPlaying="isPlaying" @play="start" @stop="stop" @bpm:update="updateBpm")
+      TransportBar(
+        :bpm="bpm"
+        :isPlaying="isPlaying"
+        :loop="transport.loop"
+        :division="gridSpec.division"
+        :divisions="divisions"
+        @play="start"
+        @stop="stop"
+        @bpm:update="updateBpm"
+        @loop:update="setLoop"
+        @division:update="setDivision"
+      )
   v-row
     v-col(cols="6")
       PadGrid(:pads="pads" @pad:down="handlePad")
@@ -29,6 +40,7 @@ import { useSessionStore } from '~/stores/session'
 import { useSequencer } from '~/composables/useSequencer'
 import { useSync } from '~/composables/useSync.client'
 import { useMidi } from '~/composables/useMidi.client'
+import { usePatternStorage } from '~/composables/usePatternStorage'
 import TransportBar from './TransportBar.vue'
 import PadGrid from './PadGrid.vue'
 import StepGrid from './StepGrid.vue'
@@ -37,6 +49,7 @@ import SyncPanel from './SyncPanel.vue'
 import SoundbankManager from './SoundbankManager.vue'
 import SampleBrowser from './SampleBrowser.vue'
 import type { DrumPadId } from '~/types/drums'
+import type { TimeDivision } from '~/types/time'
 
 export default defineComponent({
   name: 'DrumMachine',
@@ -47,9 +60,12 @@ export default defineComponent({
     const soundbanks = useSoundbanksStore()
     const session = useSessionStore()
 
-    const sequencer = useSequencer(patterns.currentPattern)
+    const sequencer = useSequencer({
+      getPattern: () => patterns.currentPattern
+    })
     const sync = useSync('internal')
     const midi = useMidi()
+    const patternStorage = usePatternStorage()
 
     const pads: DrumPadId[] = [
       'pad1',
@@ -69,6 +85,7 @@ export default defineComponent({
       'pad15',
       'pad16'
     ]
+    const divisions: TimeDivision[] = [1, 2, 4, 8, 16, 32, 64]
 
     return {
       transport,
@@ -78,8 +95,26 @@ export default defineComponent({
       sequencer,
       sync,
       midi,
-      pads
+      patternStorage,
+      pads,
+      divisions,
+      unwatchers: [] as Array<() => void>
     }
+  },
+  mounted() {
+    const storedPatterns = this.patternStorage.load()
+    if (storedPatterns.length > 0) {
+      this.patterns.setPatterns(storedPatterns)
+    }
+    const stopWatch = this.$watch(
+      () => this.patterns.patterns,
+      (value) => this.patternStorage.save(value),
+      { deep: true }
+    )
+    this.unwatchers.push(stopWatch)
+  },
+  beforeUnmount() {
+    this.unwatchers.forEach((stop) => stop())
   },
   computed: {
     gridSpec() {
@@ -89,7 +124,7 @@ export default defineComponent({
       return this.patterns.currentPattern ?? { id: 'pattern-1', name: 'Pattern 1', gridSpec: { bars: 1, division: 16 }, steps: {} }
     },
     currentStep() {
-      return this.sequencer?.state?.value?.currentStep ?? 0
+      return this.transport.currentStep
     },
     bpm() {
       return this.transport.bpm
@@ -116,15 +151,17 @@ export default defineComponent({
       this.sync.setBpm(bpm)
     },
     start() {
-      this.transport.setPlaying(true)
-      this.sequencer.setPlaying(true)
+      if (!this.transport.isPlaying) {
+        this.sequencer.start()
+      }
     },
     stop() {
-      this.transport.setPlaying(false)
-      this.sequencer.setPlaying(false)
+      if (this.transport.isPlaying) {
+        this.sequencer.stop()
+      }
     },
     handlePad(pad: DrumPadId) {
-      void pad
+      this.sequencer.recordHit(pad, 1, true)
     },
     toggleStep(payload: { barIndex: number; stepInBar: number; padId: DrumPadId }) {
       this.patterns.toggleStep(payload.barIndex, payload.stepInBar, payload.padId)
@@ -142,6 +179,14 @@ export default defineComponent({
       if (role === 'master' || role === 'slave') {
         this.sync.setRole(role)
       }
+    },
+    setLoop(loop: boolean) {
+      this.transport.setLoop(loop)
+    },
+    setDivision(division: TimeDivision) {
+      const gridSpec = { ...this.gridSpec, division }
+      this.transport.setGridSpec(gridSpec)
+      this.patterns.updateGridSpec(gridSpec)
     }
   }
 })

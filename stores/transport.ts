@@ -7,7 +7,7 @@ export const useTransportStore = defineStore('transport', {
     isPlaying: false,
     loop: true,
     gridSpec: { bars: 1, division: 16 } as GridSpec,
-    swing: 0
+    currentStep: 0
   }),
   actions: {
     setBpm(bpm: number) {
@@ -19,8 +19,11 @@ export const useTransportStore = defineStore('transport', {
     setGridSpec(gridSpec: GridSpec) {
       this.gridSpec = gridSpec
     },
-    setSwing(amount: number) {
-      this.swing = amount
+    setLoop(loop: boolean) {
+      this.loop = loop
+    },
+    setCurrentStep(step: number) {
+      this.currentStep = step
     }
   }
 })

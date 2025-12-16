@@ -5,13 +5,13 @@ import type { SampleRef, Soundbank } from '~/types/audio'
 interface TriggerRequest {
   padId: DrumPadId
   when: number
-  velocity: number
+  velocity?: number
 }
 
 export function useAudioEngine() {
   const audioContext = ref<AudioContext | null>(null)
   const masterGain = ref<GainNode | null>(null)
-  const sampleCache = ref<Map<string, AudioBuffer>>(new Map())
+  const sampleCache = ref<Map<DrumPadId, AudioBuffer>>(new Map())
 
   const ensureContext = () => {
     if (!audioContext.value) {
@@ -22,35 +22,42 @@ export function useAudioEngine() {
       audioContext.value = context
       masterGain.value = gain
     }
+    if (audioContext.value.state === 'suspended') {
+      void audioContext.value.resume()
+    }
     return audioContext.value as AudioContext
   }
 
-  const loadSample = async (sample: SampleRef): Promise<AudioBuffer | null> => {
+  const decodeSample = async (sample: SampleRef): Promise<AudioBuffer | null> => {
     const ctx = ensureContext()
-    if (sampleCache.value.has(sample.id)) {
-      return sampleCache.value.get(sample.id) ?? null
-    }
     if (!sample.url) {
-      return null
+      return sample.buffer ?? null
     }
     const response = await fetch(sample.url)
     const arrayBuffer = await response.arrayBuffer()
     const buffer = await ctx.decodeAudioData(arrayBuffer)
-    sampleCache.value.set(sample.id, buffer)
     return buffer
   }
 
+  const setSampleForPad = async (padId: DrumPadId, sample: SampleRef) => {
+    const buffer = sample.buffer ?? (await decodeSample(sample))
+    if (buffer) {
+      sampleCache.value.set(padId, buffer)
+    }
+  }
+
   const applySoundbank = async (bank: Soundbank) => {
+    const entries = Object.entries(bank.pads)
     await Promise.all(
-      Object.values(bank.pads).map(async (sample) => {
+      entries.map(async ([padId, sample]) => {
         if (sample) {
-          await loadSample(sample)
+          await setSampleForPad(padId as DrumPadId, sample)
         }
       })
     )
   }
 
-  const trigger = async ({ padId, when, velocity }: TriggerRequest) => {
+  const trigger = async ({ padId, when, velocity = 1 }: TriggerRequest) => {
     const ctx = ensureContext()
     const buffer = sampleCache.value.get(padId) ?? null
     if (!buffer) {
@@ -65,12 +72,6 @@ export function useAudioEngine() {
     source.start(when)
   }
 
-  const setSoundForPad = (padId: DrumPadId, sample: SampleRef) => {
-    if (sample.buffer) {
-      sampleCache.value.set(padId, sample.buffer)
-    }
-  }
-
   onBeforeUnmount(() => {
     audioContext.value?.close()
     sampleCache.value.clear()
@@ -81,9 +82,9 @@ export function useAudioEngine() {
     masterGain,
     sampleCache,
     ensureContext,
-    loadSample,
+    decodeSample,
     applySoundbank,
-    trigger,
-    setSoundForPad
+    setSampleForPad,
+    trigger
   }
 }

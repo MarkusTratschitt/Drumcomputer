@@ -1,21 +1,93 @@
-import { computed, ref } from 'vue'
-import type { Pattern, StepGrid } from '~/types/drums'
+import { ref } from 'vue'
+import { quantizeToStep } from '~/domain/quantize'
 import { secondsPerStep } from '~/domain/timing'
-import type { GridSpec } from '~/types/time'
+import type { DrumPadId, Pattern } from '~/types/drums'
+import type { GridSpec, StepAddress } from '~/types/time'
+import { useTransportStore } from '~/stores/transport'
+import { useScheduler } from './useScheduler'
+import { useAudioEngine } from './useAudioEngine.client'
 
-export interface SequencerState {
-  currentStep: number
-  isPlaying: boolean
+interface SequencerOptions {
+  getPattern: () => Pattern
+  lookahead?: number
+  scheduleAheadSec?: number
 }
 
-export function useSequencer(pattern: Pattern) {
-  const state = ref<SequencerState>({ currentStep: 0, isPlaying: false })
-  const listeners = ref<Array<(stepIndex: number) => void>>([])
+interface ScheduledStep {
+  when: number
+  stepAddress: StepAddress
+}
 
-  const totalSteps = computed(() => pattern.gridSpec.bars * pattern.gridSpec.division)
+export function useSequencer(options: SequencerOptions) {
+  const transport = useTransportStore()
+  const audio = useAudioEngine()
+  const scheduler = useScheduler({
+    lookahead: options.lookahead ?? 25,
+    scheduleAheadSec: options.scheduleAheadSec ?? 0.1,
+    getTime: () => audio.ensureContext().currentTime
+  })
 
-  const toggleCell = (grid: StepGrid, barIndex: number, stepInBar: number, padId: string) => {
-    const bar = grid[barIndex] ?? {}
+  const currentStep = ref(0)
+  const isRecording = ref(false)
+  const pendingSteps = ref<ScheduledStep[]>([])
+  let loopStartTime = 0
+
+  const totalStepsForGrid = (gridSpec: GridSpec) => gridSpec.bars * gridSpec.division
+
+  const scheduleStep = (when: number) => {
+    const pattern = options.getPattern()
+    const totalSteps = totalStepsForGrid(pattern.gridSpec)
+    const stepIndex = currentStep.value % totalSteps
+    const barIndex = Math.floor(stepIndex / pattern.gridSpec.division)
+    const stepInBar = stepIndex % pattern.gridSpec.division
+    pendingSteps.value.push({ when, stepAddress: { barIndex, stepInBar } })
+    scheduler.schedule({
+      when,
+      callback: () => {
+        playStep(pattern, when, { barIndex, stepInBar })
+        currentStep.value = (currentStep.value + 1) % totalSteps
+        transport.setCurrentStep(currentStep.value)
+        if (transport.loop) {
+          const stepDuration = secondsPerStep(transport.bpm, pattern.gridSpec.division)
+          scheduleStep(when + stepDuration)
+        }
+      }
+    })
+  }
+
+  const playStep = (pattern: Pattern, when: number, step: StepAddress) => {
+    const bar = pattern.steps[step.barIndex]
+    const stepRow = bar?.[step.stepInBar]
+    if (!stepRow) return
+    Object.entries(stepRow).forEach(([padId, cell]) => {
+      audio.trigger({ padId: padId as DrumPadId, when, velocity: cell?.velocity?.value ?? 1 })
+    })
+  }
+
+  const start = () => {
+    const ctx = audio.ensureContext()
+    const pattern = options.getPattern()
+    transport.setGridSpec(pattern.gridSpec)
+    loopStartTime = ctx.currentTime
+    currentStep.value = 0
+    transport.setCurrentStep(0)
+    transport.setPlaying(true)
+    scheduler.clear()
+    scheduleStep(loopStartTime)
+    scheduler.start()
+    scheduler.tick()
+  }
+
+  const stop = () => {
+    transport.setPlaying(false)
+    scheduler.stop()
+    scheduler.clear()
+    pendingSteps.value = []
+  }
+
+  const toggleStep = (barIndex: number, stepInBar: number, padId: DrumPadId) => {
+    const pattern = options.getPattern()
+    const bar = pattern.steps[barIndex] ?? {}
     const stepRow = bar[stepInBar] ?? {}
     const updated = { ...stepRow }
     if (updated[padId]) {
@@ -23,30 +95,36 @@ export function useSequencer(pattern: Pattern) {
     } else {
       updated[padId] = { velocity: { value: 1 } }
     }
-    grid[barIndex] = { ...bar, [stepInBar]: updated }
+    pattern.steps[barIndex] = { ...bar, [stepInBar]: updated }
   }
 
-  const advance = (bpm: number, gridSpec: GridSpec) => {
-    const stepDuration = secondsPerStep(bpm, gridSpec.division)
-    state.value.currentStep = (state.value.currentStep + 1) % totalSteps.value
-    listeners.value.forEach((fn) => fn(state.value.currentStep))
-    return stepDuration
-  }
-
-  const onStep = (cb: (stepIndex: number) => void) => {
-    listeners.value.push(cb)
-  }
-
-  const setPlaying = (playing: boolean) => {
-    state.value.isPlaying = playing
+  const recordHit = (padId: DrumPadId, velocity = 1, quantize = true) => {
+    const pattern = options.getPattern()
+    const ctx = audio.ensureContext()
+    const gridSpec = pattern.gridSpec
+    const stepDuration = secondsPerStep(transport.bpm, gridSpec.division)
+    const anchor = transport.isPlaying ? loopStartTime : ctx.currentTime
+    if (!transport.isPlaying) {
+      loopStartTime = anchor
+    }
+    const sinceStart = ctx.currentTime - anchor
+    const step = quantize
+      ? quantizeToStep(sinceStart, stepDuration, gridSpec.bars, gridSpec.division)
+      : {
+          barIndex: Math.floor(currentStep.value / gridSpec.division),
+          stepInBar: currentStep.value % gridSpec.division
+        }
+    toggleStep(step.barIndex, step.stepInBar, padId)
+    audio.trigger({ padId, when: ctx.currentTime, velocity })
   }
 
   return {
-    state,
-    totalSteps,
-    toggleCell,
-    advance,
-    onStep,
-    setPlaying
+    currentStep,
+    isRecording,
+    pendingSteps,
+    start,
+    stop,
+    toggleStep,
+    recordHit
   }
 }

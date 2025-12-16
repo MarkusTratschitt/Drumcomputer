@@ -1,12 +1,13 @@
 import { onBeforeUnmount, ref } from 'vue'
 
 export interface SchedulerConfig {
-  lookaheadMs: number
-  scheduleAheadTime: number
+  lookahead: number
+  scheduleAheadSec: number
+  getTime: () => number
 }
 
 export interface ScheduledTask {
-  time: number
+  when: number
   callback: () => void
 }
 
@@ -15,16 +16,16 @@ export function useScheduler(config: SchedulerConfig) {
   const intervalId = ref<number | null>(null)
 
   const tick = () => {
-    const now = performance.now() / 1000
-    const windowLimit = now + config.scheduleAheadTime
-    const ready = tasks.value.filter((task) => task.time <= windowLimit)
-    tasks.value = tasks.value.filter((task) => task.time > windowLimit)
+    const now = config.getTime()
+    const windowLimit = now + config.scheduleAheadSec
+    const ready = tasks.value.filter((task) => task.when <= windowLimit)
+    tasks.value = tasks.value.filter((task) => task.when > windowLimit)
     ready.forEach((task) => task.callback())
   }
 
   const start = () => {
     if (intervalId.value !== null) return
-    intervalId.value = window.setInterval(tick, config.lookaheadMs)
+    intervalId.value = window.setInterval(tick, config.lookahead)
   }
 
   const stop = () => {
@@ -38,11 +39,17 @@ export function useScheduler(config: SchedulerConfig) {
     tasks.value.push(task)
   }
 
+  const clear = () => {
+    tasks.value = []
+  }
+
   onBeforeUnmount(stop)
 
   return {
     start,
     stop,
+    clear,
+    tick,
     schedule
   }
 }

@@ -5,9 +5,9 @@ v-card
     .step-grid
       .step-row(v-for="pad in padOrder" :key="pad")
         v-btn(
-          v-for="stepIndex in gridSpec.division"
+          v-for="stepIndex in totalSteps"
           :key="`${pad}-${stepIndex}`"
-          :color="isActive(pad, stepIndex - 1) ? 'primary' : 'grey'"
+          :color="buttonColor(pad, stepIndex - 1)"
           size="small"
           @click="toggle(pad, stepIndex - 1)"
         ) {{ stepIndex }}
@@ -35,11 +35,24 @@ export default defineComponent({
       'pad5',
       'pad6',
       'pad7',
-      'pad8'
+      'pad8',
+      'pad9',
+      'pad10',
+      'pad11',
+      'pad12',
+      'pad13',
+      'pad14',
+      'pad15',
+      'pad16'
     ]
 
     return {
       padOrder
+    }
+  },
+  computed: {
+    totalSteps(): number {
+      return this.gridSpec.bars * this.gridSpec.division
     }
   },
   methods: {
@@ -47,6 +60,15 @@ export default defineComponent({
       const barIndex = Math.floor(stepIndex / this.gridSpec.division)
       const stepInBar = stepIndex % this.gridSpec.division
       return Boolean(this.steps[barIndex]?.[stepInBar]?.[padId])
+    },
+    isCurrent(stepIndex: number) {
+      return this.currentStep === stepIndex
+    },
+    buttonColor(padId: DrumPadId, stepIndex: number) {
+      if (this.isActive(padId, stepIndex)) {
+        return this.isCurrent(stepIndex) ? 'deep-purple-accent-3' : 'primary'
+      }
+      return this.isCurrent(stepIndex) ? 'info' : 'grey'
     },
     toggle(padId: DrumPadId, stepIndex: number) {
       const barIndex = Math.floor(stepIndex / this.gridSpec.division)

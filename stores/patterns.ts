@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import type { Pattern, Scene, StepGrid } from '~/types/drums'
+import type { DrumPadId, Pattern, Scene, StepGrid } from '~/types/drums'
 import type { GridSpec } from '~/types/time'
 
 const defaultGrid: GridSpec = { bars: 1, division: 16 }
@@ -26,7 +26,13 @@ export const usePatternsStore = defineStore('patterns', {
     selectPattern(id: string) {
       this.selectedPatternId = id
     },
-    toggleStep(barIndex: number, stepInBar: number, padId: string) {
+    setPatterns(patterns: Pattern[]) {
+      this.patterns = patterns.length ? patterns : [createEmptyPattern('pattern-1', 'Pattern 1')]
+      if (!this.patterns.find((pattern) => pattern.id === this.selectedPatternId)) {
+        this.selectedPatternId = this.patterns[0]?.id ?? 'pattern-1'
+      }
+    },
+    toggleStep(barIndex: number, stepInBar: number, padId: DrumPadId) {
       const pattern = this.currentPattern
       const grid = pattern.steps as StepGrid
       const bar = grid[barIndex] ?? {}
