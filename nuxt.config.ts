@@ -7,9 +7,18 @@ export default defineNuxtConfig({
   css: ['vuetify/styles', '~/styles/drum-machine.less', '~/styles/vuetify-overrides.less'],
   typescript: {
     strict: true,
-    typeCheck: true
+    typeCheck: false
+  },
+  devServer: {
+    host: '0.0.0.0',
+    port: 3100
   },
   vite: {
+    server: {
+      hmr: {
+        port: 24680
+      }
+    },
     define: {
       'process.env.DEBUG': false
     },

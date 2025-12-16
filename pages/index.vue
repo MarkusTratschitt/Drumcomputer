@@ -1,14 +1,13 @@
 <template lang="pug">
-v-app
-  v-main
-    v-container(fluid)
-      NuxtPage
+DrumMachine
 </template>
 
 <script lang="ts">
 import { defineComponent } from 'vue'
+import DrumMachine from '~/components/DrumMachine.vue'
 
 export default defineComponent({
-  name: 'App'
+  name: 'IndexPage',
+  components: { DrumMachine }
 })
 </script>

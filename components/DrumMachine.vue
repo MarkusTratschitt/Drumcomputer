@@ -83,13 +83,13 @@ export default defineComponent({
   },
   computed: {
     gridSpec() {
-      return this.patterns.currentPattern.gridSpec
+      return this.patterns.currentPattern?.gridSpec ?? { bars: 1, division: 16 }
     },
     pattern() {
-      return this.patterns.currentPattern
+      return this.patterns.currentPattern ?? { id: 'pattern-1', name: 'Pattern 1', gridSpec: { bars: 1, division: 16 }, steps: {} }
     },
     currentStep() {
-      return this.sequencer.state.value.currentStep
+      return this.sequencer?.state?.value?.currentStep ?? 0
     },
     bpm() {
       return this.transport.bpm
