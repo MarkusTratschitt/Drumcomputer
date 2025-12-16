@@ -7,4 +7,5 @@ export interface SyncState {
   isPlaying: boolean
   mode: SyncMode
   role: SyncRole
+  linkAvailable?: boolean
 }

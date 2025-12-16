@@ -30,13 +30,19 @@ export function useAudioEngine() {
 
   const decodeSample = async (sample: SampleRef): Promise<AudioBuffer | null> => {
     const ctx = ensureContext()
-    if (!sample.url) {
-      return sample.buffer ?? null
+    if (sample.buffer) {
+      return sample.buffer
     }
-    const response = await fetch(sample.url)
-    const arrayBuffer = await response.arrayBuffer()
-    const buffer = await ctx.decodeAudioData(arrayBuffer)
-    return buffer
+    if (sample.blob) {
+      const arrayBuffer = await sample.blob.arrayBuffer()
+      return ctx.decodeAudioData(arrayBuffer.slice(0))
+    }
+    if (sample.url) {
+      const response = await fetch(sample.url)
+      const arrayBuffer = await response.arrayBuffer()
+      return ctx.decodeAudioData(arrayBuffer)
+    }
+    return null
   }
 
   const setSampleForPad = async (padId: DrumPadId, sample: SampleRef) => {

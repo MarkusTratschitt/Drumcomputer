@@ -16,9 +16,11 @@ npm run typecheck
 
 - Lookahead Web Audio scheduler with AudioContext time, quantized live recording, and 16-pad grid sequencing.
 - Default kit served from `public/samples` and auto-loaded into the audio engine; patterns persist via LocalStorage (v1 schema with normalization).
-- Pinia stores for transport, patterns/scenes, session caps, and soundbanks; composables for audio, scheduler, sequencer, MIDI, sync, import/export, audio input, and IDB soundbank storage.
-- Client-only MIDI hooks with capability checks; sync panel stub for internal/midi/link modes; soundbank manager + sample browser stubs for future extensions.
+- Pinia stores for transport, patterns/scenes, session caps, and soundbanks; composables for audio, scheduler, sequencer, MIDI, sync, import/export, audio input, and IndexedDB soundbank storage (banks, samples, patterns).
+- Client-only MIDI hooks with device selection, pad mapping, and MIDI clock support (master/slave) plus Ableton Link stub exposure via sync panel.
+- Soundbank manager can select banks and replace pad samples (stored as blobs in IndexedDB) with lazy decoding; patterns also persisted per-bank in IDB.
 - Configurable step grid divisions (1/2/4/8/16/32/64) with responsive layout for larger sequences and stable transport start/stop handling.
+- Import/Export helpers for patterns, MIDI (@tonejs/midi), soundbank manifests + sample blobs, and WAV bounce via OfflineAudioContext.
 
 ## Browser support / limitations
 
@@ -29,7 +31,4 @@ npm run typecheck
 
 ## Roadmap
 
-- IndexedDB-backed soundbank persistence with blobbed samples and import/export.
-- MIDI clock master/slave sync, per-pad note mapping UI, and Ableton Link provider bridge.
-- Audio input capture to pad samples and WAV/SMF export via OfflineAudioContext + @tonejs/midi.
 - FX chain (filter/drive), pattern scenes, and extended sample browser with drag/drop.

@@ -22,8 +22,11 @@ const defaultPads: DrumPadId[] = [
 
 export function defaultMidiMapping(): MidiMapping {
   const noteMap: Partial<Record<number, DrumPadId>> = {}
+  const noteMapInverse: Partial<Record<DrumPadId, number>> = {}
   defaultPads.forEach((padId, index) => {
-    noteMap[36 + index] = padId
+    const note = 36 + index
+    noteMap[note] = padId
+    noteMapInverse[padId] = note
   })
-  return { noteMap }
+  return { noteMap, noteMapInverse }
 }

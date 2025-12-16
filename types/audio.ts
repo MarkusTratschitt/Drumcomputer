@@ -8,6 +8,7 @@ export interface SampleRef {
   url?: string
   buffer?: AudioBuffer
   format?: AudioFormat
+  blob?: Blob
 }
 
 export interface Soundbank {
