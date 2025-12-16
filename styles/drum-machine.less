@@ -1,0 +1,27 @@
+@import 'variables.less';
+
+body {
+  background: @background;
+  color: #fff;
+}
+
+.drum-machine {
+  padding: 16px;
+}
+
+.pad-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.step-grid {
+  display: grid;
+  gap: 4px;
+}
+
+.step-row {
+  display: grid;
+  grid-template-columns: repeat(16, 1fr);
+  gap: 2px;
+}
