@@ -1,5 +1,6 @@
 import { onBeforeUnmount, ref } from 'vue'
-import type { SyncMode, SyncRole, SyncState } from '~/types/sync'
+import { useScheduler } from './useScheduler'
+import type { ClockAuthority, SyncMode, SyncRole, SyncState } from '~/types/sync'
 import type { MidiMessage } from '~/types/midi'
 
 interface SyncDeps {
@@ -10,9 +11,13 @@ interface SyncDeps {
     sendStop: () => void
     selectedOutputId: { value: string | null }
   }
+  getAudioTime?: () => number
+  onExternalStart?: () => void
+  onExternalStop?: () => void
 }
 
 const MIDI_CLOCKS_PER_QUARTER = 24
+const CLOCK_AUTHORITY: ClockAuthority = 'audioContext'
 
 export function useSync(initialMode: SyncMode = 'internal', deps?: SyncDeps) {
   const state = ref<SyncState>({
@@ -21,16 +26,31 @@ export function useSync(initialMode: SyncMode = 'internal', deps?: SyncDeps) {
     isPlaying: false,
     mode: initialMode,
     role: 'master',
-    linkAvailable: false
+    linkAvailable: false,
+    clockAuthority: CLOCK_AUTHORITY,
+    bpmSource: 'transport'
   })
-  const intervalId = ref<number | null>(null)
+  const scheduler = deps?.getAudioTime
+    ? useScheduler({
+        lookahead: 25,
+        scheduleAheadSec: 0.05,
+        getTime: deps.getAudioTime
+      })
+    : null
+  const lastStableBpm = ref(state.value.bpm)
+  let nextClockAt: number | null = null
   let midiUnsubscribe: (() => void) | null = null
 
+  const secondsPerClockTick = () => 60 / (state.value.bpm * MIDI_CLOCKS_PER_QUARTER)
+
+  const resetPhase = () => {
+    state.value.phase = 0
+  }
+
   const stopClock = () => {
-    if (intervalId.value !== null) {
-      clearInterval(intervalId.value)
-      intervalId.value = null
-    }
+    scheduler?.stop()
+    scheduler?.clear()
+    nextClockAt = null
     deps?.midi?.sendStop()
   }
 
@@ -38,26 +58,48 @@ export function useSync(initialMode: SyncMode = 'internal', deps?: SyncDeps) {
     state.value.phase = (state.value.phase + 1) % MIDI_CLOCKS_PER_QUARTER
   }
 
+  const scheduleClockTick = () => {
+    if (!scheduler || nextClockAt === null) return
+    scheduler.schedule({
+      when: nextClockAt,
+      callback: () => {
+        deps?.midi?.sendClockTick()
+        tick()
+        nextClockAt = nextClockAt + secondsPerClockTick()
+        scheduleClockTick()
+      }
+    })
+  }
+
   const startClock = () => {
     stopClock()
     if (state.value.mode !== 'midiClock' || state.value.role !== 'master') return
     if (!deps?.midi?.selectedOutputId.value) return
-    const intervalMs = (60000 / state.value.bpm) / MIDI_CLOCKS_PER_QUARTER
+    if (!deps?.getAudioTime || !scheduler) return
+    const now = deps.getAudioTime()
+    nextClockAt = now + secondsPerClockTick()
     deps.midi.sendStart()
-    intervalId.value = window.setInterval(() => {
-      deps.midi?.sendClockTick()
-      tick()
-    }, intervalMs)
+    scheduleClockTick()
+    scheduler.start()
+    scheduler.tick()
   }
 
   const setMode = (mode: SyncMode) => {
     state.value.mode = mode
+    state.value.bpm = lastStableBpm.value
     stopClock()
+    if (state.value.isPlaying && state.value.mode === 'midiClock' && state.value.role === 'master') {
+      startClock()
+    }
   }
 
   const setRole = (role: SyncRole) => {
     state.value.role = role
+    state.value.bpm = lastStableBpm.value
     stopClock()
+    if (state.value.isPlaying && state.value.mode === 'midiClock' && state.value.role === 'master') {
+      startClock()
+    }
   }
 
   const setPlaying = (isPlaying: boolean) => {
@@ -70,7 +112,8 @@ export function useSync(initialMode: SyncMode = 'internal', deps?: SyncDeps) {
   }
 
   const setBpm = (bpm: number) => {
-    state.value.bpm = bpm
+    state.value.bpm = Math.max(20, Math.min(300, bpm))
+    lastStableBpm.value = state.value.bpm
     if (state.value.isPlaying && state.value.mode === 'midiClock' && state.value.role === 'master') {
       startClock()
     }
@@ -80,10 +123,12 @@ export function useSync(initialMode: SyncMode = 'internal', deps?: SyncDeps) {
     if (state.value.mode !== 'midiClock' || state.value.role !== 'slave') return
     if (message.type === 'start') {
       state.value.isPlaying = true
-      state.value.phase = 0
+      resetPhase()
+      deps?.onExternalStart?.()
     } else if (message.type === 'stop') {
       state.value.isPlaying = false
-      state.value.phase = 0
+      resetPhase()
+      deps?.onExternalStop?.()
     } else if (message.type === 'clock') {
       tick()
     }

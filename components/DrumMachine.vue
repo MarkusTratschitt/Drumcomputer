@@ -15,6 +15,27 @@
         @division:update="setDivision"
       )
   v-row
+    v-col(cols="12")
+      PatternScenePanel(
+        :patterns="patterns.patterns"
+        :selectedPatternId="patterns.selectedPatternId"
+        :scenes="patterns.scenes"
+        :activeSceneId="patterns.activeSceneId"
+        @pattern:add="addPattern"
+        @pattern:select="selectPattern"
+        @pattern:rename="renamePattern"
+        @pattern:undo="undoPattern"
+        @pattern:redo="redoPattern"
+        @scene:add="addScene"
+        @scene:update="updateScene"
+        @scene:select="selectScene"
+      )
+  v-row
+    v-col(cols="12")
+      .d-flex.flex-wrap.ga-2
+        v-chip(:color="capabilities.supportsWebMIDI ? 'success' : 'grey'" label) WebMIDI {{ capabilities.supportsWebMIDI ? 'available' : 'unavailable' }}
+        v-chip(:color="capabilities.supportsAudioInput ? 'success' : 'grey'" label) Audio In {{ capabilities.supportsAudioInput ? 'available' : 'unavailable' }}
+  v-row
     v-col(cols="6")
       PadGrid(:pads="pads" @pad:down="handlePad")
     v-col(cols="6")
@@ -35,9 +56,11 @@
     v-col(cols="12" md="6")
       SyncPanel(:syncState="syncState" @mode="setSyncMode" @role="setSyncRole")
   v-row
-    v-col(cols="12" md="6")
+    v-col(cols="12" md="4")
       SoundbankManager(:banks="banks" :selectedBankId="soundbanks.selectedBankId" @bank:select="selectBank" @pad:replace="replacePadSample")
-    v-col(cols="12" md="6")
+    v-col(cols="12" md="4")
+      FxPanel(:fxSettings="sequencer.fxSettings" @fx:update="updateFx")
+    v-col(cols="12" md="4")
       SampleBrowser
 </template>
 
@@ -53,6 +76,7 @@ import { useSync } from '~/composables/useSync.client'
 import { useMidi } from '~/composables/useMidi.client'
 import { usePatternStorage } from '~/composables/usePatternStorage.client'
 import { useSoundbankStorage } from '~/composables/useSoundbankStorage.client'
+import { useCapabilities } from '~/composables/useCapabilities.client'
 import TransportBar from './TransportBar.vue'
 import PadGrid from './PadGrid.vue'
 import StepGrid from './StepGrid.vue'
@@ -60,24 +84,55 @@ import MidiPanel from './MidiPanel.vue'
 import SyncPanel from './SyncPanel.vue'
 import SoundbankManager from './SoundbankManager.vue'
 import SampleBrowser from './SampleBrowser.vue'
+import FxPanel from './FxPanel.vue'
+import PatternScenePanel from './PatternScenePanel.vue'
 import type { DrumPadId } from '~/types/drums'
 import type { TimeDivision } from '~/types/time'
-import type { SampleRef, Soundbank } from '~/types/audio'
+import type { FxSettings, SampleRef, Soundbank } from '~/types/audio'
 
 export default defineComponent({
   name: 'DrumMachine',
-  components: { TransportBar, PadGrid, StepGrid, MidiPanel, SyncPanel, SoundbankManager, SampleBrowser },
+  components: {
+    TransportBar,
+    PadGrid,
+    StepGrid,
+    MidiPanel,
+    SyncPanel,
+    SoundbankManager,
+    FxPanel,
+    SampleBrowser,
+    PatternScenePanel
+  },
   data() {
     const transport = useTransportStore()
     const patterns = usePatternsStore()
     const soundbanks = useSoundbanksStore()
     const session = useSessionStore()
+    const capabilitiesProbe = useCapabilities()
+    session.setCapabilities(capabilitiesProbe.capabilities.value)
 
     const sequencer = useSequencer({
-      getPattern: () => patterns.currentPattern
+      getPattern: () => patterns.currentPattern,
+      onPatternBoundary: () => patterns.advanceScenePlayback()
     })
     const midi = useMidi()
-    const sync = useSync('internal', { midi })
+    const handleExternalStart = () => {
+      if (!transport.isPlaying) {
+        patterns.prepareScenePlayback()
+        sequencer.start()
+      }
+    }
+    const handleExternalStop = () => {
+      if (transport.isPlaying) {
+        sequencer.stop()
+      }
+    }
+    const sync = useSync('internal', {
+      midi,
+      getAudioTime: () => sequencer.getAudioTime(),
+      onExternalStart: handleExternalStart,
+      onExternalStop: handleExternalStop
+    })
     const patternStorage = usePatternStorage()
     const soundbankStorage = useSoundbankStorage()
 
@@ -141,42 +196,6 @@ export default defineComponent({
       unwatchers: [] as Array<() => void>
     }
   },
-  mounted() {
-    const storedPatterns = this.patternStorage.load()
-    if (storedPatterns.length > 0) {
-      this.patterns.setPatterns(storedPatterns)
-    }
-    void this.initializeSoundbank()
-    const stopWatch = this.$watch(
-      () => this.patterns.patterns,
-      (value) => this.patternStorage.save(value),
-      { deep: true }
-    )
-    const stopBankPatternWatch = this.$watch(
-      () => this.patterns.patterns,
-      (value) => {
-        const bankId = this.soundbanks.selectedBankId
-        if (bankId) {
-          void this.soundbankStorage.savePatterns(bankId, value)
-        }
-      },
-      { deep: true }
-    )
-    const stopMidiListener = this.midi.listen((message) => {
-      if (message.type === 'noteon' && typeof message.note === 'number') {
-        const pad = this.midi.mapNoteToPad(message.note)
-        if (pad) {
-          this.handlePad(pad)
-        }
-      }
-    })
-    this.unwatchers.push(stopWatch)
-    this.unwatchers.push(stopBankPatternWatch)
-    this.unwatchers.push(() => stopMidiListener?.())
-  },
-  beforeUnmount() {
-    this.unwatchers.forEach((stop) => stop())
-  },
   computed: {
     gridSpec() {
       return this.patterns.currentPattern?.gridSpec ?? { ...DEFAULT_GRID_SPEC }
@@ -209,13 +228,94 @@ export default defineComponent({
       return this.session.capabilities
     }
   },
+  mounted() {
+    const storedPatterns = this.patternStorage.load()
+    if (storedPatterns.patterns.length > 0) {
+      this.patterns.setPatterns(storedPatterns.patterns)
+    }
+    if (storedPatterns.scenes.length > 0) {
+      this.patterns.setScenes(storedPatterns.scenes)
+    }
+    if (storedPatterns.selectedPatternId && this.patterns.patterns.find((pattern) => pattern.id === storedPatterns.selectedPatternId)) {
+      this.patterns.selectPattern(storedPatterns.selectedPatternId)
+    }
+    this.patterns.selectScene(storedPatterns.activeSceneId ?? null)
+    void this.initializeSoundbank()
+    const persistPatterns = () =>
+      this.patternStorage.save({
+        patterns: this.patterns.patterns,
+        scenes: this.patterns.scenes,
+        selectedPatternId: this.patterns.selectedPatternId,
+        activeSceneId: this.patterns.activeSceneId
+      })
+    const stopWatch = this.$watch(
+      () => [this.patterns.patterns, this.patterns.scenes, this.patterns.selectedPatternId, this.patterns.activeSceneId],
+      persistPatterns,
+      { deep: true }
+    )
+    const stopBankPatternWatch = this.$watch(
+      () => this.patterns.patterns,
+      (value) => {
+        const bankId = this.soundbanks.selectedBankId
+        if (bankId) {
+          void this.soundbankStorage.savePatterns(bankId, value)
+        }
+      },
+      { deep: true }
+    )
+    const stopMidiListener = this.midi.listen((message) => {
+      if (message.type === 'noteon' && typeof message.note === 'number') {
+        const pad = this.midi.mapNoteToPad(message.note)
+        if (pad) {
+          this.handlePad(pad, message.velocity ?? 1)
+        }
+      }
+    })
+    this.unwatchers.push(stopWatch)
+    this.unwatchers.push(stopBankPatternWatch)
+    this.unwatchers.push(() => stopMidiListener?.())
+  },
+  beforeUnmount() {
+    this.unwatchers.forEach((stop) => stop())
+  },
   methods: {
+    addPattern(payload: { name?: string }) {
+      this.patterns.addPattern(payload?.name)
+    },
+    selectPattern(id: string) {
+      this.patterns.selectPattern(id)
+    },
+    renamePattern(payload: { id: string; name: string }) {
+      this.patterns.renamePattern(payload.id, payload.name)
+    },
+    undoPattern() {
+      this.patterns.undo()
+    },
+    redoPattern() {
+      this.patterns.redo()
+    },
+    addScene(payload: { name?: string; patternIds?: string[] }) {
+      this.patterns.addScene(payload?.name ?? 'Scene', payload?.patternIds ?? [])
+    },
+    updateScene(payload: { id: string; name?: string; patternIds?: string[] }) {
+      this.patterns.updateScene(payload.id, {
+        name: payload.name ?? undefined,
+        patternIds: payload.patternIds
+      })
+    },
+    selectScene(id: string | null) {
+      this.patterns.selectScene(id)
+    },
+    updateFx(settings: FxSettings) {
+      this.sequencer.setFx(settings)
+    },
     updateBpm(bpm: number) {
       this.transport.setBpm(bpm)
       this.sync.setBpm(bpm)
     },
     start() {
       if (this.transport.isPlaying) return
+      this.patterns.prepareScenePlayback()
       this.sequencer.start()
       this.sync.startTransport(this.transport.bpm)
     },
@@ -223,15 +323,18 @@ export default defineComponent({
       this.sequencer.stop()
       this.sync.stopTransport()
     },
-    handlePad(pad: DrumPadId) {
-      this.sequencer.recordHit(pad, 1, true)
+    handlePad(pad: DrumPadId, velocity = 1) {
+      this.sequencer.recordHit(pad, velocity, true)
     },
     toggleStep(payload: { barIndex: number; stepInBar: number; padId: DrumPadId }) {
       this.patterns.toggleStep(payload.barIndex, payload.stepInBar, payload.padId)
     },
     async requestMidi() {
       await this.midi.requestAccess()
-      this.session.setCapabilities({ supportsAudioInput: false, supportsWebMIDI: this.midi.supportsMidi() })
+      this.session.setCapabilities({
+        supportsAudioInput: this.session.capabilities.supportsAudioInput,
+        supportsWebMIDI: this.midi.supportsMidi()
+      })
       if (this.midi.inputs.length > 0 && !this.midi.selectedInputId) {
         this.midi.setSelectedInput(this.midi.inputs[0]?.id ?? null)
       }

@@ -8,15 +8,17 @@ v-card
           v-for="stepIndex in totalSteps"
           :key="`${pad}-${stepIndex}`"
           :color="buttonColor(pad, stepIndex - 1)"
+          :style="buttonStyle(pad, stepIndex - 1)"
           size="small"
           @click="toggle(pad, stepIndex - 1)"
-        ) {{ stepIndex }}
+        ) {{ stepLabel(stepIndex, pad, stepIndex - 1) }}
 </template>
 
 <script lang="ts">
 import { defineComponent } from 'vue'
 import type { GridSpec } from '~/types/time'
 import type { DrumPadId, StepGrid } from '~/types/drums'
+import { ACCENT_STEP_VELOCITY, velocityToIntensity } from '~/domain/velocity'
 
 export default defineComponent({
   name: 'StepGrid',
@@ -59,19 +61,44 @@ export default defineComponent({
     }
   },
   methods: {
-    isActive(padId: DrumPadId, stepIndex: number) {
+    stepVelocity(padId: DrumPadId, stepIndex: number): number | undefined {
       const barIndex = Math.floor(stepIndex / this.gridSpec.division)
       const stepInBar = stepIndex % this.gridSpec.division
-      return Boolean(this.steps[barIndex]?.[stepInBar]?.[padId])
+      return this.steps[barIndex]?.[stepInBar]?.[padId]?.velocity?.value
+    },
+    isActive(padId: DrumPadId, stepIndex: number) {
+      return Boolean(this.stepVelocity(padId, stepIndex))
     },
     isCurrent(stepIndex: number) {
       return this.currentStep === stepIndex
     },
     buttonColor(padId: DrumPadId, stepIndex: number) {
+      const velocity = this.stepVelocity(padId, stepIndex)
       if (this.isActive(padId, stepIndex)) {
-        return this.isCurrent(stepIndex) ? 'deep-purple-accent-3' : 'primary'
+        const accent = (velocity ?? 0) >= ACCENT_STEP_VELOCITY - 0.01
+        if (accent) {
+          return this.isCurrent(stepIndex) ? 'deep-orange-accent-2' : 'amber-darken-2'
+        }
+        return this.isCurrent(stepIndex) ? 'light-blue-accent-3' : 'primary'
       }
       return this.isCurrent(stepIndex) ? 'info' : 'grey'
+    },
+    buttonStyle(padId: DrumPadId, stepIndex: number) {
+      const intensity = velocityToIntensity(this.stepVelocity(padId, stepIndex))
+      return intensity > 0 ? { opacity: String(0.5 + intensity * 0.5) } : {}
+    },
+    stepLabel(displayIndex: number, padId: DrumPadId, stepIndex: number) {
+      const velocity = this.stepVelocity(padId, stepIndex) ?? 0
+      if (!velocity) {
+        return String(displayIndex)
+      }
+      if (velocity >= ACCENT_STEP_VELOCITY - 0.01) {
+        return `${displayIndex}!`
+      }
+      if (velocity > 0.75) {
+        return `${displayIndex}•`
+      }
+      return `${displayIndex}·`
     },
     toggle(padId: DrumPadId, stepIndex: number) {
       const barIndex = Math.floor(stepIndex / this.gridSpec.division)

@@ -7,11 +7,13 @@ import type { GridSpec, StepAddress } from '~/types/time'
 import { useTransportStore } from '~/stores/transport'
 import { useScheduler } from './useScheduler'
 import { useAudioEngine } from './useAudioEngine.client'
+import { clampVelocity, cycleVelocity, DEFAULT_STEP_VELOCITY } from '~/domain/velocity'
 
 interface SequencerOptions {
   getPattern: () => Pattern
   lookahead?: number
   scheduleAheadSec?: number
+  onPatternBoundary?: () => Pattern | void
 }
 
 interface ScheduledStep {
@@ -48,8 +50,19 @@ export function useSequencer(options: SequencerOptions) {
         playStep(pattern, when, { barIndex, stepInBar })
         currentStep.value = (currentStep.value + 1) % totalSteps
         transport.setCurrentStep(currentStep.value)
+        const isPatternBoundary = currentStep.value === 0
+        let nextPattern = pattern
+        if (isPatternBoundary && options.onPatternBoundary) {
+          const candidate = options.onPatternBoundary()
+          if (candidate) {
+            nextPattern = candidate
+            transport.setGridSpec(nextPattern.gridSpec)
+          } else {
+            nextPattern = options.getPattern()
+          }
+        }
         if (transport.loop) {
-          const stepDuration = secondsPerStep(transport.bpm, pattern.gridSpec.division)
+          const stepDuration = secondsPerStep(transport.bpm, nextPattern.gridSpec.division)
           scheduleStep(when + stepDuration)
         }
       }
@@ -98,11 +111,20 @@ export function useSequencer(options: SequencerOptions) {
     const bar = pattern.steps[barIndex] ?? {}
     const stepRow = bar[stepInBar] ?? {}
     const updated = { ...stepRow }
-    if (updated[padId]) {
+    const nextVelocity = cycleVelocity(updated[padId]?.velocity?.value)
+    if (nextVelocity === null) {
       delete updated[padId]
     } else {
-      updated[padId] = { velocity: { value: 1 } }
+      updated[padId] = { velocity: { value: clampVelocity(nextVelocity) } }
     }
+    pattern.steps[barIndex] = { ...bar, [stepInBar]: updated }
+  }
+
+  const setStepVelocity = (barIndex: number, stepInBar: number, padId: DrumPadId, velocity: number) => {
+    const pattern = options.getPattern()
+    const bar = pattern.steps[barIndex] ?? {}
+    const stepRow = bar[stepInBar] ?? {}
+    const updated = { ...stepRow, [padId]: { velocity: { value: clampVelocity(velocity || DEFAULT_STEP_VELOCITY) } } }
     pattern.steps[barIndex] = { ...bar, [stepInBar]: updated }
   }
 
@@ -111,6 +133,7 @@ export function useSequencer(options: SequencerOptions) {
     const ctx = audio.ensureContext()
     const gridSpec = pattern.gridSpec
     const stepDuration = secondsPerStep(transport.bpm, gridSpec.division)
+    const resolvedVelocity = clampVelocity(velocity)
     const anchor = transport.isPlaying ? loopStartTime : ctx.currentTime
     if (!transport.isPlaying) {
       loopStartTime = anchor
@@ -122,8 +145,8 @@ export function useSequencer(options: SequencerOptions) {
           barIndex: Math.floor(currentStep.value / gridSpec.division),
           stepInBar: currentStep.value % gridSpec.division
         }
-    toggleStep(step.barIndex, step.stepInBar, padId)
-    audio.trigger({ padId, when: ctx.currentTime, velocity })
+    setStepVelocity(step.barIndex, step.stepInBar, padId, resolvedVelocity)
+    audio.trigger({ padId, when: ctx.currentTime, velocity: resolvedVelocity })
   }
 
   const setSampleForPad = async (padId: DrumPadId, sample: SampleRef) => {
@@ -134,6 +157,8 @@ export function useSequencer(options: SequencerOptions) {
     await audio.applySoundbank(bank)
   }
 
+  const getAudioTime = () => audio.ensureContext().currentTime
+
   return {
     currentStep,
     isRecording,
@@ -141,8 +166,12 @@ export function useSequencer(options: SequencerOptions) {
     start,
     stop,
     toggleStep,
+    setStepVelocity,
     recordHit,
+    fxSettings: audio.fxSettings,
+    setFx: audio.setFx,
     setSampleForPad,
-    applySoundbank
+    applySoundbank,
+    getAudioTime
   }
 }

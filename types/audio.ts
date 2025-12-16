@@ -22,3 +22,19 @@ export interface Soundbank {
 export interface AudioRouting {
   masterGain: number
 }
+
+export interface FxSettings {
+  filter: {
+    enabled: boolean
+    frequency: number
+    q: number
+  }
+  drive: {
+    enabled: boolean
+    amount: number
+  }
+  reverb: {
+    enabled: boolean
+    mix: number
+  }
+}

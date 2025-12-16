@@ -21,6 +21,19 @@ npm run typecheck
 - Soundbank manager can select banks and replace pad samples (stored as blobs in IndexedDB) with lazy decoding; patterns also persisted per-bank in IDB.
 - Configurable step grid divisions (1/2/4/8/16/32/64) with responsive layout for larger sequences and stable transport start/stop handling.
 - Import/Export helpers for patterns, MIDI (@tonejs/midi), soundbank manifests + sample blobs, and WAV bounce via OfflineAudioContext.
+- Scene chains with bar-boundary pattern switching, per-step velocity/accent cycling, and an FX chain (filter/drive/reverb) routed through the WebAudio graph.
+
+## Timing & Sync
+
+- AudioContext is the sole clock authority; the lookahead scheduler, sequencer, and MIDI clock master all derive their timings from `AudioContext.currentTime`.
+- MIDI clock output follows the audio clock (scheduled via the lookahead worker); incoming MIDI clock only drives phase counters/start-stop follow and never retimes audio events.
+- BPM updates are clamped and restored on sync mode/role changes to prevent drift when switching between internal and MIDI clock roles; transport BPM remains the master source.
+
+## Workflow & UX
+
+- Undo/redo history for pattern + scene edits (50 steps), persisted alongside scenes/pattern selection.
+- Capability gates surface WebMIDI/Audio In support status directly in the UI.
+- Importers normalize grid specs/velocities and soundbank manifests to handle malformed payloads more gracefully.
 
 ## Browser support / limitations
 

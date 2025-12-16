@@ -1,7 +1,10 @@
 import { saveAs } from 'file-saver'
 import { Midi } from '@tonejs/midi'
 import { defaultMidiMapping } from '~/domain/midiMapping'
+import { normalizeGridSpec } from '~/domain/timing'
+import { clampVelocity, DEFAULT_STEP_VELOCITY } from '~/domain/velocity'
 import type { Pattern } from '~/types/drums'
+import type { DrumPadId } from '~/types/drums'
 import type { GridSpec } from '~/types/time'
 import type { MidiFileData, MidiMapping } from '~/types/midi'
 import type { SampleRef, Soundbank } from '~/types/audio'
@@ -61,6 +64,38 @@ const audioBufferToWav = (buffer: AudioBuffer) => {
   return result
 }
 
+const normalizePattern = (pattern: Pattern): Pattern => {
+  const gridSpec: GridSpec = normalizeGridSpec(pattern.gridSpec)
+  const steps: Pattern['steps'] = {}
+  Object.entries(pattern.steps ?? {}).forEach(([barKey, barValue]) => {
+    const barIndex = Number(barKey)
+    if (Number.isNaN(barIndex)) return
+    const normalizedBar: Record<number, Partial<Record<DrumPadId, { velocity?: { value: number } }>>> = {}
+    Object.entries(barValue ?? {}).forEach(([stepKey, stepValue]) => {
+      const stepInBar = Number(stepKey)
+      if (Number.isNaN(stepInBar)) return
+      const normalizedRow: Partial<Record<DrumPadId, { velocity?: { value: number } }>> = {}
+      Object.entries(stepValue ?? {}).forEach(([padId, cell]) => {
+        if (!cell) return
+        normalizedRow[padId as DrumPadId] = {
+          velocity: { value: clampVelocity(cell.velocity?.value ?? DEFAULT_STEP_VELOCITY) }
+        }
+      })
+      if (Object.keys(normalizedRow).length > 0) {
+        normalizedBar[stepInBar] = normalizedRow
+      }
+    })
+    if (Object.keys(normalizedBar).length > 0) {
+      steps[barIndex] = normalizedBar
+    }
+  })
+  return {
+    ...pattern,
+    gridSpec,
+    steps
+  }
+}
+
 const patternFromMidi = (midi: Midi, mapping: MidiMapping): Pattern => {
   const gridSpec: GridSpec = { bars: 1, division: 16 }
   const steps: Pattern['steps'] = {}
@@ -75,28 +110,39 @@ const patternFromMidi = (midi: Midi, mapping: MidiMapping): Pattern => {
     if (!pad) return
     const bar = steps[barIndex] ?? {}
     const row = bar[stepInBar] ?? {}
-    row[pad] = { velocity: { value: note.velocity } }
+    row[pad] = { velocity: { value: clampVelocity(note.velocity) } }
     bar[stepInBar] = row
     steps[barIndex] = bar
   })
-  return {
+  return normalizePattern({
     id: 'imported-pattern',
     name: track?.name || 'Imported Pattern',
     gridSpec,
     steps
-  }
+  })
 }
 
 export function useImportExport() {
   const exportPattern = (pattern: Pattern) => {
-    const blob = new Blob([JSON.stringify(pattern, null, 2)], { type: 'application/json' })
-    saveAs(blob, `${pattern.name}.json`)
+    const normalized = normalizePattern(pattern)
+    const blob = new Blob([JSON.stringify(normalized, null, 2)], { type: 'application/json' })
+    saveAs(blob, `${normalized.name}.json`)
   }
 
   const importPattern = async (file: File): Promise<Pattern> => {
-    const text = await file.text()
-    const parsed = JSON.parse(text) as Pattern
-    return parsed
+    try {
+      const text = await file.text()
+      const parsed = JSON.parse(text) as Pattern
+      return normalizePattern(parsed)
+    } catch (error) {
+      console.error('Failed to import pattern', error)
+      return {
+        id: `imported-${Date.now()}`,
+        name: file.name,
+        gridSpec: { bars: 1, division: 16 },
+        steps: {}
+      }
+    }
   }
 
   const exportMidi = (pattern: Pattern, bpm: number, mapping: MidiMapping = defaultMidiMapping()) => {
@@ -166,22 +212,30 @@ export function useImportExport() {
   }
 
   const importSoundbank = async (manifestFile: File, sampleFiles: File[]): Promise<{ bank: Soundbank; samples: SampleRef[] }> => {
-    const manifestText = await manifestFile.text()
-    const parsed = JSON.parse(manifestText) as { bank: Soundbank; samples: Array<Pick<SampleRef, 'id' | 'name' | 'format'>> }
-    const sampleMap = new Map(sampleFiles.map((file) => [file.name, file]))
-    const hydratedSamples: SampleRef[] = parsed.samples.map((sample) => {
-      const blob = sampleMap.get(sample.name)
-      return { ...sample, blob: blob ?? undefined }
-    })
-    const padAssignments: Partial<Record<string, SampleRef>> = {}
-    Object.entries(parsed.bank.pads ?? {}).forEach(([padId, sampleInfo]) => {
-      const found = hydratedSamples.find((sample) => sample.id === (sampleInfo as SampleRef).id)
-      if (found) {
-        padAssignments[padId] = found
+    try {
+      const manifestText = await manifestFile.text()
+      const parsed = JSON.parse(manifestText) as { bank: Soundbank; samples: Array<Pick<SampleRef, 'id' | 'name' | 'format'>> }
+      const sampleMap = new Map(sampleFiles.map((file) => [file.name, file]))
+      const hydratedSamples: SampleRef[] = parsed.samples.map((sample) => {
+        const blob = sampleMap.get(sample.name)
+        return { ...sample, blob: blob ?? undefined }
+      })
+      const padAssignments: Partial<Record<string, SampleRef>> = {}
+      Object.entries(parsed.bank.pads ?? {}).forEach(([padId, sampleInfo]) => {
+        const found = hydratedSamples.find((sample) => sample.id === (sampleInfo as SampleRef).id)
+        if (found) {
+          padAssignments[padId] = found
+        }
+      })
+      const hydratedBank: Soundbank = { ...parsed.bank, pads: padAssignments }
+      return { bank: hydratedBank, samples: hydratedSamples }
+    } catch (error) {
+      console.error('Failed to import soundbank', error)
+      return {
+        bank: { id: 'invalid-bank', name: manifestFile.name, pads: {}, createdAt: Date.now(), updatedAt: Date.now() },
+        samples: []
       }
-    })
-    const hydratedBank: Soundbank = { ...parsed.bank, pads: padAssignments }
-    return { bank: hydratedBank, samples: hydratedSamples }
+    }
   }
 
   const exportMidiData = (data: MidiFileData) => {
