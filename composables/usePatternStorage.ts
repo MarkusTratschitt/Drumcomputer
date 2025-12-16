@@ -7,13 +7,13 @@ export function usePatternStorage() {
   const lastSavedAt = ref<number | null>(null)
 
   const save = (patterns: Pattern[]) => {
-    if (!process.client) return
+    if (typeof window === 'undefined') return
     localStorage.setItem(STORAGE_KEY, JSON.stringify(patterns))
     lastSavedAt.value = Date.now()
   }
 
   const load = (): Pattern[] => {
-    if (!process.client) return []
+    if (typeof window === 'undefined') return []
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return []
     try {
@@ -25,7 +25,7 @@ export function usePatternStorage() {
   }
 
   const clear = () => {
-    if (!process.client) return
+    if (typeof window === 'undefined') return
     localStorage.removeItem(STORAGE_KEY)
   }
 

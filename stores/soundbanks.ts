@@ -15,7 +15,10 @@ export const useSoundbanksStore = defineStore('soundbanks', {
     setBanks(banks: Soundbank[]) {
       this.banks = banks
       if (!this.selectedBankId && banks.length > 0) {
-        this.selectedBankId = banks[0].id
+        const first = banks[0]
+        if (first) {
+          this.selectedBankId = first.id
+        }
       }
     },
     selectBank(id: string) {

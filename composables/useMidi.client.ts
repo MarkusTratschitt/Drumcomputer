@@ -3,7 +3,7 @@ import type { MidiDeviceInfo, MidiMapping, MidiMessage } from '~/types/midi'
 import { defaultMidiMapping } from '~/domain/midiMapping'
 
 export function useMidi() {
-  const access = ref<WebMidi.MIDIAccess | null>(null)
+  const access = ref<MIDIAccess | null>(null)
   const inputs = ref<MidiDeviceInfo[]>([])
   const outputs = ref<MidiDeviceInfo[]>([])
   const mapping = ref<MidiMapping>(defaultMidiMapping())
@@ -12,12 +12,12 @@ export function useMidi() {
 
   const refreshDevices = () => {
     if (!access.value) return
-    inputs.value = Array.from(access.value.inputs.values()).map((device) => ({
+    inputs.value = Array.from(access.value.inputs.values()).map((device: MIDIInput) => ({
       id: device.id,
       name: device.name ?? 'MIDI In',
       type: 'input'
     }))
-    outputs.value = Array.from(access.value.outputs.values()).map((device) => ({
+    outputs.value = Array.from(access.value.outputs.values()).map((device: MIDIOutput) => ({
       id: device.id,
       name: device.name ?? 'MIDI Out',
       type: 'output'
@@ -33,9 +33,14 @@ export function useMidi() {
   }
 
   const listen = (cb: (message: MidiMessage) => void) => {
-    access.value?.inputs.forEach((input) => {
-      input.onmidimessage = (event) => {
-        const [status, data1, data2] = event.data
+    access.value?.inputs.forEach((input: MIDIInput) => {
+      input.onmidimessage = (event: MIDIMessageEvent) => {
+        if (!event.data || event.data.length < 3) return
+        const status = event.data[0]
+        const data1 = event.data[1]
+        const data2 = event.data[2]
+        if (status === undefined || data1 === undefined || data2 === undefined) return
+
         const type = status & 0xf0
         if (type === 0x90 && data2 > 0) {
           cb({ type: 'noteon', note: data1, velocity: data2 / 127 })

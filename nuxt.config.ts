@@ -57,10 +57,8 @@ export default defineNuxtConfig({
     transpile: ['vuetify']
   },
   vue: {
-    template: {
-      compilerOptions: {
-        whitespace: 'condense'
-      }
+    compilerOptions: {
+      whitespace: 'condense'
     }
   }
 })
