@@ -15,9 +15,10 @@ npm run typecheck
 ## Features
 
 - Lookahead Web Audio scheduler with AudioContext time, quantized live recording, and 16-pad grid sequencing.
-- Default kit served from `public/samples` and auto-loaded into the audio engine; patterns persist via LocalStorage.
+- Default kit served from `public/samples` and auto-loaded into the audio engine; patterns persist via LocalStorage (v1 schema with normalization).
 - Pinia stores for transport, patterns/scenes, session caps, and soundbanks; composables for audio, scheduler, sequencer, MIDI, sync, import/export, audio input, and IDB soundbank storage.
 - Client-only MIDI hooks with capability checks; sync panel stub for internal/midi/link modes; soundbank manager + sample browser stubs for future extensions.
+- Configurable step grid divisions (1/2/4/8/16/32/64) with responsive layout for larger sequences and stable transport start/stop handling.
 
 ## Browser support / limitations
 

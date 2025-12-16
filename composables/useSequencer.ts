@@ -1,6 +1,6 @@
 import { ref } from 'vue'
 import { quantizeToStep } from '~/domain/quantize'
-import { secondsPerStep } from '~/domain/timing'
+import { normalizeGridSpec, secondsPerStep } from '~/domain/timing'
 import type { DrumPadId, Pattern } from '~/types/drums'
 import type { SampleRef, Soundbank } from '~/types/audio'
 import type { GridSpec, StepAddress } from '~/types/time'
@@ -66,11 +66,15 @@ export function useSequencer(options: SequencerOptions) {
   }
 
   const start = () => {
+    if (transport.isPlaying) return
     const ctx = audio.ensureContext()
     const pattern = options.getPattern()
-    transport.setGridSpec(pattern.gridSpec)
+    const gridSpec = normalizeGridSpec(pattern.gridSpec)
+    pattern.gridSpec = gridSpec
+    transport.setGridSpec(gridSpec)
     loopStartTime = ctx.currentTime
     currentStep.value = 0
+    pendingSteps.value = []
     transport.setCurrentStep(0)
     transport.setPlaying(true)
     scheduler.clear()
@@ -84,6 +88,9 @@ export function useSequencer(options: SequencerOptions) {
     scheduler.stop()
     scheduler.clear()
     pendingSteps.value = []
+    currentStep.value = 0
+    transport.setCurrentStep(0)
+    loopStartTime = 0
   }
 
   const toggleStep = (barIndex: number, stepInBar: number, padId: DrumPadId) => {

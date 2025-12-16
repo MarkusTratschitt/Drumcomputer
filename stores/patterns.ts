@@ -1,13 +1,14 @@
 import { defineStore } from 'pinia'
 import type { DrumPadId, Pattern, Scene, StepGrid } from '~/types/drums'
 import type { GridSpec } from '~/types/time'
+import { DEFAULT_GRID_SPEC, normalizeGridSpec } from '~/domain/timing'
 
-const defaultGrid: GridSpec = { bars: 1, division: 16 }
+const createDefaultGrid = (): GridSpec => ({ ...DEFAULT_GRID_SPEC })
 
 const createEmptyPattern = (id: string, name: string): Pattern => ({
   id,
   name,
-  gridSpec: defaultGrid,
+  gridSpec: createDefaultGrid(),
   steps: {}
 })
 
@@ -47,7 +48,7 @@ export const usePatternsStore = defineStore('patterns', {
     },
     updateGridSpec(gridSpec: GridSpec) {
       const pattern = this.currentPattern
-      pattern.gridSpec = gridSpec
+      pattern.gridSpec = normalizeGridSpec(gridSpec)
     }
   }
 })

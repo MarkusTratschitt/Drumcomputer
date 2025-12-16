@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { DEFAULT_GRID_SPEC, normalizeGridSpec } from '~/domain/timing'
 import type { GridSpec } from '~/types/time'
 
 export const useTransportStore = defineStore('transport', {
@@ -6,7 +7,7 @@ export const useTransportStore = defineStore('transport', {
     bpm: 120,
     isPlaying: false,
     loop: true,
-    gridSpec: { bars: 1, division: 16 } as GridSpec,
+    gridSpec: { ...DEFAULT_GRID_SPEC } as GridSpec,
     currentStep: 0
   }),
   actions: {
@@ -17,7 +18,7 @@ export const useTransportStore = defineStore('transport', {
       this.isPlaying = isPlaying
     },
     setGridSpec(gridSpec: GridSpec) {
-      this.gridSpec = gridSpec
+      this.gridSpec = normalizeGridSpec(gridSpec)
     },
     setLoop(loop: boolean) {
       this.loop = loop

@@ -3,7 +3,7 @@ v-card
   v-card-title Step Grid
   v-card-text
     .step-grid
-      .step-row(v-for="pad in padOrder" :key="pad")
+      .step-row(v-for="pad in padOrder" :key="pad" :style="stepRowStyle")
         v-btn(
           v-for="stepIndex in totalSteps"
           :key="`${pad}-${stepIndex}`"
@@ -53,6 +53,9 @@ export default defineComponent({
   computed: {
     totalSteps(): number {
       return this.gridSpec.bars * this.gridSpec.division
+    },
+    stepRowStyle(): Record<string, string> {
+      return { '--step-columns': String(this.totalSteps) }
     }
   },
   methods: {

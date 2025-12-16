@@ -33,6 +33,7 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue'
+import { DEFAULT_GRID_SPEC, GRID_DIVISIONS, normalizeGridSpec } from '~/domain/timing'
 import { useTransportStore } from '~/stores/transport'
 import { usePatternsStore } from '~/stores/patterns'
 import { useSoundbanksStore } from '~/stores/soundbanks'
@@ -40,7 +41,7 @@ import { useSessionStore } from '~/stores/session'
 import { useSequencer } from '~/composables/useSequencer'
 import { useSync } from '~/composables/useSync.client'
 import { useMidi } from '~/composables/useMidi.client'
-import { usePatternStorage } from '~/composables/usePatternStorage'
+import { usePatternStorage } from '~/composables/usePatternStorage.client'
 import TransportBar from './TransportBar.vue'
 import PadGrid from './PadGrid.vue'
 import StepGrid from './StepGrid.vue'
@@ -86,7 +87,7 @@ export default defineComponent({
       'pad15',
       'pad16'
     ]
-    const divisions: TimeDivision[] = [1, 2, 4, 8, 16, 32, 64]
+    const divisions: TimeDivision[] = [...GRID_DIVISIONS]
     const defaultBank: Soundbank = {
       id: 'default-kit',
       name: 'Default Kit',
@@ -145,10 +146,10 @@ export default defineComponent({
   },
   computed: {
     gridSpec() {
-      return this.patterns.currentPattern?.gridSpec ?? { bars: 1, division: 16 }
+      return this.patterns.currentPattern?.gridSpec ?? { ...DEFAULT_GRID_SPEC }
     },
     pattern() {
-      return this.patterns.currentPattern ?? { id: 'pattern-1', name: 'Pattern 1', gridSpec: { bars: 1, division: 16 }, steps: {} }
+      return this.patterns.currentPattern ?? { id: 'pattern-1', name: 'Pattern 1', gridSpec: { ...DEFAULT_GRID_SPEC }, steps: {} }
     },
     currentStep() {
       return this.transport.currentStep
@@ -178,14 +179,11 @@ export default defineComponent({
       this.sync.setBpm(bpm)
     },
     start() {
-      if (!this.transport.isPlaying) {
-        this.sequencer.start()
-      }
+      if (this.transport.isPlaying) return
+      this.sequencer.start()
     },
     stop() {
-      if (this.transport.isPlaying) {
-        this.sequencer.stop()
-      }
+      this.sequencer.stop()
     },
     handlePad(pad: DrumPadId) {
       this.sequencer.recordHit(pad, 1, true)
@@ -211,7 +209,7 @@ export default defineComponent({
       this.transport.setLoop(loop)
     },
     setDivision(division: TimeDivision) {
-      const gridSpec = { ...this.gridSpec, division }
+      const gridSpec = normalizeGridSpec({ ...this.gridSpec, division })
       this.transport.setGridSpec(gridSpec)
       this.patterns.updateGridSpec(gridSpec)
     },
