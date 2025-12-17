@@ -4,6 +4,7 @@
     "strict": true,
     "noImplicitAny": true,
     "exactOptionalPropertyTypes": true,
+    "types": ["node"],
     "typeRoots": ["./types", "./node_modules/@types"]
   }
 }

@@ -1,44 +1,45 @@
 <template lang="pug">
-.drumshell
-  // ───────────── TOP ─────────────
-  .hardware-top
-    TransportBar(
-      :bpm="bpm"
-      :isPlaying="isPlaying"
-      :loop="transport.loop"
-      :division="gridSpec.division"
-      :divisions="divisions"
-      @play="start"
-      @stop="stop"
-      @bpm:update="updateBpm"
-      @loop:update="setLoop"
-      @division:update="setDivision"
-    )
+client-only(tag="div")
 
-  // ───────────── MAIN ─────────────
-  .main-shell
-    .pads-panel
-      PadGrid(
-        :pads="pads"
-        :selected-pad="selectedPadId"
-        :pad-states="padStates"
-        @pad:down="handlePad"
-        @pad:select="selectPad"
+  .drumshell
+    // ───────────── TOP ─────────────
+    .hardware-top
+      TransportBar(
+        :bpm="bpm"
+        :isPlaying="isPlaying"
+        :loop="transport.loop"
+        :division="gridSpec.division"
+        :divisions="divisions"
+        @play="start"
+        @stop="stop"
+        @bpm:update="updateBpm"
+        @loop:update="setLoop"
+        @division:update="setDivision"
       )
 
-    .sequencer-panel
-      StepGrid(
-        :grid-spec="gridSpec"
-        :steps="pattern.steps"
-        :selected-pad="selectedPadId"
-        :current-step="currentStep"
-        :is-playing="isPlaying"
-        @step:toggle="toggleStep"
-      )
+    // ───────────── MAIN ─────────────
+    .main-shell
+      .pads-panel
+        PadGrid(
+          :pads="pads"
+          :selected-pad="selectedPadId"
+          :pad-states="padStates"
+          @pad:down="handlePad"
+          @pad:select="selectPad"
+        )
 
-  // ───────────── DRAWER ─────────────
-  .drawer-wrapper
-    client-only(tag="div")
+      .sequencer-panel
+        StepGrid(
+          :grid-spec="gridSpec"
+          :steps="pattern.steps"
+          :selected-pad="selectedPadId"
+          :current-step="currentStep"
+          :is-playing="isPlaying"
+          @step:toggle="toggleStep"
+        )
+
+    // ───────────── DRAWER ─────────────
+    .drawer-wrapper
       .drawer-scroll
         TabPanel(v-model="drawerTab")
           template(#sound)
@@ -54,7 +55,7 @@
               :fxSettings="sequencer.fxSettings"
               @fx:update="updateFx"
             )
-  
+
           template(#patterns)
             PatternsPanel(
               :patterns="patterns.patterns"
@@ -70,7 +71,7 @@
               @scene:update="updateScene"
               @scene:select="selectScene"
             )
-  
+
           template(#export)
             ExportPanel(
               :isExporting="isExporting"
