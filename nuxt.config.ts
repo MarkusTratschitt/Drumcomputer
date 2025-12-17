@@ -10,7 +10,7 @@ export default defineNuxtConfig({
   debug: true,
   compatibilityDate: '2024-04-03',
   devtools: { enabled: true },
-  modules: ['@pinia/nuxt', '@vite-pwa/nuxt', 'vuetify-nuxt-module'],
+  modules: ['@pinia/nuxt', '@vite-pwa/nuxt'],
   css: ['vuetify/styles', '~/styles/drum-machine.less', '~/styles/vuetify-overrides.less'],
   typescript: {
     strict: true,
