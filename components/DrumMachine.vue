@@ -1,8 +1,6 @@
 <template lang="pug">
 .drumshell
-  // ─────────────────────────────────────────
-  // TOP HARDWARE BAR
-  // ─────────────────────────────────────────
+  // ───────────── TOP ─────────────
   .hardware-top
     TransportBar(
       :bpm="bpm"
@@ -17,9 +15,7 @@
       @division:update="setDivision"
     )
 
-  // ─────────────────────────────────────────
-  // MAIN PLAY AREA
-  // ─────────────────────────────────────────
+  // ───────────── MAIN ─────────────
   .main-shell
     .pads-panel
       PadGrid(
@@ -40,9 +36,7 @@
         @step:toggle="toggleStep"
       )
 
-  // ─────────────────────────────────────────
-  // BOTTOM DRAWER (TABS)
-  // ─────────────────────────────────────────
+  // ───────────── DRAWER ─────────────
   .drawer-wrapper
     .drawer-scroll
       TabPanel(v-model="drawerTab")
