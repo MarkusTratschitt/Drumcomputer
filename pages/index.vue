@@ -1,6 +1,7 @@
 <template lang="pug">
   client-only
-    DrumMachine
+    VMain
+      DrumMachine
 </template>
 
 <script lang="ts">

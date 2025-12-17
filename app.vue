@@ -1,6 +1,6 @@
 <template lang="pug">
 v-app
-  v-main
+  NuxtLayout
     NuxtPage
 </template>
 
