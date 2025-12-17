@@ -89,7 +89,7 @@ export default defineComponent({
   position: relative;
   height: 100%;
   max-height: 96px;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .step-row {
@@ -97,6 +97,7 @@ export default defineComponent({
   grid-template-columns: repeat(auto-fit, minmax(32px, 1fr));
   gap: 8px;
   position: relative;
+  overflow: hidden;
 
   .step-cell:nth-child(4n + 1) {
     border-left: 2px solid rgba(255, 255, 255, 0.12);

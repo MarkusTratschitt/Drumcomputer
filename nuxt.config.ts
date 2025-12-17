@@ -6,6 +6,7 @@ const hmrPort = Number.isInteger(Number(process.env.HMR_PORT)) && process.env.HM
   : DEFAULT_HMR_PORT
 
 export default defineNuxtConfig({
+  debug: true,
   compatibilityDate: '2024-04-03',
   devtools: { enabled: true },
   modules: ['@pinia/nuxt', '@vite-pwa/nuxt'],
@@ -26,7 +27,7 @@ export default defineNuxtConfig({
       }
     },
     define: {
-      'process.env.DEBUG': false
+      'process.env.DEBUG': true
     },
     css: {
       preprocessorOptions: {

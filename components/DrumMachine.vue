@@ -679,7 +679,7 @@ export default defineComponent({
   display: flex;
   gap: 16px;
   height: 100vh;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .pads-panel {
@@ -698,7 +698,7 @@ export default defineComponent({
 .drawer-wrapper {
   flex: 0 0 auto;
   height: clamp(220px, 28vh, 320px);
-  overflow: hidden;
+  overflow: visible;
 }
 
 .drawer-scroll {
