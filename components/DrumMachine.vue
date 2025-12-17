@@ -37,53 +37,54 @@
       )
 
   // ───────────── DRAWER ─────────────
-.drawer-wrapper
-  .drawer-scroll
-    TabPanel(v-model="drawerTab")
-      template(#sound)
-        SoundPanel(
-          :banks="banks"
-          :selected-bank-id="soundbanks.selectedBankId"
-          @bank:select="selectBank"
-          @pad:replace="replacePadSample"
-        )
+  .drawer-wrapper
+    .drawer-scroll
+      client-only
+        TabPanel(v-model="drawerTab")
+          template(#sound)
+            SoundPanel(
+              :banks="banks"
+              :selected-bank-id="soundbanks.selectedBankId"
+              @bank:select="selectBank"
+              @pad:replace="replacePadSample"
+            )
 
-      template(#fx)
-        FxPanel(
-          :fxSettings="sequencer.fxSettings"
-          @fx:update="updateFx"
-        )
+          template(#fx)
+            FxPanel(
+              :fxSettings="sequencer.fxSettings"
+              @fx:update="updateFx"
+            )
 
-      template(#patterns)
-        PatternsPanel(
-          :patterns="patterns.patterns"
-          :selected-pattern-id="patterns.selectedPatternId"
-          :scenes="patterns.scenes"
-          :active-scene-id="patterns.activeSceneId"
-          @pattern:add="addPattern"
-          @pattern:select="selectPattern"
-          @pattern:rename="renamePattern"
-          @pattern:undo="undoPattern"
-          @pattern:redo="redoPattern"
-          @scene:add="addScene"
-          @scene:update="updateScene"
-          @scene:select="selectScene"
-        )
+          template(#patterns)
+            PatternsPanel(
+              :patterns="patterns.patterns"
+              :selected-pattern-id="patterns.selectedPatternId"
+              :scenes="patterns.scenes"
+              :active-scene-id="patterns.activeSceneId"
+              @pattern:add="addPattern"
+              @pattern:select="selectPattern"
+              @pattern:rename="renamePattern"
+              @pattern:undo="undoPattern"
+              @pattern:redo="redoPattern"
+              @scene:add="addScene"
+              @scene:update="updateScene"
+              @scene:select="selectScene"
+            )
 
-      template(#export)
-        ExportPanel(
-          :isExporting="isExporting"
-          :exportError="exportError"
-          :exportMetadata="exportMetadata"
-          :audioBlob="exportAudioBlob"
-          :hasZipArtifacts="hasZipArtifacts"
-          :stemEntries="stemEntries"
-          @export="exportBounce"
-          @download:mixdown="downloadMixdown"
-          @download:zip="downloadZip"
-          @download:stem="downloadStem"
-          @download:stems="downloadAllStems"
-        )
+          template(#export)
+            ExportPanel(
+              :isExporting="isExporting"
+              :exportError="exportError"
+              :exportMetadata="exportMetadata"
+              :audioBlob="exportAudioBlob"
+              :hasZipArtifacts="hasZipArtifacts"
+              :stemEntries="stemEntries"
+              @export="exportBounce"
+              @download:mixdown="downloadMixdown"
+              @download:zip="downloadZip"
+              @download:stem="downloadStem"
+              @download:stems="downloadAllStems"
+            )
 </template>
 
 
@@ -181,7 +182,9 @@ export default defineComponent({
     const handleExternalStart = () => {
       if (!transport.isPlaying) {
         patterns.prepareScenePlayback()
-        sequencer.start()
+        void sequencer.start().catch((error) => {
+          console.error('Failed to start sequencer from external sync', error)
+        })
       }
     }
     const handleExternalStop = () => {
@@ -432,18 +435,22 @@ export default defineComponent({
       this.transport.setBpm(bpm)
       this.sync.setBpm(bpm)
     },
-    start() {
+    async start() {
       if (this.transport.isPlaying) return
       this.patterns.prepareScenePlayback()
-      this.sequencer.start()
+      await this.sequencer.start()
       this.sync.startTransport(this.transport.bpm)
     },
     stop() {
       this.sequencer.stop()
       this.sync.stopTransport()
     },
-    handlePad(pad: DrumPadId, velocity = 1) {
-      this.sequencer.recordHit(pad, velocity, true)
+    async handlePad(pad: DrumPadId, velocity = 1) {
+      try {
+        await this.sequencer.recordHit(pad, velocity, true)
+      } catch (error) {
+        console.error('Failed to trigger pad', error)
+      }
       this.selectPad(pad)
     },
     selectPad(pad: DrumPadId) {

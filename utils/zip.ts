@@ -28,8 +28,9 @@ export type ZipEntry = {
 }
 
 export const createZip = (entries: ZipEntry[]): Blob => {
-  const localChunks: BlobPart[] = []
-  const centralChunks: BlobPart[] = []
+  const localChunks: ArrayBuffer[] = []
+  const centralChunks: ArrayBuffer[] = []
+
   let offset = 0
   let centralSize = 0
 
@@ -55,7 +56,15 @@ export const createZip = (entries: ZipEntry[]): Blob => {
     const localHeaderBytes = new Uint8Array(localHeaderBuffer)
     localHeaderBytes.set(nameBytes, 30)
     localChunks.push(localHeaderBuffer)
-    localChunks.push(data.slice().buffer)
+    // Ensure only ArrayBuffer is pushed (not a view)
+    // Garantiert ArrayBuffer, kein SharedArrayBuffer
+    let ab: ArrayBuffer
+    if (data.buffer instanceof ArrayBuffer && !(data.buffer instanceof SharedArrayBuffer)) {
+      ab = data.buffer.slice(0, data.byteLength)
+    } else {
+      ab = new Uint8Array(data).buffer.slice(0)
+    }
+    localChunks.push(ab)
 
     const centralHeaderBuffer = new ArrayBuffer(46 + nameBytes.length)
     const centralView = new DataView(centralHeaderBuffer)
@@ -96,6 +105,10 @@ export const createZip = (entries: ZipEntry[]): Blob => {
   endView.setUint32(16, offset, true)
   endView.setUint16(20, 0, true) // ZIP file comment length
 
-  const parts: BlobPart[] = [...localChunks, ...centralChunks, endBuffer]
+  const parts: ArrayBuffer[] = [
+    ...localChunks,
+    ...centralChunks,
+    endBuffer
+  ]
   return new Blob(parts, { type: 'application/zip' })
 }

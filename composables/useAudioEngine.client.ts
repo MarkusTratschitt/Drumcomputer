@@ -54,11 +54,16 @@ const createAudioEngineInstance = () => {
       audioContext.value = context
       masterGain.value = gain
     }
-    if (audioContext.value.state === 'suspended') {
-      void audioContext.value.resume()
-    }
     ensureFxGraph(audioContext.value as BaseAudioContext, fxSnapshot.value)
     return audioContext.value as AudioContext
+  }
+
+  const resumeContext = async () => {
+    const ctx = ensureContext()
+    if (ctx.state === 'suspended') {
+      await ctx.resume()
+    }
+    return ctx
   }
 
   const getFxSnapshot = () => cloneFxSettings(fxSnapshot.value)
@@ -149,6 +154,7 @@ const createAudioEngineInstance = () => {
     sampleCache,
     fxSettings,
     ensureContext,
+    resumeContext,
     decodeSample,
     applySoundbank,
     setFx,

@@ -112,9 +112,9 @@ export function useSequencer(options: SequencerOptions) {
     onPatternBoundary: boundaryCallback
   })
 
-  const start = () => {
+  const start = async () => {
     if (transport.isPlaying) return
-    const ctx = audio.ensureContext()
+    const ctx = await audio.resumeContext()
     renderClock = createRenderClock(ctx)
     const pattern = options.getPattern()
     const gridSpec = normalizeGridSpec(pattern.gridSpec)
@@ -165,9 +165,9 @@ export function useSequencer(options: SequencerOptions) {
     pattern.steps[barIndex] = { ...bar, [stepInBar]: updated }
   }
 
-  const recordHit = (padId: DrumPadId, velocity = 1, quantize = true) => {
+  const recordHit = async (padId: DrumPadId, velocity = 1, quantize = true) => {
     const pattern = options.getPattern()
-    const ctx = audio.ensureContext()
+    const ctx = await audio.resumeContext()
     const gridSpec = pattern.gridSpec
     const stepDuration = secondsPerStep(transport.bpm, gridSpec.division)
     const resolvedVelocity = clampVelocity(velocity)
