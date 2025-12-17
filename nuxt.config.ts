@@ -6,6 +6,7 @@ const hmrPort = Number.isInteger(Number(process.env.HMR_PORT)) && process.env.HM
   : DEFAULT_HMR_PORT
 
 export default defineNuxtConfig({
+  ssr: false,
   debug: true,
   compatibilityDate: '2024-04-03',
   devtools: { enabled: true },
@@ -18,6 +19,11 @@ export default defineNuxtConfig({
   devServer: {
     host: '0.0.0.0',
     port: 3100
+  },
+  nitro: {
+    prerender: {
+      routes: []
+    }
   },
   vite: {
     server: {
@@ -58,14 +64,6 @@ export default defineNuxtConfig({
     workbox: {
       navigateFallback: '/',
       globPatterns: ['**/*.{js,css,html,png,svg,ico}']
-    }
-  },
-  build: {
-    transpile: ['vuetify']
-  },
-  vue: {
-    compilerOptions: {
-      whitespace: 'condense'
     }
   }
 })

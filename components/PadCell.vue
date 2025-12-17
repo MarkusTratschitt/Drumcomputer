@@ -59,7 +59,7 @@ export default defineComponent({
   justify-content: center;
   transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.3s ease;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
 
   &:active {
     transform: scale(0.97);

@@ -11,3 +11,7 @@ export default defineComponent({
   name: 'App'
 })
 </script>
+
+<style lang="less">
+@import '~/styles/variables.less';
+</style>

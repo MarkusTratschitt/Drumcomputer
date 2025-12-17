@@ -1,6 +1,6 @@
 import { ref } from 'vue'
 import { saveAs } from 'file-saver'
-import { Midi } from '@tonejs/midi'
+import MidiPkg, { Midi as MidiType } from '@tonejs/midi'
 import { defaultMidiMapping } from '~/domain/midiMapping'
 import { DEFAULT_GRID_SPEC, normalizeGridSpec } from '~/domain/timing'
 import { clampVelocity, DEFAULT_STEP_VELOCITY } from '~/domain/velocity'
@@ -19,6 +19,7 @@ import type { SampleRef, Soundbank } from '~/types/audio'
 import type { RenderMetadata, RenderEvent } from '~/types/render'
 import type { DrumPadId, Pattern } from '~/types/drums'
 
+const Midi = (typeof MidiPkg !== 'undefined' && MidiPkg && MidiPkg.Midi) ? MidiPkg.Midi : undefined
 const encoderHeader = 'Drumcomputer Pattern Export'
 
 const audioBufferToWav = (buffer: AudioBuffer) => {
@@ -113,41 +114,53 @@ const normalizePattern = (pattern: Pattern): Pattern => {
   }
 }
 
-  const patternFromMidi = (midi: Midi, mapping: MidiMapping): Pattern => {
-    const gridSpec: GridSpec = { bars: 1, division: 16 }
-    const steps: Pattern['steps'] = {}
-    const track = midi.tracks[0]
-    if (!track) {
-      return normalizePattern({
-        id: 'imported-pattern',
-        name: 'Imported Pattern',
-        gridSpec,
-        steps
-      })
-    }
-    const ticksPerBeat = midi.header.ppq
-    const stepTicks = (ticksPerBeat * 4) / gridSpec.division
-    const notes = track.notes ?? []
-    notes.forEach((note) => {
-      const stepIndex = Math.round(note.ticks / stepTicks)
-      const barIndex = Math.floor(stepIndex / gridSpec.division)
-      const stepInBar = stepIndex % gridSpec.division
-      const pad = mapping.noteMap[note.midi]
-      if (!pad) return
-      const bar = steps[barIndex] ?? {}
-      const row = bar[stepInBar] ?? {}
-      const velocity = typeof note.velocity === 'number' ? note.velocity : DEFAULT_STEP_VELOCITY
-      row[pad] = { velocity: { value: clampVelocity(velocity) } }
-      bar[stepInBar] = row
-      steps[barIndex] = bar
-    })
+const patternFromMidi = (midi: MidiType, mapping: MidiMapping): Pattern => {
+  const gridSpec: GridSpec = { bars: 1, division: 16 }
+  const steps: Pattern['steps'] = {}
+  const track = midi.tracks[0]
+  if (!track) {
     return normalizePattern({
       id: 'imported-pattern',
-      name: track.name ?? 'Imported Pattern',
+      name: 'Imported Pattern',
       gridSpec,
       steps
     })
   }
+  const ticksPerBeat = midi.header.ppq
+  const stepTicks = (ticksPerBeat * 4) / gridSpec.division
+  const notes = track.notes ?? []
+  interface Note {
+    midi: number
+    ticks: number
+    velocity?: number
+  }
+
+  interface Steps {
+    [barIndex: number]: {
+      [stepInBar: number]: Partial<Record<DrumPadId, { velocity?: { value: number } }>>
+    }
+  }
+
+  notes.forEach((note: Note) => {
+    const stepIndex: number = Math.round(note.ticks / stepTicks)
+    const barIndex: number = Math.floor(stepIndex / gridSpec.division)
+    const stepInBar: number = stepIndex % gridSpec.division
+    const pad: DrumPadId | undefined = mapping.noteMap[note.midi]
+    if (!pad) return
+    const bar: Steps[number] = steps[barIndex] ?? {}
+    const row: Steps[number][number] = bar[stepInBar] ?? {}
+    const velocity: number = typeof note.velocity === 'number' ? note.velocity : DEFAULT_STEP_VELOCITY
+    row[pad] = { velocity: { value: clampVelocity(velocity) } }
+    bar[stepInBar] = row
+    steps[barIndex] = bar
+  })
+  return normalizePattern({
+    id: 'imported-pattern',
+    name: track.name ?? 'Imported Pattern',
+    gridSpec,
+    steps
+  })
+}
 
 export function useImportExport() {
   const exportPattern = (pattern: Pattern) => {
@@ -173,6 +186,10 @@ export function useImportExport() {
   }
 
   const exportMidi = (pattern: Pattern, bpm: number, mapping: MidiMapping = defaultMidiMapping()) => {
+    if (typeof Midi === 'undefined') {
+      console.error('MIDI export is not available: Midi is undefined.')
+      return
+    }
     const midi = new Midi()
     midi.header.setTempo(bpm)
     const track = midi.addTrack()
@@ -205,6 +222,15 @@ export function useImportExport() {
   }
 
   const importMidi = async (file: File, mapping: MidiMapping = defaultMidiMapping()): Promise<Pattern> => {
+    if (typeof Midi === 'undefined') {
+      console.error('MIDI import is not available: Midi is undefined.')
+      return {
+        id: `imported-${Date.now()}`,
+        name: file.name,
+        gridSpec: { bars: 1, division: 16 },
+        steps: {}
+      }
+    }
     const buffer = await file.arrayBuffer()
     const midi = new Midi(buffer)
     return patternFromMidi(midi, mapping)
@@ -395,7 +421,7 @@ export function useImportExport() {
         loop: transport.loop,
         bpm: transport.bpm,
         gridSpec: renderGridSpec,
-        setCurrentStep: () => {},
+        setCurrentStep: () => { },
         setGridSpec(gridSpec: GridSpec) {
           offlineTransportBase.gridSpec = normalizeGridSpec(gridSpec)
         }

@@ -12,5 +12,6 @@
     "soundbanks",
     "Soundbanks",
     "unwatchers"
-  ]
+  ],
+  "jupyter.logKernelOutputSeparately": true
 }
