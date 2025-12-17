@@ -62,7 +62,6 @@ export default defineNuxtConfig({
       display: 'standalone'
     },
     workbox: {
-      navigateFallback: '/',
       globPatterns: ['**/*.{js,css,html,png,svg,ico}']
     }
   }
