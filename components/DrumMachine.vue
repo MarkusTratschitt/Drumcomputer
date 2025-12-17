@@ -37,53 +37,53 @@
       )
 
   // ───────────── DRAWER ─────────────
-  .drawer-wrapper
-    .drawer-scroll
-      TabPanel(v-model="drawerTab")
-        template(#sound)
-          SoundPanel(
-            :banks="banks"
-            :selected-bank-id="soundbanks.selectedBankId"
-            @bank:select="selectBank"
-            @pad:replace="replacePadSample"
-          )
+.drawer-wrapper
+  .drawer-scroll
+    TabPanel(v-model="drawerTab")
+      template(#sound)
+        SoundPanel(
+          :banks="banks"
+          :selected-bank-id="soundbanks.selectedBankId"
+          @bank:select="selectBank"
+          @pad:replace="replacePadSample"
+        )
 
-        template(#fx)
-          FxPanel(
-            :fxSettings="sequencer.fxSettings"
-            @fx:update="updateFx"
-          )
+      template(#fx)
+        FxPanel(
+          :fxSettings="sequencer.fxSettings"
+          @fx:update="updateFx"
+        )
 
-        template(#patterns)
-          PatternsPanel(
-            :patterns="patterns.patterns"
-            :selected-pattern-id="patterns.selectedPatternId"
-            :scenes="patterns.scenes"
-            :active-scene-id="patterns.activeSceneId"
-            @pattern:add="addPattern"
-            @pattern:select="selectPattern"
-            @pattern:rename="renamePattern"
-            @pattern:undo="undoPattern"
-            @pattern:redo="redoPattern"
-            @scene:add="addScene"
-            @scene:update="updateScene"
-            @scene:select="selectScene"
-          )
+      template(#patterns)
+        PatternsPanel(
+          :patterns="patterns.patterns"
+          :selected-pattern-id="patterns.selectedPatternId"
+          :scenes="patterns.scenes"
+          :active-scene-id="patterns.activeSceneId"
+          @pattern:add="addPattern"
+          @pattern:select="selectPattern"
+          @pattern:rename="renamePattern"
+          @pattern:undo="undoPattern"
+          @pattern:redo="redoPattern"
+          @scene:add="addScene"
+          @scene:update="updateScene"
+          @scene:select="selectScene"
+        )
 
-        template(#export)
-          ExportPanel(
-            :isExporting="isExporting"
-            :exportError="exportError"
-            :exportMetadata="exportMetadata"
-            :audioBlob="exportAudioBlob"
-            :hasZipArtifacts="hasZipArtifacts"
-            :stemEntries="stemEntries"
-            @export="exportBounce"
-            @download:mixdown="downloadMixdown"
-            @download:zip="downloadZip"
-            @download:stem="downloadStem"
-            @download:stems="downloadAllStems"
-          )
+      template(#export)
+        ExportPanel(
+          :isExporting="isExporting"
+          :exportError="exportError"
+          :exportMetadata="exportMetadata"
+          :audioBlob="exportAudioBlob"
+          :hasZipArtifacts="hasZipArtifacts"
+          :stemEntries="stemEntries"
+          @export="exportBounce"
+          @download:mixdown="downloadMixdown"
+          @download:zip="downloadZip"
+          @download:stem="downloadStem"
+          @download:stems="downloadAllStems"
+        )
 </template>
 
 
@@ -658,7 +658,6 @@ export default defineComponent({
 <style scoped lang="less">
 .drumshell {
   height: 100dvh;
-  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -672,7 +671,7 @@ export default defineComponent({
   flex: 1 1 auto;
   display: flex;
   gap: 16px;
-  min-height: 0;
+  height: 100vh;
   overflow: hidden;
 }
 
