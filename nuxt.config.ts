@@ -10,7 +10,7 @@ export default defineNuxtConfig({
   debug: true,
   compatibilityDate: '2024-04-03',
   devtools: { enabled: true },
-  modules: ['@pinia/nuxt', '@vite-pwa/nuxt'],
+  modules: ['@pinia/nuxt', '@vite-pwa/nuxt', 'vuetify-nuxt-module'],
   css: ['vuetify/styles', '~/styles/drum-machine.less', '~/styles/vuetify-overrides.less'],
   typescript: {
     strict: true,
@@ -64,14 +64,6 @@ export default defineNuxtConfig({
     workbox: {
       navigateFallback: '/',
       globPatterns: ['**/*.{js,css,html,png,svg,ico}']
-    }
-  },
-  build: {
-    transpile: ['vuetify']
-  },
-  vue: {
-    compilerOptions: {
-      whitespace: 'condense'
     }
   }
 })
