@@ -80,6 +80,9 @@ export default defineComponent({
   border-radius: 12px;
   padding: 0 12px;
   gap: 12px;
+  height: 100%;
+  position: static;
+  box-shadow: none;
 
   .transport-controls {
     display: flex;

@@ -48,10 +48,12 @@ export default defineComponent({
 .pad-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-rows: repeat(4, minmax(0, 1fr));
   gap: 10px;
   padding: 12px;
   background: #0a0d12;
   border-radius: 16px;
   border: 1px solid #1f2838;
+  height: 100%;
 }
 </style>

@@ -81,12 +81,15 @@ export default defineComponent({
 
 <style scoped lang="less">
 .step-grid-shell {
-  margin-top: 16px;
+  margin-top: 0;
   padding: 10px;
   background: #090c11;
   border: 1px solid #1d2430;
   border-radius: 16px;
   position: relative;
+  height: 100%;
+  max-height: 96px;
+  overflow: hidden;
 }
 
 .step-row {
@@ -98,6 +101,13 @@ export default defineComponent({
   .step-cell:nth-child(4n + 1) {
     border-left: 2px solid rgba(255, 255, 255, 0.12);
     padding-left: 12px;
+  }
+}
+
+@media (max-height: 820px) {
+  .step-grid-shell {
+    max-height: 88px;
+    padding: 8px;
   }
 }
 </style>

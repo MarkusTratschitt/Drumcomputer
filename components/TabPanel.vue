@@ -57,16 +57,29 @@ export default defineComponent({
   background: #07090f;
   border: 1px solid #1f2433;
   padding: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
 
   .drawer-tabs {
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     background: #0b0f16;
+    flex: 0 0 56px;
   }
 
   .drawer-window {
     background: #05060b;
     border-radius: 0 0 16px 16px;
     padding: 16px;
+    flex: 1 1 auto;
+    overflow-y: auto;
+    max-height: calc(100% - 56px);
+  }
+}
+
+@media (max-height: 780px) {
+  .drawer-shell {
+    margin-top: 16px;
   }
 }
 </style>

@@ -47,6 +47,9 @@ export default defineComponent({
   position: relative;
   overflow: hidden;
   cursor: pointer;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
 
   &:not(.is-active):hover {
     background: rgba(120, 125, 140, 0.35);

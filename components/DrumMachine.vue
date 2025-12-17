@@ -1,18 +1,19 @@
 <template lang="pug">
-.drum-machine-shell
-  TransportBar(
-    :bpm="bpm"
-    :isPlaying="isPlaying"
-    :loop="transport.loop"
-    :division="gridSpec.division"
-    :divisions="divisions"
-    @play="start"
-    @stop="stop"
-    @bpm:update="updateBpm"
-    @loop:update="setLoop"
-    @division:update="setDivision"
-  )
-  .drum-core
+.drumshell
+  .hardware-top
+    TransportBar(
+      :bpm="bpm"
+      :isPlaying="isPlaying"
+      :loop="transport.loop"
+      :division="gridSpec.division"
+      :divisions="divisions"
+      @play="start"
+      @stop="stop"
+      @bpm:update="updateBpm"
+      @loop:update="setLoop"
+      @division:update="setDivision"
+    )
+  .main-shell
     .pads-panel
       PadGrid(
         :pads="pads"
@@ -30,7 +31,8 @@
         :is-playing="isPlaying"
         @step:toggle="toggleStep"
       )
-  TabPanel(v-model="drawerTab")
+  .drawer-wrapper
+    TabPanel(v-model="drawerTab")
     template(#sound)
       SoundPanel(
         :banks="banks"
@@ -631,21 +633,40 @@ export default defineComponent({
 </script>
 
 <style scoped lang="less">
-.drum-machine-shell {
+.drumshell {
+  height: 100vh;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 12px;
+  overflow: hidden;
 }
 
-.drum-core {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 16px;
+.hardware-top {
+  flex: 0 0 56px;
 }
 
-.pads-panel,
+.main-shell {
+  flex: 1 1 auto;
+  display: flex;
+  gap: 16px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.pads-panel {
+  flex: 1 1 65%;
+  min-height: 0;
+}
+
 .sequencer-panel {
-  background: transparent;
+  flex: 0 0 auto;
+  height: clamp(72px, 8vh, 96px);
+  overflow: hidden;
+}
+
+.drawer-wrapper {
+  flex: 0 0 auto;
+  height: clamp(220px, 28vh, 320px);
+  min-height: 56px;
+  overflow: hidden;
 }
 </style>

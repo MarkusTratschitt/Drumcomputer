@@ -47,7 +47,6 @@ export default defineComponent({
 
 <style scoped lang="less">
 .pad-cell {
-  aspect-ratio: 1 / 1;
   border-radius: 12px;
   border: 2px solid transparent;
   background: linear-gradient(135deg, #12151b, #1c2130);
