@@ -1,110 +1,103 @@
 <template lang="pug">
-v-card
-  v-card-title Step Grid
-  v-card-text
-    .step-grid
-      .step-row(v-for="pad in padOrder" :key="pad" :style="stepRowStyle")
-        v-btn(
-          v-for="stepIndex in totalSteps"
-          :key="`${pad}-${stepIndex}`"
-          :color="buttonColor(pad, stepIndex - 1)"
-          :style="buttonStyle(pad, stepIndex - 1)"
-          size="small"
-          @click="toggle(pad, stepIndex - 1)"
-        ) {{ stepLabel(stepIndex, pad, stepIndex - 1) }}
+.step-grid-shell
+  .step-row
+    StepCell(
+      v-for="index in totalSteps"
+      :key="index"
+      :display-label="String(index)"
+      :is-active="isActive(index - 1)"
+      :is-accent="isAccent(index - 1)"
+      :is-current="isCurrent(index - 1)"
+      @cell:toggle="emitToggle(index - 1)"
+    )
+    PlayheadOverlay(
+      v-if="totalSteps > 0"
+      :current-step="currentStepNormalized"
+      :total-steps="totalSteps"
+      :is-playing="isPlaying"
+    )
 </template>
 
 <script lang="ts">
 import { defineComponent } from 'vue'
+import StepCell from './StepCell.vue'
+import PlayheadOverlay from './PlayheadOverlay.vue'
 import type { GridSpec } from '~/types/time'
 import type { DrumPadId, StepGrid } from '~/types/drums'
-import { ACCENT_STEP_VELOCITY, velocityToIntensity } from '~/domain/velocity'
+import { ACCENT_STEP_VELOCITY } from '~/domain/velocity'
 
 export default defineComponent({
   name: 'StepGrid',
+  components: {
+    StepCell,
+    PlayheadOverlay
+  },
   props: {
     gridSpec: { type: Object as () => GridSpec, required: true },
     steps: { type: Object as () => StepGrid, required: true },
-    currentStep: { type: Number, required: true }
+    selectedPad: { type: String as () => DrumPadId | null, default: null },
+    currentStep: { type: Number, required: true },
+    isPlaying: { type: Boolean, required: true }
   },
   emits: ['step:toggle'],
-  data() {
-    const padOrder: DrumPadId[] = [
-      'pad1',
-      'pad2',
-      'pad3',
-      'pad4',
-      'pad5',
-      'pad6',
-      'pad7',
-      'pad8',
-      'pad9',
-      'pad10',
-      'pad11',
-      'pad12',
-      'pad13',
-      'pad14',
-      'pad15',
-      'pad16'
-    ]
-
-    return {
-      padOrder
-    }
-  },
   computed: {
     totalSteps(): number {
       return this.gridSpec.bars * this.gridSpec.division
     },
-    stepRowStyle(): Record<string, string> {
-      return { '--step-columns': String(this.totalSteps) }
+    currentStepNormalized(): number {
+      const steps = Math.max(this.totalSteps, 1)
+      return ((this.currentStep % steps) + steps) % steps
     }
   },
   methods: {
-    stepVelocity(padId: DrumPadId, stepIndex: number): number | undefined {
-      const barIndex = Math.floor(stepIndex / this.gridSpec.division)
-      const stepInBar = stepIndex % this.gridSpec.division
-      return this.steps[barIndex]?.[stepInBar]?.[padId]?.velocity?.value
-    },
-    isActive(padId: DrumPadId, stepIndex: number) {
-      return Boolean(this.stepVelocity(padId, stepIndex))
-    },
-    isCurrent(stepIndex: number) {
-      return this.currentStep === stepIndex
-    },
-    buttonColor(padId: DrumPadId, stepIndex: number) {
-      const velocity = this.stepVelocity(padId, stepIndex)
-      if (this.isActive(padId, stepIndex)) {
-        const accent = (velocity ?? 0) >= ACCENT_STEP_VELOCITY - 0.01
-        if (accent) {
-          return this.isCurrent(stepIndex) ? 'deep-orange-accent-2' : 'amber-darken-2'
-        }
-        return this.isCurrent(stepIndex) ? 'light-blue-accent-3' : 'primary'
+    emitToggle(index: number) {
+      const barIndex = Math.floor(index / this.gridSpec.division)
+      const stepInBar = index % this.gridSpec.division
+      if (this.selectedPad) {
+        this.$emit('step:toggle', { barIndex, stepInBar, padId: this.selectedPad })
       }
-      return this.isCurrent(stepIndex) ? 'info' : 'grey'
     },
-    buttonStyle(padId: DrumPadId, stepIndex: number) {
-      const intensity = velocityToIntensity(this.stepVelocity(padId, stepIndex))
-      return intensity > 0 ? { opacity: String(0.5 + intensity * 0.5) } : {}
+    velocityAt(index: number): number | undefined {
+      if (!this.selectedPad) {
+        return undefined
+      }
+      const barIndex = Math.floor(index / this.gridSpec.division)
+      const stepInBar = index % this.gridSpec.division
+      return this.steps[barIndex]?.[stepInBar]?.[this.selectedPad]?.velocity?.value
     },
-    stepLabel(displayIndex: number, padId: DrumPadId, stepIndex: number) {
-      const velocity = this.stepVelocity(padId, stepIndex) ?? 0
-      if (!velocity) {
-        return String(displayIndex)
-      }
-      if (velocity >= ACCENT_STEP_VELOCITY - 0.01) {
-        return `${displayIndex}!`
-      }
-      if (velocity > 0.75) {
-        return `${displayIndex}•`
-      }
-      return `${displayIndex}·`
+    isActive(index: number) {
+      return Boolean(this.velocityAt(index))
     },
-    toggle(padId: DrumPadId, stepIndex: number) {
-      const barIndex = Math.floor(stepIndex / this.gridSpec.division)
-      const stepInBar = stepIndex % this.gridSpec.division
-      this.$emit('step:toggle', { barIndex, stepInBar, padId })
-    }
+    isAccent(index: number) {
+      const velocity = this.velocityAt(index)
+      return velocity !== undefined && velocity >= ACCENT_STEP_VELOCITY - 0.01
+    },
+    isCurrent(index: number) {
+      return index === this.currentStepNormalized
+    },
   }
 })
 </script>
+
+<style scoped lang="less">
+.step-grid-shell {
+  margin-top: 16px;
+  padding: 10px;
+  background: #090c11;
+  border: 1px solid #1d2430;
+  border-radius: 16px;
+  position: relative;
+}
+
+.step-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(32px, 1fr));
+  gap: 8px;
+  position: relative;
+
+  .step-cell:nth-child(4n + 1) {
+    border-left: 2px solid rgba(255, 255, 255, 0.12);
+    padding-left: 12px;
+  }
+}
+</style>

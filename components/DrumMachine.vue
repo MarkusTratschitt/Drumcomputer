@@ -1,26 +1,51 @@
 <template lang="pug">
-.section.drum-machine
-  v-row
-    v-col(cols="12")
-      TransportBar(
-        :bpm="bpm"
-        :isPlaying="isPlaying"
-        :loop="transport.loop"
-        :division="gridSpec.division"
-        :divisions="divisions"
-        @play="start"
-        @stop="stop"
-        @bpm:update="updateBpm"
-        @loop:update="setLoop"
-        @division:update="setDivision"
+.drum-machine-shell
+  TransportBar(
+    :bpm="bpm"
+    :isPlaying="isPlaying"
+    :loop="transport.loop"
+    :division="gridSpec.division"
+    :divisions="divisions"
+    @play="start"
+    @stop="stop"
+    @bpm:update="updateBpm"
+    @loop:update="setLoop"
+    @division:update="setDivision"
+  )
+  .drum-core
+    .pads-panel
+      PadGrid(
+        :pads="pads"
+        :selected-pad="selectedPadId"
+        :pad-states="padStates"
+        @pad:down="handlePad"
+        @pad:select="selectPad"
       )
-  v-row
-    v-col(cols="12")
-      PatternScenePanel(
+    .sequencer-panel
+      StepGrid(
+        :grid-spec="gridSpec"
+        :steps="pattern.steps"
+        :selected-pad="selectedPadId"
+        :current-step="currentStep"
+        :is-playing="isPlaying"
+        @step:toggle="toggleStep"
+      )
+  TabPanel(v-model="drawerTab")
+    template(#sound)
+      SoundPanel(
+        :banks="banks"
+        :selected-bank-id="soundbanks.selectedBankId"
+        @bank:select="selectBank"
+        @pad:replace="replacePadSample"
+      )
+    template(#fx)
+      FxPanel(:fxSettings="sequencer.fxSettings" @fx:update="updateFx")
+    template(#patterns)
+      PatternsPanel(
         :patterns="patterns.patterns"
-        :selectedPatternId="patterns.selectedPatternId"
+        :selected-pattern-id="patterns.selectedPatternId"
         :scenes="patterns.scenes"
-        :activeSceneId="patterns.activeSceneId"
+        :active-scene-id="patterns.activeSceneId"
         @pattern:add="addPattern"
         @pattern:select="selectPattern"
         @pattern:rename="renamePattern"
@@ -30,93 +55,20 @@
         @scene:update="updateScene"
         @scene:select="selectScene"
       )
-  v-row
-    v-col(cols="12")
-      .d-flex.flex-wrap.ga-2
-        v-chip(:color="capabilities.supportsWebMIDI ? 'success' : 'grey'" label) WebMIDI {{ capabilities.supportsWebMIDI ? 'available' : 'unavailable' }}
-        v-chip(:color="capabilities.supportsAudioInput ? 'success' : 'grey'" label) Audio In {{ capabilities.supportsAudioInput ? 'available' : 'unavailable' }}
-  v-row
-    v-col(cols="6")
-      PadGrid(:pads="pads" @pad:down="handlePad")
-    v-col(cols="6")
-      StepGrid(:gridSpec="gridSpec" :steps="pattern.steps" :currentStep="currentStep" @step:toggle="toggleStep")
-  v-row
-    v-col(cols="12" md="6")
-      MidiPanel(
-        :inputs="midiInputs"
-        :outputs="midiOutputs"
-        :selectedInputId="midi.selectedInputId"
-        :selectedOutputId="midi.selectedOutputId"
-        :supports="capabilities.supportsWebMIDI"
-        @request="requestMidi"
-        @input="selectMidiInput"
-        @output="selectMidiOutput"
-        @map="mapPadToNote"
-      )
-    v-col(cols="12" md="6")
-      SyncPanel(:syncState="syncState" @mode="setSyncMode" @role="setSyncRole")
-  v-row
-    v-col(cols="12" md="4")
-      SoundbankManager(:banks="banks" :selectedBankId="soundbanks.selectedBankId" @bank:select="selectBank" @pad:replace="replacePadSample")
-    v-col(cols="12" md="4")
-      FxPanel(:fxSettings="sequencer.fxSettings" @fx:update="updateFx")
-    v-col(cols="12" md="4")
-      SampleBrowser
-  v-row
-    v-col(cols="12" md="6")
-      v-card(class="mt-3")
-      v-card-title Export audio
-      v-card-text
-        p Export the current scene/chain as a WAV mixdown and inspect the deterministic metadata that pairs with it.
-        v-btn(color="primary" :loading="isExporting" :disabled="isExporting" @click="exportBounce") Export mixdown
-        v-alert(v-if="exportError" type="error" dense class="mt-2 py-1") {{ exportError }}
-      v-card-actions(v-if="hasZipArtifacts")
-        v-btn(text small color="secondary" :disabled="isExporting || !hasZipArtifacts" @click="downloadZip") Download ZIP
-  v-row
-    v-col(cols="12")
-      ExportResultPanel(
-        v-if="exportMetadata"
-        :metadata="exportMetadata"
+    template(#export)
+      ExportPanel(
+        :isExporting="isExporting"
+        :exportError="exportError"
+        :exportMetadata="exportMetadata"
         :audioBlob="exportAudioBlob"
-        :debugTimeline="exportTimeline"
+        :hasZipArtifacts="hasZipArtifacts"
+        :stemEntries="stemEntries"
+        @export="exportBounce"
+        @download:mixdown="downloadMixdown"
+        @download:zip="downloadZip"
+        @download:stem="downloadStem"
+        @download:stems="downloadAllStems"
       )
-  v-row(v-if="stemEntries.length > 0")
-  v-col(cols="12")
-    v-card(class="mt-3")
-      v-card-title
-        | Stem exports
-        v-spacer
-        v-btn(
-          variant="text"
-          size="small"
-          color="secondary"
-          :loading="isExporting"
-          :disabled="isExporting"
-          @click="downloadAllStems"
-        )
-          | Download all stems
-      v-card-text
-        p.mt-0.mb-3
-          | Download mixes that isolate each pad so you can grab stems individually or all at once.
-        v-list(density="compact")
-          v-list-item(
-            v-for="stem in stemEntries"
-            :key="stem.padId"
-          )
-            v-list-item-title {{ stem.label }}
-            v-list-item-subtitle {{ stem.fileName }}
-
-            template(#append)
-              v-btn(
-                variant="text"
-                size="small"
-                color="primary"
-                :loading="isExporting"
-                :disabled="isExporting"
-                @click="downloadStem(stem.padId)"
-              )
-                | Download
-
 </template>
 
 <script lang="ts">
@@ -137,13 +89,11 @@ import { useCapabilities } from '~/composables/useCapabilities.client'
 import TransportBar from './TransportBar.vue'
 import PadGrid from './PadGrid.vue'
 import StepGrid from './StepGrid.vue'
-import MidiPanel from './MidiPanel.vue'
-import SyncPanel from './SyncPanel.vue'
-import SoundbankManager from './SoundbankManager.vue'
-import SampleBrowser from './SampleBrowser.vue'
-import FxPanel from './FxPanel.vue'
-import PatternScenePanel from './PatternScenePanel.vue'
-import ExportResultPanel from './ExportResultPanel.vue'
+import TabPanel from './TabPanel.vue'
+import SoundPanel from './panels/SoundPanel.vue'
+import FxPanel from './panels/FxPanel.vue'
+import PatternsPanel from './panels/PatternsPanel.vue'
+import ExportPanel from './panels/ExportPanel.vue'
 import { createZip, type ZipEntry } from '~/utils/zip'
 import type { DrumPadId, Scene } from '~/types/drums'
 import type { TimeDivision } from '~/types/time'
@@ -173,19 +123,25 @@ type StemEntry = {
   fileName: string
 }
 
+type PadState = {
+  label: string
+  isTriggered: boolean
+  isPlaying: boolean
+}
+
+const VISIBLE_DIVISIONS: TimeDivision[] = GRID_DIVISIONS.filter((value) => value <= 16)
+
 export default defineComponent({
   name: 'DrumMachine',
   components: {
     TransportBar,
     PadGrid,
     StepGrid,
-    MidiPanel,
-    SyncPanel,
-    SoundbankManager,
+    TabPanel,
+    SoundPanel,
     FxPanel,
-    SampleBrowser,
-    PatternScenePanel,
-    ExportResultPanel
+    PatternsPanel,
+    ExportPanel
   },
   data() {
     const transport = useTransportStore()
@@ -239,7 +195,7 @@ export default defineComponent({
       'pad15',
       'pad16'
     ]
-    const divisions: TimeDivision[] = [...GRID_DIVISIONS]
+    const divisions: TimeDivision[] = [...VISIBLE_DIVISIONS]
     const defaultBank: Soundbank = {
       id: 'default-kit',
       name: 'Default Kit',
@@ -285,7 +241,9 @@ export default defineComponent({
       exportStems: null as StemFiles | null,
       isExporting: false,
       exportError: null as string | null,
-      exportAudioFn: importExport.exportAudio
+      exportAudioFn: importExport.exportAudio,
+      selectedPadId: 'pad1' as DrumPadId,
+      drawerTab: 'sound'
     }
   },
   computed: {
@@ -318,6 +276,30 @@ export default defineComponent({
     },
     capabilities() {
       return this.session.capabilities
+    },
+    padStates(): Record<DrumPadId, PadState> {
+      const bankPads = this.soundbanks.currentBank?.pads ?? {}
+      const result: Record<DrumPadId, PadState> = {} as Record<DrumPadId, PadState>
+      const stepsPerPattern = Math.max(1, this.gridSpec.bars * this.gridSpec.division)
+      const normalizedStep = ((this.currentStep % stepsPerPattern) + stepsPerPattern) % stepsPerPattern
+      const barIndex = Math.floor(normalizedStep / this.gridSpec.division)
+      const stepIndex = normalizedStep % this.gridSpec.division
+      const currentRow = this.pattern.steps[barIndex]?.[stepIndex] ?? {}
+      const triggered = new Set<DrumPadId>(Object.keys(currentRow) as DrumPadId[])
+      const playingPads = new Set<DrumPadId>()
+      Object.values(this.pattern.steps).forEach((bar) => {
+        Object.values(bar).forEach((step) => {
+          Object.keys(step).forEach((padId) => playingPads.add(padId as DrumPadId))
+        })
+      })
+      this.pads.forEach((pad) => {
+        result[pad] = {
+          label: bankPads[pad]?.name ?? pad.toUpperCase(),
+          isTriggered: triggered.has(pad),
+          isPlaying: this.isPlaying && playingPads.has(pad)
+        }
+      })
+      return result
     },
     hasZipArtifacts(): boolean {
       return Boolean(this.exportMetadata && this.exportAudioBlob)
@@ -437,6 +419,10 @@ export default defineComponent({
     },
     handlePad(pad: DrumPadId, velocity = 1) {
       this.sequencer.recordHit(pad, velocity, true)
+      this.selectPad(pad)
+    },
+    selectPad(pad: DrumPadId) {
+      this.selectedPadId = pad
     },
     toggleStep(payload: { barIndex: number; stepInBar: number; padId: DrumPadId }) {
       this.patterns.toggleStep(payload.barIndex, payload.stepInBar, payload.padId)
@@ -599,6 +585,11 @@ export default defineComponent({
       if (!entry) return
       saveAs(entry.blob, entry.fileName)
     },
+    downloadMixdown() {
+      if (this.isExporting) return
+      if (!this.exportAudioBlob) return
+      saveAs(this.exportAudioBlob, 'mixdown.wav')
+    },
     downloadAllStems() {
       if (this.isExporting || !this.exportStems) return
       Object.values(this.exportStems).forEach((entry) => {
@@ -638,3 +629,23 @@ export default defineComponent({
   }
 })
 </script>
+
+<style scoped lang="less">
+.drum-machine-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 12px;
+}
+
+.drum-core {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+}
+
+.pads-panel,
+.sequencer-panel {
+  background: transparent;
+}
+</style>

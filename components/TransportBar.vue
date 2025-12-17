@@ -1,26 +1,35 @@
 <template lang="pug">
-v-card
-  v-card-title Transport
-  v-card-text
-    v-row(align="center")
-      v-col(cols="12" md="4")
-        v-btn(color="primary" @click="$emit('play')" :disabled="isPlaying") Play
-        v-btn(color="secondary" class="ml-2" @click="$emit('stop')" :disabled="!isPlaying") Stop
-      v-col(cols="12" md="4")
-        v-text-field(label="BPM" type="number" :model-value="bpm" @update:model-value="onBpm" min="40" max="240")
-      v-col(cols="12" md="4")
-        v-switch(label="Loop" color="primary" :model-value="loop" @update:model-value="onLoop")
-    v-row
-      v-col(cols="12" md="6")
-        v-select(
-          label="Division"
-          :items="divisionItems"
-          item-title="title"
-          item-value="value"
-          :model-value="division"
-          @update:model-value="onDivision"
-          hide-details
-        )
+v-app-bar(dense flat class="transport-bar")
+  .transport-controls
+    v-btn(icon :disabled="isPlaying" color="primary" @click="$emit('play')" aria-label="Play")
+      v-icon mdi-play
+    v-btn(icon :disabled="!isPlaying" color="error" @click="$emit('stop')" aria-label="Stop")
+      v-icon mdi-stop
+  .transport-parameters
+    v-text-field(
+      dense
+      type="number"
+      class="bpm-input"
+      label="BPM"
+      :model-value="bpm"
+      @update:model-value="onBpm"
+      min="40"
+      max="240"
+      hide-details
+    )
+    v-select(
+      dense
+      class="division-select"
+      label="Division"
+      :items="divisionItems"
+      item-title="title"
+      item-value="value"
+      :model-value="division"
+      @update:model-value="onDivision"
+      hide-details
+    )
+    v-btn(icon class="loop-toggle" :color="loop ? 'cyan' : 'grey'" @click="toggleLoop" aria-label="Loop")
+      v-icon(:class="{ 'mdi-spin': loop }") mdi-repeat
 </template>
 
 <script lang="ts">
@@ -52,14 +61,46 @@ export default defineComponent({
         this.$emit('bpm:update', numeric)
       }
     },
-    onLoop(value: boolean) {
-      this.$emit('loop:update', value)
-    },
     onDivision(value: TimeDivision | null) {
       if (value) {
         this.$emit('division:update', value)
       }
+    },
+    toggleLoop() {
+      this.$emit('loop:update', !this.loop)
     }
   }
 })
 </script>
+
+<style scoped lang="less">
+.transport-bar {
+  background: #0f1115;
+  border: 1px solid #1d2430;
+  border-radius: 12px;
+  padding: 0 12px;
+  gap: 12px;
+
+  .transport-controls {
+    display: flex;
+    gap: 8px;
+  }
+
+  .transport-parameters {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: auto;
+  }
+
+  .bpm-input,
+  .division-select {
+    max-width: 120px;
+  }
+
+  .loop-toggle {
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+}
+</style>
