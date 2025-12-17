@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import type { Pattern } from '~/types/drums'
+import type { DrumPadId, Pattern } from '~/types/drums'
 import type { Soundbank, SampleRef } from '~/types/audio'
 
 const DB_NAME = 'drum-machine-db'
@@ -16,6 +16,33 @@ interface StoredPatternRecord {
   id: string
   bankId: string
   pattern: Pattern
+}
+
+const stripNonSerializableSample = (sample?: SampleRef): SampleRef | undefined => {
+  if (!sample) return undefined
+  return {
+    id: sample.id,
+    name: sample.name,
+    url: sample.url,
+    format: sample.format
+  }
+}
+
+const serializeSoundbank = (bank: Soundbank): Soundbank => {
+  const pads: Partial<Record<DrumPadId, SampleRef>> = {}
+  Object.entries(bank.pads).forEach(([padId, sample]) => {
+    const sanitized = stripNonSerializableSample(sample)
+    if (sanitized) {
+      pads[padId as DrumPadId] = sanitized
+    }
+  })
+  return {
+    id: bank.id,
+    name: bank.name,
+    createdAt: bank.createdAt,
+    updatedAt: bank.updatedAt,
+    pads
+  }
 }
 
 export function useSoundbankStorage() {
@@ -54,7 +81,7 @@ export function useSoundbankStorage() {
     const db = await ensureDb()
     return new Promise<void>((resolve, reject) => {
       const tx = db.transaction(['soundbanks'], 'readwrite')
-      tx.objectStore('soundbanks').put(bank)
+      tx.objectStore('soundbanks').put(serializeSoundbank(bank))
       tx.oncomplete = () => resolve()
       tx.onerror = () => reject(tx.error)
     })

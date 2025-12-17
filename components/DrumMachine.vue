@@ -223,6 +223,10 @@ export default defineComponent({
       }
     }
 
+    if (soundbanks.banks.length === 0) {
+      soundbanks.setBanks([defaultBank])
+    }
+
     return {
       transport,
       patterns,
