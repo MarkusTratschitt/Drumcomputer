@@ -15,76 +15,76 @@
       @division:update="setDivision"
     )
 
-// ───────────── MAIN ─────────────
-.main-shell
-  .pads-panel
-    PadGrid(
-      :pads="pads"
-      :selected-pad="selectedPadId"
-      :pad-states="padStates"
-      @pad:down="handlePad"
-      @pad:select="selectPad"
-    )
+  // ───────────── MAIN ─────────────
+  .main-shell
+    .pads-panel
+      PadGrid(
+        :pads="pads"
+        :selected-pad="selectedPadId"
+        :pad-states="padStates"
+        @pad:down="handlePad"
+        @pad:select="selectPad"
+      )
 
-  .sequencer-panel
-    StepGrid(
-      :grid-spec="gridSpec"
-      :steps="pattern.steps"
-      :selected-pad="selectedPadId"
-      :current-step="currentStep"
-      :is-playing="isPlaying"
-      @step:toggle="toggleStep"
-    )
+    .sequencer-panel
+      StepGrid(
+        :grid-spec="gridSpec"
+        :steps="pattern.steps"
+        :selected-pad="selectedPadId"
+        :current-step="currentStep"
+        :is-playing="isPlaying"
+        @step:toggle="toggleStep"
+      )
 
-// ───────────── DRAWER ─────────────
-.drawer-wrapper
-  .drawer-scroll
-    client-only
-      TabPanel(v-model="drawerTab")
-        template(#sound)
-          SoundPanel(
-            :banks="banks"
-            :selected-bank-id="soundbanks.selectedBankId"
-            @bank:select="selectBank"
-            @pad:replace="replacePadSample"
-          )
+  // ───────────── DRAWER ─────────────
+  .drawer-wrapper
+    client-only(tag="div")
+      .drawer-scroll
+        TabPanel(v-model="drawerTab")
+          template(#sound)
+            SoundPanel(
+              :banks="banks"
+              :selected-bank-id="soundbanks.selectedBankId"
+              @bank:select="selectBank"
+              @pad:replace="replacePadSample"
+            )
 
-        template(#fx)
-          FxPanel(
-            :fxSettings="sequencer.fxSettings"
-            @fx:update="updateFx"
-          )
-
-        template(#patterns)
-          PatternsPanel(
-            :patterns="patterns.patterns"
-            :selected-pattern-id="patterns.selectedPatternId"
-            :scenes="patterns.scenes"
-            :active-scene-id="patterns.activeSceneId"
-            @pattern:add="addPattern"
-            @pattern:select="selectPattern"
-            @pattern:rename="renamePattern"
-            @pattern:undo="undoPattern"
-            @pattern:redo="redoPattern"
-            @scene:add="addScene"
-            @scene:update="updateScene"
-            @scene:select="selectScene"
-          )
-
-        template(#export)
-          ExportPanel(
-            :isExporting="isExporting"
-            :exportError="exportError"
-            :exportMetadata="exportMetadata"
-            :audioBlob="exportAudioBlob"
-            :hasZipArtifacts="hasZipArtifacts"
-            :stemEntries="stemEntries"
-            @export="exportBounce"
-            @download:mixdown="downloadMixdown"
-            @download:zip="downloadZip"
-            @download:stem="downloadStem"
-            @download:stems="downloadAllStems"
-          )
+          template(#fx)
+            FxPanel(
+              :fxSettings="sequencer.fxSettings"
+              @fx:update="updateFx"
+            )
+  
+          template(#patterns)
+            PatternsPanel(
+              :patterns="patterns.patterns"
+              :selected-pattern-id="patterns.selectedPatternId"
+              :scenes="patterns.scenes"
+              :active-scene-id="patterns.activeSceneId"
+              @pattern:add="addPattern"
+              @pattern:select="selectPattern"
+              @pattern:rename="renamePattern"
+              @pattern:undo="undoPattern"
+              @pattern:redo="redoPattern"
+              @scene:add="addScene"
+              @scene:update="updateScene"
+              @scene:select="selectScene"
+            )
+  
+          template(#export)
+            ExportPanel(
+              :isExporting="isExporting"
+              :exportError="exportError"
+              :exportMetadata="exportMetadata"
+              :audioBlob="exportAudioBlob"
+              :hasZipArtifacts="hasZipArtifacts"
+              :stemEntries="stemEntries"
+              @export="exportBounce"
+              @download:mixdown="downloadMixdown"
+              @download:zip="downloadZip"
+              @download:stem="downloadStem"
+              @download:stems="downloadAllStems"
+            )
 </template>
 
 

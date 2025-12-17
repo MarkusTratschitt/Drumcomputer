@@ -1,4 +1,4 @@
-import { defineComponent, ref, resolveComponent, mergeProps, withCtx, createTextVNode, createVNode, toDisplayString, createBlock, openBlock, Fragment, renderList, createCommentVNode, renderSlot, useSSRContext } from 'vue';
+import { defineComponent, mergeProps, ref, resolveComponent, withCtx, createTextVNode, createVNode, toDisplayString, createBlock, openBlock, Fragment, renderList, createCommentVNode, renderSlot, useSSRContext } from 'vue';
 import { saveAs } from 'file-saver';
 import { _ as _export_sfc, e as __nuxt_component_3, d as defineStore } from './server.mjs';
 import { Midi } from '@tonejs/midi';
@@ -4560,7 +4560,7 @@ function ssrRender$1(_ctx, _push, _parent, _attrs, $props, $setup, $data, $optio
   const _component_PadGrid = __nuxt_component_1$1;
   const _component_StepGrid = __nuxt_component_2;
   const _component_client_only = __nuxt_component_3;
-  _push(`<!--[--><div class="drumshell" data-v-f413034f><div class="hardware-top" data-v-f413034f>`);
+  _push(`<div${ssrRenderAttrs(mergeProps({ class: "drumshell" }, _attrs))} data-v-58e91f09><div class="hardware-top" data-v-58e91f09>`);
   _push(ssrRenderComponent(_component_TransportBar, {
     bpm: _ctx.bpm,
     isPlaying: _ctx.isPlaying,
@@ -4573,7 +4573,7 @@ function ssrRender$1(_ctx, _push, _parent, _attrs, $props, $setup, $data, $optio
     "onLoop:update": _ctx.setLoop,
     "onDivision:update": _ctx.setDivision
   }, null, _parent));
-  _push(`</div></div><div class="main-shell" data-v-f413034f><div class="pads-panel" data-v-f413034f>`);
+  _push(`</div><div class="main-shell" data-v-58e91f09><div class="pads-panel" data-v-58e91f09>`);
   _push(ssrRenderComponent(_component_PadGrid, {
     pads: _ctx.pads,
     "selected-pad": _ctx.selectedPadId,
@@ -4581,7 +4581,7 @@ function ssrRender$1(_ctx, _push, _parent, _attrs, $props, $setup, $data, $optio
     "onPad:down": _ctx.handlePad,
     "onPad:select": _ctx.selectPad
   }, null, _parent));
-  _push(`</div><div class="sequencer-panel" data-v-f413034f>`);
+  _push(`</div><div class="sequencer-panel" data-v-58e91f09>`);
   _push(ssrRenderComponent(_component_StepGrid, {
     "grid-spec": _ctx.gridSpec,
     steps: _ctx.pattern.steps,
@@ -4590,9 +4590,9 @@ function ssrRender$1(_ctx, _push, _parent, _attrs, $props, $setup, $data, $optio
     "is-playing": _ctx.isPlaying,
     "onStep:toggle": _ctx.toggleStep
   }, null, _parent));
-  _push(`</div></div><div class="drawer-wrapper" data-v-f413034f><div class="drawer-scroll" data-v-f413034f>`);
-  _push(ssrRenderComponent(_component_client_only, null, {}, _parent));
-  _push(`</div></div><!--]-->`);
+  _push(`</div></div><div class="drawer-wrapper" data-v-58e91f09>`);
+  _push(ssrRenderComponent(_component_client_only, { tag: "div" }, {}, _parent));
+  _push(`</div></div>`);
 }
 const _sfc_setup$1 = _sfc_main$1.setup;
 _sfc_main$1.setup = (props, ctx) => {
@@ -4600,7 +4600,7 @@ _sfc_main$1.setup = (props, ctx) => {
   (ssrContext.modules || (ssrContext.modules = /* @__PURE__ */ new Set())).add("components/DrumMachine.vue");
   return _sfc_setup$1 ? _sfc_setup$1(props, ctx) : void 0;
 };
-const __nuxt_component_0 = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1, [["ssrRender", ssrRender$1], ["__scopeId", "data-v-f413034f"]]), { __name: "DrumMachine" });
+const __nuxt_component_0 = /* @__PURE__ */ Object.assign(_export_sfc(_sfc_main$1, [["ssrRender", ssrRender$1], ["__scopeId", "data-v-58e91f09"]]), { __name: "DrumMachine" });
 const _sfc_main = defineComponent({
   name: "IndexPage",
   components: { DrumMachine: __nuxt_component_0 }
@@ -4618,4 +4618,4 @@ _sfc_main.setup = (props, ctx) => {
 const index = /* @__PURE__ */ _export_sfc(_sfc_main, [["ssrRender", ssrRender]]);
 
 export { index as default };
-//# sourceMappingURL=index-lagATdlo.mjs.map
+//# sourceMappingURL=index-ntocajd8.mjs.map
