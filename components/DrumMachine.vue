@@ -1,6 +1,6 @@
 <template lang="pug">
 client-only(tag="div")
-
+  div(style="color:white; padding:20px;")
   .drumshell
     // ───────────── TOP ─────────────
     .hardware-top
@@ -665,11 +665,12 @@ export default defineComponent({
 
 <style scoped lang="less">
 .drumshell {
-  min-height: 100dvh;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
-  overflow: visible;
+  min-height: 0;
 }
+
 
 .hardware-top {
   flex: 0 0 56px;
@@ -677,11 +678,13 @@ export default defineComponent({
 
 .main-shell {
   flex: 1 1 auto;
-  display: flex;
-  gap: 16px;
   min-height: 0;
-  overflow: visible;
+  display: flex;
+  outline: 2px solid red;
+  min-height: 0;
+
 }
+
 
 .pads-panel {
   flex: 1 1 65%;

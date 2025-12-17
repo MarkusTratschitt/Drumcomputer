@@ -45,7 +45,7 @@ export default defineComponent({
   padding: 8px 0;
   transition: background 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
   cursor: pointer;
   width: 100%;
   height: 100%;
