@@ -6,6 +6,7 @@ const hmrPort = Number.isInteger(Number(process.env.HMR_PORT)) && process.env.HM
   : DEFAULT_HMR_PORT
 
 export default defineNuxtConfig({
+  ssr: false,
   debug: true,
   compatibilityDate: '2024-04-03',
   devtools: { enabled: true },
