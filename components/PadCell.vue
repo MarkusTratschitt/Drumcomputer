@@ -2,11 +2,11 @@
 button.pad-cell(
   type="button"
   :class="padClasses"
-  @pointerdown="handleDown"
-  @click="handleSelect"
-  @keydown.enter.prevent="handleDown"
-  @keydown.space.prevent="handleDown"
-  aria-pressed="isSelected"
+  @pointerdown.prevent="handleActivate"
+  @click.prevent="handleActivate"
+  @keydown.enter.prevent="handleActivate"
+  @keydown.space.prevent="handleActivate"
+  :aria-pressed="isSelected"
 )
   span.pad-label {{ label }}
 </template>
@@ -35,10 +35,8 @@ export default defineComponent({
     }
   },
   methods: {
-    handleDown() {
+    handleActivate() {
       this.$emit('pad:down', this.padId)
-    },
-    handleSelect() {
       this.$emit('pad:select', this.padId)
     }
   }
@@ -73,6 +71,12 @@ export default defineComponent({
   &.is-playing {
     animation: padPulse 2s ease-in-out infinite;
   }
+
+  &:focus-visible {
+    outline: 2px solid #00f8ff;
+    outline-offset: 2px;
+  }
+
 
   &.is-triggered {
     &:after {
