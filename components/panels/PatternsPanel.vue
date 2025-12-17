@@ -158,6 +158,9 @@ export default defineComponent({
     updateRenameValue(value: string) {
       this.renameValue = value
     },
+    setNewPatternName(value: string) {
+      this.newPatternName = value
+    },
     submitRename() {
       if (this.currentPattern && this.renameValue.trim().length > 0) {
         this.$emit('pattern:rename', { id: this.currentPattern.id, name: this.renameValue.trim() })

@@ -4,7 +4,6 @@
   v-expansion-panels(
     v-model="activeSlot"
     accordion
-    variant="flat"
     class="fx-panels"
   )
     v-expansion-panel(value="filter")

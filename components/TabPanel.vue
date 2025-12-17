@@ -8,13 +8,13 @@
   )
     v-tab(v-for="tab in tabs" :key="tab.value" :value="tab.value") {{ tab.label }}
   v-tabs-window(v-model="internalTab" class="drawer-window")
-    v-tabs-item(value="sound")
+    v-tabs-window-item(value="sound")
       slot(name="sound")
-    v-tabs-item(value="fx")
+    v-tabs-window-item(value="fx")
       slot(name="fx")
-    v-tabs-item(value="patterns")
+    v-tabs-window-item(value="patterns")
       slot(name="patterns")
-    v-tabs-item(value="export")
+    v-tabs-window-item(value="export")
       slot(name="export")
 </template>
 
