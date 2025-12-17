@@ -19,7 +19,7 @@ import type { SampleRef, Soundbank } from '~/types/audio'
 import type { RenderMetadata, RenderEvent } from '~/types/render'
 import type { DrumPadId, Pattern } from '~/types/drums'
 
-const { Midi } = MidiPkg
+const Midi = (typeof MidiPkg !== 'undefined' && MidiPkg && MidiPkg.Midi) ? MidiPkg.Midi : undefined
 const encoderHeader = 'Drumcomputer Pattern Export'
 
 const audioBufferToWav = (buffer: AudioBuffer) => {
@@ -186,6 +186,10 @@ export function useImportExport() {
   }
 
   const exportMidi = (pattern: Pattern, bpm: number, mapping: MidiMapping = defaultMidiMapping()) => {
+    if (typeof Midi === 'undefined') {
+      console.error('MIDI export is not available: Midi is undefined.')
+      return
+    }
     const midi = new Midi()
     midi.header.setTempo(bpm)
     const track = midi.addTrack()
@@ -218,6 +222,15 @@ export function useImportExport() {
   }
 
   const importMidi = async (file: File, mapping: MidiMapping = defaultMidiMapping()): Promise<Pattern> => {
+    if (typeof Midi === 'undefined') {
+      console.error('MIDI import is not available: Midi is undefined.')
+      return {
+        id: `imported-${Date.now()}`,
+        name: file.name,
+        gridSpec: { bars: 1, division: 16 },
+        steps: {}
+      }
+    }
     const buffer = await file.arrayBuffer()
     const midi = new Midi(buffer)
     return patternFromMidi(midi, mapping)
