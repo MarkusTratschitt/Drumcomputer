@@ -65,11 +65,13 @@
   v-row
     v-col(cols="12" md="6")
       v-card(class="mt-3")
-        v-card-title Export audio
-        v-card-text
-          p Export the current scene/chain as a WAV mixdown and inspect the deterministic metadata that pairs with it.
-          v-btn(color="primary" :loading="isExporting" :disabled="isExporting" @click="exportBounce") Export mixdown
-          v-alert(v-if="exportError" type="error" dense class="mt-2 py-1") {{ exportError }}
+      v-card-title Export audio
+      v-card-text
+        p Export the current scene/chain as a WAV mixdown and inspect the deterministic metadata that pairs with it.
+        v-btn(color="primary" :loading="isExporting" :disabled="isExporting" @click="exportBounce") Export mixdown
+        v-alert(v-if="exportError" type="error" dense class="mt-2 py-1") {{ exportError }}
+      v-card-actions(v-if="hasZipArtifacts")
+        v-btn(text small color="secondary" :disabled="isExporting || !hasZipArtifacts" @click="downloadZip") Download ZIP
   v-row
     v-col(cols="12")
       ExportResultPanel(
@@ -125,6 +127,102 @@ import type { DrumPadId, Scene } from '~/types/drums'
 import type { TimeDivision } from '~/types/time'
 import type { FxSettings, SampleRef, Soundbank } from '~/types/audio'
 import type { RenderEvent, RenderMetadata } from '~/types/render'
+
+const textEncoder = new TextEncoder()
+const CRC_TABLE = (() => {
+  const table = new Uint32Array(256)
+  for (let i = 0; i < 256; i += 1) {
+    let crc = i
+    for (let j = 0; j < 8; j += 1) {
+      crc = crc & 1 ? 0xedb88320 ^ (crc >>> 1) : crc >>> 1
+    }
+    table[i] = crc >>> 0
+  }
+  return table
+})()
+
+const crc32 = (data: Uint8Array): number => {
+  let crc = 0xffffffff
+  for (let i = 0; i < data.length; i += 1) {
+    crc = CRC_TABLE[(crc ^ data[i]) & 0xff] ^ (crc >>> 8)
+  }
+  return (crc ^ 0xffffffff) >>> 0
+}
+
+const slugify = (value: string): string => {
+  const cleaned = value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+  return cleaned || 'drum-session'
+}
+
+const createZipBlob = async (entries: Array<{ name: string; blob: Blob }>): Promise<Blob> => {
+  let offset = 0
+  const localChunks: Uint8Array[] = []
+  const centralChunks: Uint8Array[] = []
+  let centralSize = 0
+  for (const entry of entries) {
+    const data = new Uint8Array(await entry.blob.arrayBuffer())
+    const crc = crc32(data)
+    const nameBytes = textEncoder.encode(entry.name)
+    const localHeaderBuffer = new ArrayBuffer(30 + nameBytes.length)
+    const localHeaderView = new DataView(localHeaderBuffer)
+    localHeaderView.setUint32(0, 0x04034b50, true)
+    localHeaderView.setUint16(4, 20, true)
+    localHeaderView.setUint16(6, 0, true)
+    localHeaderView.setUint16(8, 0, true)
+    localHeaderView.setUint16(10, 0, true)
+    localHeaderView.setUint16(12, 0, true)
+    localHeaderView.setUint32(14, crc, true)
+    localHeaderView.setUint32(18, data.length, true)
+    localHeaderView.setUint32(22, data.length, true)
+    localHeaderView.setUint16(26, nameBytes.length, true)
+    localHeaderView.setUint16(28, 0, true)
+    const localHeader = new Uint8Array(localHeaderBuffer)
+    localHeader.set(nameBytes, 30)
+    localChunks.push(localHeader)
+    localChunks.push(data)
+
+    const centralHeaderBuffer = new ArrayBuffer(46 + nameBytes.length)
+    const centralHeaderView = new DataView(centralHeaderBuffer)
+    centralHeaderView.setUint32(0, 0x02014b50, true)
+    centralHeaderView.setUint16(4, 20, true)
+    centralHeaderView.setUint16(6, 20, true)
+    centralHeaderView.setUint16(8, 0, true)
+    centralHeaderView.setUint16(10, 0, true)
+    centralHeaderView.setUint16(12, 0, true)
+    centralHeaderView.setUint32(14, crc, true)
+    centralHeaderView.setUint32(18, data.length, true)
+    centralHeaderView.setUint32(22, data.length, true)
+    centralHeaderView.setUint16(26, nameBytes.length, true)
+    centralHeaderView.setUint16(28, 0, true)
+    centralHeaderView.setUint16(30, 0, true)
+    centralHeaderView.setUint16(32, 0, true)
+    centralHeaderView.setUint32(34, 0, true)
+    centralHeaderView.setUint32(38, 0, true)
+    centralHeaderView.setUint32(42, offset, true)
+    const centralHeader = new Uint8Array(centralHeaderBuffer)
+    centralHeader.set(nameBytes, 46)
+    centralChunks.push(centralHeader)
+
+    offset += localHeader.length + data.length
+    centralSize += centralHeader.length
+  }
+  const endBuffer = new ArrayBuffer(22)
+  const endView = new DataView(endBuffer)
+  endView.setUint32(0, 0x06054b50, true)
+  endView.setUint16(4, 0, true)
+  endView.setUint16(6, 0, true)
+  endView.setUint16(8, entries.length, true)
+  endView.setUint16(10, entries.length, true)
+  endView.setUint32(12, centralSize, true)
+  endView.setUint32(16, offset, true)
+  endView.setUint16(20, 0, true)
+  const parts = [...localChunks, ...centralChunks, new Uint8Array(endBuffer)]
+  return new Blob(parts, { type: 'application/zip' })
+}
 
 type StemFiles = Record<
   DrumPadId,
@@ -285,6 +383,9 @@ export default defineComponent({
     },
     capabilities() {
       return this.session.capabilities
+    }
+    hasZipArtifacts(): boolean {
+      return Boolean(this.exportMetadata && this.exportAudioBlob)
     }
     stemEntries(): StemEntry[] {
       if (!this.exportStems) {
@@ -568,6 +669,30 @@ export default defineComponent({
       Object.values(this.exportStems).forEach((entry) => {
         saveAs(entry.blob, entry.fileName)
       })
+    },
+    async downloadZip() {
+      if (this.isExporting || !this.hasZipArtifacts) return
+      try {
+        const metadata = this.exportMetadata
+        const mixdown = this.exportAudioBlob
+        if (!metadata || !mixdown) return
+        const metadataBlob = new Blob([JSON.stringify(metadata, null, 2)], { type: 'application/json' })
+        const files = [
+          { name: 'mixdown.wav', blob: mixdown },
+          { name: 'render-meta.json', blob: metadataBlob }
+        ]
+        if (this.exportStems) {
+          Object.entries(this.exportStems).forEach(([padId, entry]) => {
+            files.push({ name: `stems/${padId}.wav`, blob: entry.blob })
+          })
+        }
+        const zipped = await createZipBlob(files)
+        const songName = slugify(this.soundbanks.currentBank?.name ?? this.patterns.currentScene?.name ?? this.pattern?.name ?? 'drum-session')
+        const seedSuffix = metadata.seed ?? Date.now().toString()
+        saveAs(zipped, `${songName}_${seedSuffix}.zip`)
+      } catch (error) {
+        console.error('Failed to create ZIP archive', error)
+      }
     }
   }
 })
