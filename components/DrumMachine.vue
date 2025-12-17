@@ -383,10 +383,10 @@ export default defineComponent({
     },
     capabilities() {
       return this.session.capabilities
-    }
+    },
     hasZipArtifacts(): boolean {
       return Boolean(this.exportMetadata && this.exportAudioBlob)
-    }
+    },
     stemEntries(): StemEntry[] {
       if (!this.exportStems) {
         return []
