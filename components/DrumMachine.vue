@@ -78,10 +78,27 @@
         :audioBlob="exportAudioBlob"
         :debugTimeline="exportTimeline"
       )
+  v-row(v-if="stemEntries.length > 0")
+    v-col(cols="12")
+      v-card(class="mt-3")
+        v-card-title
+          | Stem exports
+          v-spacer
+          v-btn(text small color="secondary" :loading="isExporting" :disabled="isExporting" @click="downloadAllStems") Download all stems
+        v-card-text
+          p.mt-0.mb-3 Download mixes that isolate each pad so you can grab stems individually or all at once.
+          v-list(dense)
+            v-list-item(v-for="stem in stemEntries" :key="stem.padId")
+              v-list-item-content
+                v-list-item-title {{ stem.label }}
+                v-list-item-subtitle {{ stem.fileName }}
+              v-list-item-action
+                v-btn(text small color="primary" :loading="isExporting" :disabled="isExporting" @click="downloadStem(stem.padId)") Download
 </template>
 
 <script lang="ts">
 import { defineComponent } from 'vue'
+import { saveAs } from 'file-saver'
 import { DEFAULT_GRID_SPEC, GRID_DIVISIONS, normalizeGridSpec } from '~/domain/timing'
 import { useTransportStore } from '~/stores/transport'
 import { usePatternsStore } from '~/stores/patterns'
@@ -108,6 +125,20 @@ import type { DrumPadId, Scene } from '~/types/drums'
 import type { TimeDivision } from '~/types/time'
 import type { FxSettings, SampleRef, Soundbank } from '~/types/audio'
 import type { RenderEvent, RenderMetadata } from '~/types/render'
+
+type StemFiles = Record<
+  DrumPadId,
+  {
+    fileName: string
+    blob: Blob
+  }
+>
+
+type StemEntry = {
+  padId: DrumPadId
+  label: string
+  fileName: string
+}
 
 export default defineComponent({
   name: 'DrumMachine',
@@ -218,6 +249,7 @@ export default defineComponent({
       exportMetadata: null as RenderMetadata | null,
       exportAudioBlob: null as Blob | null,
       exportTimeline: undefined as RenderEvent[] | undefined,
+      exportStems: null as StemFiles | null,
       isExporting: false,
       exportError: null as string | null,
       exportAudioFn: importExport.exportAudio
@@ -253,6 +285,17 @@ export default defineComponent({
     },
     capabilities() {
       return this.session.capabilities
+    }
+    stemEntries(): StemEntry[] {
+      if (!this.exportStems) {
+        return []
+      }
+      const bankPads = this.soundbanks.currentBank?.pads ?? {}
+      return Object.entries(this.exportStems).map(([padId, entry]) => ({
+        padId: padId as DrumPadId,
+        label: bankPads[padId as DrumPadId]?.name ?? padId,
+        fileName: entry.fileName
+      }))
     }
   },
   mounted() {
@@ -499,17 +542,32 @@ export default defineComponent({
       if (this.isExporting) return
       this.isExporting = true
       this.exportError = null
+      this.exportStems = null
       try {
         const result = await this.exportAudioFn(this.computeExportDuration())
         this.exportMetadata = result.metadata
         this.exportAudioBlob = result.audioBlob
         this.exportTimeline = result.debugTimeline
+        this.exportStems = result.stems ?? null
       } catch (error) {
         console.error('Failed to export audio', error)
         this.exportError = 'Failed to export audio'
+        this.exportStems = null
       } finally {
         this.isExporting = false
       }
+    },
+    downloadStem(pad: DrumPadId) {
+      if (this.isExporting) return
+      const entry = this.exportStems?.[pad]
+      if (!entry) return
+      saveAs(entry.blob, entry.fileName)
+    },
+    downloadAllStems() {
+      if (this.isExporting || !this.exportStems) return
+      Object.values(this.exportStems).forEach((entry) => {
+        saveAs(entry.blob, entry.fileName)
+      })
     }
   }
 })
