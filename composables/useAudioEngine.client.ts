@@ -2,6 +2,7 @@ import { onBeforeUnmount, ref } from 'vue'
 import type { DrumPadId } from '~/types/drums'
 import type { FxSettings, SampleRef, Soundbank } from '~/types/audio'
 import { createSeededRandom, type RandomSource } from '~/utils/seededRandom'
+import { createFxGraph, connectFxGraph, updateFxGraph, type FxGraphNodes } from '~/domain/audio/fxGraph'
 
 interface TriggerRequest {
   padId: DrumPadId
@@ -15,7 +16,7 @@ const cloneFxSettings = (settings: FxSettings): FxSettings => ({
   reverb: { ...settings.reverb }
 })
 
-export function useAudioEngine() {
+const createAudioEngineInstance = () => {
   const audioContext = ref<AudioContext | null>(null)
   const masterGain = ref<GainNode | null>(null)
   const sampleCache = ref<Map<DrumPadId, AudioBuffer>>(new Map())
@@ -25,101 +26,23 @@ export function useAudioEngine() {
     reverb: { enabled: false, mix: 0.15 }
   })
   const fxSnapshot = ref<FxSettings>(cloneFxSettings(fxSettings.value))
+  const fxGraph = ref<FxGraphNodes | null>(null)
   let randomSource: RandomSource = createSeededRandom(0)
-  const fxInput = ref<GainNode | null>(null)
-  const driveNode = ref<WaveShaperNode | null>(null)
-  const filterNode = ref<BiquadFilterNode | null>(null)
-  const dryGain = ref<GainNode | null>(null)
-  const wetGain = ref<GainNode | null>(null)
-  const reverbNode = ref<ConvolverNode | null>(null)
-  const fxConnected = ref(false)
 
   const syncFxSnapshot = () => {
     fxSnapshot.value = cloneFxSettings(fxSettings.value)
     return fxSnapshot.value
   }
 
-  const createDriveCurve = (amount: number) => {
-    const k = Math.max(0, amount) * 50 + 1
-    const samples = 1024
-    const curve = new Float32Array(samples)
-    for (let i = 0; i < samples; i += 1) {
-      const x = (i * 2) / samples - 1
-      curve[i] = ((1 + k) * x) / (1 + k * Math.abs(x))
-    }
-    return curve
-  }
-
-  const createImpulseResponse = (ctx: BaseAudioContext, rng: RandomSource, duration = 1.2, decay = 2.5) => {
-    const length = Math.max(1, Math.floor(ctx.sampleRate * duration))
-    const impulse = ctx.createBuffer(2, length, ctx.sampleRate)
-    for (let channel = 0; channel < impulse.numberOfChannels; channel += 1) {
-      const channelData = impulse.getChannelData(channel)
-      for (let i = 0; i < length; i += 1) {
-        channelData[i] = (rng() * 2 - 1) * Math.pow(1 - i / length, decay)
-      }
-    }
-    return impulse
-  }
-
-  const updateFxNodes = (ctx: BaseAudioContext, snapshot: FxSettings, rng: RandomSource) => {
-    const now = ctx.currentTime
-    if (filterNode.value) {
-      const frequencyValue = snapshot.filter.enabled ? snapshot.filter.frequency : ctx.sampleRate / 2
-      filterNode.value.frequency.setValueAtTime(frequencyValue, now)
-      filterNode.value.Q.setValueAtTime(snapshot.filter.q, now)
-    }
-    if (driveNode.value) {
-      const amount = snapshot.drive.enabled ? snapshot.drive.amount : 0
-      driveNode.value.curve = createDriveCurve(amount)
-    }
-    if (dryGain.value && wetGain.value) {
-      const mix = snapshot.reverb.enabled ? snapshot.reverb.mix : 0
-      dryGain.value.gain.setValueAtTime(Math.max(0, 1 - mix), now)
-      wetGain.value.gain.setValueAtTime(Math.max(0, Math.min(1, mix)), now)
-    }
-    if (reverbNode.value) {
-      if (snapshot.reverb.enabled) {
-        if (!reverbNode.value.buffer) {
-          reverbNode.value.buffer = createImpulseResponse(ctx, rng)
-        }
-      } else if (reverbNode.value.buffer) {
-        reverbNode.value.buffer = null
-      }
-    }
-  }
-
   const ensureFxGraph = (ctx: BaseAudioContext, snapshot: FxSettings) => {
-    if (!fxInput.value) {
-      fxInput.value = ctx.createGain()
+    if (!masterGain.value) {
+      return
     }
-    if (!driveNode.value) {
-      driveNode.value = ctx.createWaveShaper()
+    if (!fxGraph.value) {
+      fxGraph.value = createFxGraph(ctx)
+      connectFxGraph(fxGraph.value, masterGain.value)
     }
-    if (!filterNode.value) {
-      filterNode.value = ctx.createBiquadFilter()
-      filterNode.value.type = 'lowpass'
-    }
-    if (!dryGain.value) {
-      dryGain.value = ctx.createGain()
-    }
-    if (!wetGain.value) {
-      wetGain.value = ctx.createGain()
-    }
-    if (!reverbNode.value) {
-      reverbNode.value = ctx.createConvolver()
-    }
-    if (!fxConnected.value) {
-      fxInput.value?.connect(driveNode.value as WaveShaperNode)
-      driveNode.value?.connect(filterNode.value as BiquadFilterNode)
-      filterNode.value?.connect(dryGain.value as GainNode)
-      filterNode.value?.connect(reverbNode.value as ConvolverNode)
-      reverbNode.value?.connect(wetGain.value as GainNode)
-      dryGain.value?.connect(masterGain.value as GainNode)
-      wetGain.value?.connect(masterGain.value as GainNode)
-      fxConnected.value = true
-    }
-    updateFxNodes(ctx, snapshot, randomSource)
+    updateFxGraph(ctx, fxGraph.value, snapshot, randomSource)
   }
 
   const ensureContext = () => {
@@ -142,8 +65,11 @@ export function useAudioEngine() {
 
   const setFxRandomSource = (source: RandomSource) => {
     randomSource = source
-    if (reverbNode.value) {
-      reverbNode.value.buffer = null
+    if (fxGraph.value?.reverbNode) {
+      fxGraph.value.reverbNode.buffer = null
+    }
+    if (audioContext.value) {
+      ensureFxGraph(audioContext.value, fxSnapshot.value)
     }
   }
 
@@ -190,7 +116,7 @@ export function useAudioEngine() {
     }
     const snapshot = syncFxSnapshot()
     const ctx = ensureContext()
-    updateFxNodes(ctx, snapshot, randomSource)
+    ensureFxGraph(ctx, snapshot)
   }
 
   const trigger = async ({ padId, when, velocity = 1 }: TriggerRequest) => {
@@ -204,8 +130,8 @@ export function useAudioEngine() {
     const gain = ctx.createGain()
     gain.gain.value = velocity
     source.connect(gain)
-    if (fxInput.value) {
-      gain.connect(fxInput.value)
+    if (fxGraph.value) {
+      gain.connect(fxGraph.value.fxInput)
     } else {
       gain.connect(masterGain.value ?? ctx.destination)
     }
@@ -231,4 +157,13 @@ export function useAudioEngine() {
     getFxSnapshot,
     setFxRandomSource
   }
+}
+
+let audioEngineInstance: ReturnType<typeof createAudioEngineInstance> | null = null
+
+export function useAudioEngine() {
+  if (!audioEngineInstance) {
+    audioEngineInstance = createAudioEngineInstance()
+  }
+  return audioEngineInstance
 }

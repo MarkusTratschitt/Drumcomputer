@@ -1,13 +1,23 @@
+import { ref } from 'vue'
 import { saveAs } from 'file-saver'
 import { Midi } from '@tonejs/midi'
 import { defaultMidiMapping } from '~/domain/midiMapping'
-import { normalizeGridSpec } from '~/domain/timing'
+import { DEFAULT_GRID_SPEC, normalizeGridSpec } from '~/domain/timing'
 import { clampVelocity, DEFAULT_STEP_VELOCITY } from '~/domain/velocity'
-import type { Pattern } from '~/types/drums'
-import type { DrumPadId } from '~/types/drums'
+import { createRenderClock } from '~/domain/audio/clock'
+import { createFxGraph, connectFxGraph, updateFxGraph } from '~/domain/audio/fxGraph'
+import { useAudioEngine } from './useAudioEngine.client'
+import { usePatternsStore } from '~/stores/patterns'
+import { useTransportStore } from '~/stores/transport'
+import { createSeededRandom } from '~/utils/seededRandom'
+import type { ScheduledTask } from './useScheduler'
+import { scheduleStep } from './useSequencer'
+import type { ScheduleStepOptions, ScheduledStep } from './useSequencer'
 import type { GridSpec } from '~/types/time'
 import type { MidiFileData, MidiMapping } from '~/types/midi'
 import type { SampleRef, Soundbank } from '~/types/audio'
+import type { RenderMetadata, RenderEvent } from '~/types/render'
+import type { DrumPadId, Pattern } from '~/types/drums'
 
 const encoderHeader = 'Drumcomputer Pattern Export'
 
@@ -179,13 +189,195 @@ export function useImportExport() {
     return patternFromMidi(midi, mapping)
   }
 
-  const exportAudio = async (renderDurationSec: number, renderGraph: (context: OfflineAudioContext) => void, sampleRate = 44100) => {
-    const context = new OfflineAudioContext(2, renderDurationSec * sampleRate, sampleRate)
-    renderGraph(context)
+  const createScenePlaybackTracker = (patternsStore: ReturnType<typeof usePatternsStore>) => {
+    const scene = patternsStore.currentScene
+    const patternList = scene?.patternIds ?? []
+    const fallbackPattern: Pattern = patternsStore.patterns[0] ?? {
+      id: 'pattern-1',
+      name: 'Pattern 1',
+      gridSpec: { ...DEFAULT_GRID_SPEC },
+      steps: {}
+    }
+    let currentPatternId = patternList[0] ?? patternsStore.selectedPatternId ?? fallbackPattern.id
+    let scenePosition = patternList.length > 1 ? 1 : 0
+    const resolvePattern = (id: string) => patternsStore.patterns.find((pattern) => pattern.id === id) ?? fallbackPattern
+    const getPattern = () => resolvePattern(currentPatternId)
+    const advancePattern = () => {
+      if (!scene || patternList.length === 0) {
+        return getPattern()
+      }
+      const nextId = patternList[scenePosition % patternList.length]
+      scenePosition = (scenePosition + 1) % patternList.length
+      if (nextId) {
+        currentPatternId = nextId
+      }
+      return getPattern()
+    }
+    const initialPattern = getPattern()
+    const patternChain = patternList.length > 0 ? [...patternList] : [patternsStore.selectedPatternId ?? initialPattern.id]
+    return {
+      sceneId: scene?.id ?? null,
+      patternChain,
+      initialPatternId: initialPattern.id,
+      getPattern,
+      advancePattern
+    }
+  }
+
+  const createOfflineScheduler = (limit: number, updateClock: (time: number) => void) => {
+    const tasks: ScheduledTask[] = []
+    return {
+      schedule(task: ScheduledTask) {
+        tasks.push(task)
+        tasks.sort((a, b) => a.when - b.when)
+      },
+      run() {
+        while (tasks.length > 0 && tasks[0].when <= limit) {
+          const next = tasks.shift()!
+          updateClock(next.when)
+          next.callback()
+        }
+      }
+    }
+  }
+
+  const hashSnapshot = (payload: string) => {
+    let hash = 0
+    for (let i = 0; i < payload.length; i += 1) {
+      hash = Math.imul(31, hash) + payload.charCodeAt(i)
+      hash >>>= 0
+    }
+    return hash.toString(36)
+  }
+
+  const exportAudio = async (
+    renderDurationSec: number,
+    sampleRate = 44100,
+    options: { seed?: number } = {}
+  ): Promise<{ audioBlob: Blob; metadata: RenderMetadata; debugTimeline?: RenderEvent[] }> => {
+    const transport = useTransportStore()
+    const patterns = usePatternsStore()
+    const audio = useAudioEngine()
+    const tracker = createScenePlaybackTracker(patterns)
+    const initialPattern = tracker.getPattern()
+    const duration = Math.max(0, renderDurationSec)
+    const frameCount = Math.max(1, Math.ceil(duration * sampleRate))
+    const context = new OfflineAudioContext(2, frameCount, sampleRate)
+
+    const masterGainNode = context.createGain()
+    masterGainNode.gain.value = 0.8
+    masterGainNode.connect(context.destination)
+    const fxGraph = createFxGraph(context)
+    connectFxGraph(fxGraph, masterGainNode)
+
+    const fxSnapshot = audio.getFxSnapshot()
+    const seedValue = options.seed ?? Date.now()
+    const rng = createSeededRandom(seedValue)
+    updateFxGraph(context, fxGraph, fxSnapshot, rng)
+
+    const sampleCache = new Map(audio.sampleCache.value)
+    const shouldDebug = import.meta.env?.DEV ?? false
+    const debugEvents: RenderEvent[] = shouldDebug ? [] : []
+
+    const offlineEngine = {
+      trigger({ padId, when, velocity = 1 }: { padId: DrumPadId; when: number; velocity?: number }) {
+        const buffer = sampleCache.get(padId)
+        if (!buffer) return
+        const source = context.createBufferSource()
+        source.buffer = buffer
+        const gainNode = context.createGain()
+        gainNode.gain.value = velocity
+        source.connect(gainNode)
+        gainNode.connect(fxGraph.fxInput)
+        source.start(when)
+        if (shouldDebug) {
+          debugEvents.push({ time: when, padId, velocity })
+        }
+      }
+    }
+
+    let simulatedTime = 0
+    const baseClock = createRenderClock(context, true)
+    const renderClock: ScheduleStepOptions['clock'] = {
+      ctx: baseClock.ctx,
+      isOffline: true,
+      now: () => simulatedTime
+    }
+
+    const offlineScheduler = createOfflineScheduler(duration, (time) => {
+      simulatedTime = time
+    })
+
+    const currentStep = ref(0)
+    const pendingSteps = ref<ScheduledStep[]>([])
+
+    const initialGridSpec = normalizeGridSpec(initialPattern.gridSpec ?? transport.gridSpec)
+    const offlineTransport = {
+      loop: transport.loop,
+      bpm: transport.bpm,
+      gridSpec: initialGridSpec,
+      setCurrentStep: () => {},
+      setGridSpec(gridSpec: GridSpec) {
+        offlineTransport.gridSpec = normalizeGridSpec(gridSpec)
+      }
+    }
+
+    const stepOptions: ScheduleStepOptions = {
+      clock: renderClock,
+      scheduler: offlineScheduler,
+      audio: offlineEngine as ScheduleStepOptions['audio'],
+      transport: offlineTransport,
+      getPattern: () => tracker.getPattern(),
+      currentStep,
+      pendingSteps,
+      onPatternBoundary: () => {
+        const nextPattern = tracker.advancePattern()
+        offlineTransport.setGridSpec(nextPattern.gridSpec)
+        return nextPattern
+      }
+    }
+
+    scheduleStep(stepOptions, 0)
+    offlineScheduler.run()
+    simulatedTime = duration
+
     const rendered = await context.startRendering()
     const wav = audioBufferToWav(rendered)
     const blob = new Blob([wav], { type: 'audio/wav' })
     saveAs(blob, 'mixdown.wav')
+
+    const metadata: RenderMetadata = {
+      seed: String(seedValue),
+      bpm: transport.bpm,
+      gridSpec: initialGridSpec,
+      sceneId: tracker.sceneId,
+      patternChain: tracker.patternChain,
+      initialPatternId: tracker.initialPatternId,
+      durationSec: duration
+    }
+
+    if (shouldDebug) {
+      const snapshotHash = hashSnapshot(JSON.stringify(fxSnapshot))
+      console.info(
+        'Offline export',
+        `seed=${seedValue}`,
+        `snapshot=${snapshotHash}`,
+        `events=${debugEvents.length}`,
+        `duration=${duration.toFixed(2)}`
+      )
+      if (debugEvents.length === 0) {
+        console.warn('Offline export scheduled zero events; verify the active pattern/scene contains steps')
+      }
+    }
+
+    const result: { audioBlob: Blob; metadata: RenderMetadata; debugTimeline?: RenderEvent[] } = {
+      audioBlob: blob,
+      metadata
+    }
+    if (shouldDebug) {
+      result.debugTimeline = debugEvents
+    }
+    return result
   }
 
   const exportSoundbank = (bank: Soundbank, samples: SampleRef[]) => {
