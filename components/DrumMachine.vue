@@ -665,10 +665,11 @@ export default defineComponent({
 
 <style scoped lang="less">
 .drumshell {
-  height: 100dvh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 
@@ -680,9 +681,9 @@ export default defineComponent({
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
-  outline: 2px solid red;
+  gap: 16px;
   min-height: 0;
-
+  overflow: visible;
 }
 
 
