@@ -62,6 +62,22 @@
       FxPanel(:fxSettings="sequencer.fxSettings" @fx:update="updateFx")
     v-col(cols="12" md="4")
       SampleBrowser
+  v-row
+    v-col(cols="12" md="6")
+      v-card(class="mt-3")
+        v-card-title Export audio
+        v-card-text
+          p Export the current scene/chain as a WAV mixdown and inspect the deterministic metadata that pairs with it.
+          v-btn(color="primary" :loading="isExporting" :disabled="isExporting" @click="exportBounce") Export mixdown
+          v-alert(v-if="exportError" type="error" dense class="mt-2 py-1") {{ exportError }}
+  v-row
+    v-col(cols="12")
+      ExportResultPanel(
+        v-if="exportMetadata"
+        :metadata="exportMetadata"
+        :audioBlob="exportAudioBlob"
+        :debugTimeline="exportTimeline"
+      )
 </template>
 
 <script lang="ts">
@@ -76,6 +92,7 @@ import { useSync } from '~/composables/useSync.client'
 import { useMidi } from '~/composables/useMidi.client'
 import { usePatternStorage } from '~/composables/usePatternStorage.client'
 import { useSoundbankStorage } from '~/composables/useSoundbankStorage.client'
+import { useImportExport } from '~/composables/useImportExport.client'
 import { useCapabilities } from '~/composables/useCapabilities.client'
 import TransportBar from './TransportBar.vue'
 import PadGrid from './PadGrid.vue'
@@ -86,9 +103,11 @@ import SoundbankManager from './SoundbankManager.vue'
 import SampleBrowser from './SampleBrowser.vue'
 import FxPanel from './FxPanel.vue'
 import PatternScenePanel from './PatternScenePanel.vue'
+import ExportResultPanel from './ExportResultPanel.vue'
 import type { DrumPadId } from '~/types/drums'
 import type { TimeDivision } from '~/types/time'
 import type { FxSettings, SampleRef, Soundbank } from '~/types/audio'
+import type { RenderEvent, RenderMetadata } from '~/types/render'
 
 export default defineComponent({
   name: 'DrumMachine',
@@ -101,7 +120,8 @@ export default defineComponent({
     SoundbankManager,
     FxPanel,
     SampleBrowser,
-    PatternScenePanel
+    PatternScenePanel,
+    ExportResultPanel
   },
   data() {
     const transport = useTransportStore()
@@ -111,6 +131,7 @@ export default defineComponent({
     const capabilitiesProbe = useCapabilities()
     session.setCapabilities(capabilitiesProbe.capabilities.value)
 
+    const importExport = useImportExport()
     const sequencer = useSequencer({
       getPattern: () => patterns.currentPattern,
       onPatternBoundary: () => patterns.advanceScenePlayback()
@@ -193,7 +214,13 @@ export default defineComponent({
       pads,
       divisions,
       defaultBank,
-      unwatchers: [] as Array<() => void>
+      unwatchers: [] as Array<() => void>,
+      exportMetadata: null as RenderMetadata | null,
+      exportAudioBlob: null as Blob | null,
+      exportTimeline: undefined as RenderEvent[] | undefined,
+      isExporting: false,
+      exportError: null as string | null,
+      exportAudioFn: importExport.exportAudio
     }
   },
   computed: {
@@ -437,6 +464,41 @@ export default defineComponent({
         this.patterns.setPatterns(bankPatterns)
       }
       await this.sequencer.applySoundbank(hydratedBank)
+    },
+    getScenePatternChain(): string[] {
+      const chain = this.patterns.currentScene?.patternIds ?? []
+      const filtered = chain.filter((patternId) => this.patterns.patterns.some((pattern) => pattern.id === patternId))
+      if (filtered.length > 0) {
+        return filtered
+      }
+      const fallback = this.patterns.selectedPatternId ?? this.patterns.patterns[0]?.id
+      return fallback ? [fallback] : []
+    },
+    computeExportDuration(): number {
+      const bpm = Math.max(1, this.transport.bpm)
+      const chain = this.getScenePatternChain()
+      const totalBars = chain.reduce((sum, patternId) => {
+        const pattern = this.patterns.patterns.find((entry) => entry.id === patternId)
+        return sum + (pattern?.gridSpec?.bars ?? DEFAULT_GRID_SPEC.bars)
+      }, 0)
+      const bars = totalBars || DEFAULT_GRID_SPEC.bars
+      return (bars * 4 * 60) / bpm
+    },
+    async exportBounce() {
+      if (this.isExporting) return
+      this.isExporting = true
+      this.exportError = null
+      try {
+        const result = await this.exportAudioFn(this.computeExportDuration())
+        this.exportMetadata = result.metadata
+        this.exportAudioBlob = result.audioBlob
+        this.exportTimeline = result.debugTimeline
+      } catch (error) {
+        console.error('Failed to export audio', error)
+        this.exportError = 'Failed to export audio'
+      } finally {
+        this.isExporting = false
+      }
     }
   }
 })
