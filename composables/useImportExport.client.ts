@@ -273,7 +273,7 @@ export function useImportExport() {
     return hash.toString(36)
   }
 
-  type StemExportFiles = Record<DrumPadId, { fileName: string; blob: Blob }>
+  type StemExportFiles = Partial<Record<DrumPadId, { fileName: string; blob: Blob }>>
 
   type ExportAudioResult = {
     audioBlob: Blob
@@ -459,7 +459,7 @@ export function useImportExport() {
       audioBlob: mixdownBlob,
       metadata
     }
-    if (shouldDebug) {
+    if (shouldDebug && mixdownResult.debugEvents) {
       result.debugTimeline = mixdownResult.debugEvents
     }
     if (Object.keys(stemFiles).length > 0) {

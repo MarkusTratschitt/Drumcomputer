@@ -12,6 +12,11 @@ npm run lint
 npm run typecheck
 ```
 
+To override the dev or HMR port, prefix the command with the env vars you need:
+```bash
+PORT=3001 HMR_PORT=24679 npm run dev
+```
+
 ## Features
 
 - Lookahead Web Audio scheduler with AudioContext time, quantized live recording, and 16-pad grid sequencing.
@@ -35,6 +40,10 @@ npm run typecheck
 - Undo/redo history for pattern + scene edits (50 steps), persisted alongside scenes/pattern selection.
 - Capability gates surface WebMIDI/Audio In support status directly in the UI.
 - Importers normalize grid specs/velocities and soundbank manifests to handle malformed payloads more gracefully.
+
+## Layout Notes
+
+- Viewport locked, drawer scrolls internally.
 
 ## Browser support / limitations
 

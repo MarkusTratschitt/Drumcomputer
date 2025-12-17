@@ -32,7 +32,8 @@
         @step:toggle="toggleStep"
       )
   .drawer-wrapper
-    TabPanel(v-model="drawerTab")
+    .drawer-scroll
+      TabPanel(v-model="drawerTab")
       template(#sound)
         SoundPanel(
           :banks="banks"
@@ -111,12 +112,14 @@ const slugify = (value: string): string => {
   return cleaned || 'drum-session'
 }
 
-type StemFiles = Record<
-  DrumPadId,
-  {
-    fileName: string
-    blob: Blob
-  }
+type StemFiles = Partial<
+  Record<
+    DrumPadId,
+    {
+      fileName: string
+      blob: Blob
+    }
+  >
 >
 
 type StemEntry = {
@@ -638,7 +641,8 @@ export default defineComponent({
 
 <style scoped lang="less">
 .drumshell {
-  height: 100vh;
+  height: 100dvh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -654,17 +658,23 @@ export default defineComponent({
   gap: 16px;
   min-height: 0;
   overflow: hidden;
+  padding-bottom: 16px;
 }
 
 .pads-panel {
   flex: 1 1 65%;
   min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .sequencer-panel {
   flex: 0 0 auto;
+  min-height: 0;
   height: clamp(72px, 8vh, 96px);
   overflow: hidden;
+  width: clamp(220px, 30vw, 360px);
 }
 
 .drawer-wrapper {
@@ -672,5 +682,14 @@ export default defineComponent({
   height: clamp(220px, 28vh, 320px);
   min-height: 56px;
   overflow: hidden;
+}
+
+.drawer-scroll {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+  padding: 16px;
 }
 </style>

@@ -1,8 +1,7 @@
 <template lang="pug">
 v-app
   v-main
-    v-container(fluid)
-      NuxtPage
+    NuxtPage
 </template>
 
 <script lang="ts">

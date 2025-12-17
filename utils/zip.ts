@@ -15,7 +15,9 @@ const CRC_TABLE = (() => {
 const crc32 = (data: Uint8Array): number => {
   let crc = 0xffffffff
   for (let i = 0; i < data.length; i += 1) {
-    crc = CRC_TABLE[(crc ^ data[i]) & 0xff] ^ (crc >>> 8)
+    const byte = data[i] ?? 0
+    const tableValue = CRC_TABLE[(crc ^ byte) & 0xff] ?? 0
+    crc = tableValue ^ (crc >>> 8)
   }
   return (crc ^ 0xffffffff) >>> 0
 }
@@ -26,8 +28,8 @@ export type ZipEntry = {
 }
 
 export const createZip = (entries: ZipEntry[]): Blob => {
-  const localChunks: Uint8Array[] = []
-  const centralChunks: Uint8Array[] = []
+  const localChunks: BlobPart[] = []
+  const centralChunks: BlobPart[] = []
   let offset = 0
   let centralSize = 0
 
@@ -52,8 +54,8 @@ export const createZip = (entries: ZipEntry[]): Blob => {
 
     const localHeaderBytes = new Uint8Array(localHeaderBuffer)
     localHeaderBytes.set(nameBytes, 30)
-    localChunks.push(localHeaderBytes)
-    localChunks.push(data)
+    localChunks.push(localHeaderBuffer)
+    localChunks.push(data.slice().buffer)
 
     const centralHeaderBuffer = new ArrayBuffer(46 + nameBytes.length)
     const centralView = new DataView(centralHeaderBuffer)
@@ -77,7 +79,7 @@ export const createZip = (entries: ZipEntry[]): Blob => {
 
     const centralHeaderBytes = new Uint8Array(centralHeaderBuffer)
     centralHeaderBytes.set(nameBytes, 46)
-    centralChunks.push(centralHeaderBytes)
+    centralChunks.push(centralHeaderBuffer)
 
     offset += localHeaderBytes.length + data.length
     centralSize += centralHeaderBytes.length
@@ -94,6 +96,6 @@ export const createZip = (entries: ZipEntry[]): Blob => {
   endView.setUint32(16, offset, true)
   endView.setUint16(20, 0, true) // ZIP file comment length
 
-  const parts = [...localChunks, ...centralChunks, new Uint8Array(endBuffer)]
+  const parts: BlobPart[] = [...localChunks, ...centralChunks, endBuffer]
   return new Blob(parts, { type: 'application/zip' })
 }

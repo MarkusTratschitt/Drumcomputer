@@ -20,12 +20,17 @@ interface StoredPatternRecord {
 
 const stripNonSerializableSample = (sample?: SampleRef): SampleRef | undefined => {
   if (!sample) return undefined
-  return {
+  const sanitized: SampleRef = {
     id: sample.id,
-    name: sample.name,
-    url: sample.url,
-    format: sample.format
+    name: sample.name
   }
+  if (sample.url !== undefined) {
+    sanitized.url = sample.url
+  }
+  if (sample.format !== undefined) {
+    sanitized.format = sample.format
+  }
+  return sanitized
 }
 
 const serializeSoundbank = (bank: Soundbank): Soundbank => {

@@ -1,5 +1,10 @@
 import { defineNuxtConfig } from 'nuxt/config'
 
+const DEFAULT_HMR_PORT = 24678
+const hmrPort = Number.isInteger(Number(process.env.HMR_PORT)) && process.env.HMR_PORT
+  ? Number(process.env.HMR_PORT)
+  : DEFAULT_HMR_PORT
+
 export default defineNuxtConfig({
   compatibilityDate: '2024-04-03',
   devtools: { enabled: true },
@@ -16,7 +21,8 @@ export default defineNuxtConfig({
   vite: {
     server: {
       hmr: {
-        port: 24679
+        port: hmrPort,
+        host: '127.0.0.1'
       }
     },
     define: {
