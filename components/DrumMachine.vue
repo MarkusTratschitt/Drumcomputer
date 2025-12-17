@@ -1,5 +1,8 @@
 <template lang="pug">
 .drumshell
+  // ─────────────────────────────────────────
+  // TOP HARDWARE BAR
+  // ─────────────────────────────────────────
   .hardware-top
     TransportBar(
       :bpm="bpm"
@@ -13,6 +16,10 @@
       @loop:update="setLoop"
       @division:update="setDivision"
     )
+
+  // ─────────────────────────────────────────
+  // MAIN PLAY AREA
+  // ─────────────────────────────────────────
   .main-shell
     .pads-panel
       PadGrid(
@@ -22,6 +29,7 @@
         @pad:down="handlePad"
         @pad:select="selectPad"
       )
+
     .sequencer-panel
       StepGrid(
         :grid-spec="gridSpec"
@@ -31,48 +39,59 @@
         :is-playing="isPlaying"
         @step:toggle="toggleStep"
       )
+
+  // ─────────────────────────────────────────
+  // BOTTOM DRAWER (TABS)
+  // ─────────────────────────────────────────
   .drawer-wrapper
     .drawer-scroll
       TabPanel(v-model="drawerTab")
-      template(#sound)
-        SoundPanel(
-          :banks="banks"
-          :selected-bank-id="soundbanks.selectedBankId"
-          @bank:select="selectBank"
-          @pad:replace="replacePadSample"
-        )
-      template(#fx)
-        FxPanel(:fxSettings="sequencer.fxSettings" @fx:update="updateFx")
-      template(#patterns)
-        PatternsPanel(
-          :patterns="patterns.patterns"
-          :selected-pattern-id="patterns.selectedPatternId"
-          :scenes="patterns.scenes"
-          :active-scene-id="patterns.activeSceneId"
-          @pattern:add="addPattern"
-          @pattern:select="selectPattern"
-          @pattern:rename="renamePattern"
-          @pattern:undo="undoPattern"
-          @pattern:redo="redoPattern"
-          @scene:add="addScene"
-          @scene:update="updateScene"
-          @scene:select="selectScene"
-        )
-      template(#export)
-        ExportPanel(
-          :isExporting="isExporting"
-          :exportError="exportError"
-          :exportMetadata="exportMetadata"
-          :audioBlob="exportAudioBlob"
-          :hasZipArtifacts="hasZipArtifacts"
-          :stemEntries="stemEntries"
-          @export="exportBounce"
-          @download:mixdown="downloadMixdown"
-          @download:zip="downloadZip"
-          @download:stem="downloadStem"
-          @download:stems="downloadAllStems"
-        )
+        template(#sound)
+          SoundPanel(
+            :banks="banks"
+            :selected-bank-id="soundbanks.selectedBankId"
+            @bank:select="selectBank"
+            @pad:replace="replacePadSample"
+          )
+
+        template(#fx)
+          FxPanel(
+            :fxSettings="sequencer.fxSettings"
+            @fx:update="updateFx"
+          )
+
+        template(#patterns)
+          PatternsPanel(
+            :patterns="patterns.patterns"
+            :selected-pattern-id="patterns.selectedPatternId"
+            :scenes="patterns.scenes"
+            :active-scene-id="patterns.activeSceneId"
+            @pattern:add="addPattern"
+            @pattern:select="selectPattern"
+            @pattern:rename="renamePattern"
+            @pattern:undo="undoPattern"
+            @pattern:redo="redoPattern"
+            @scene:add="addScene"
+            @scene:update="updateScene"
+            @scene:select="selectScene"
+          )
+
+        template(#export)
+          ExportPanel(
+            :isExporting="isExporting"
+            :exportError="exportError"
+            :exportMetadata="exportMetadata"
+            :audioBlob="exportAudioBlob"
+            :hasZipArtifacts="hasZipArtifacts"
+            :stemEntries="stemEntries"
+            @export="exportBounce"
+            @download:mixdown="downloadMixdown"
+            @download:zip="downloadZip"
+            @download:stem="downloadStem"
+            @download:stems="downloadAllStems"
+          )
 </template>
+
 
 <script lang="ts">
 import { defineComponent } from 'vue'
