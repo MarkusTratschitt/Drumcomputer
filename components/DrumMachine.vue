@@ -154,6 +154,23 @@ type PadState = {
 
 const VISIBLE_DIVISIONS: TimeDivision[] = GRID_DIVISIONS.filter((value) => value <= 16)
 
+// 🔴 expensive part – now isolated
+const collectPlayingPads = (
+  steps: Record<number, Record<number, Record<DrumPadId, boolean>>>
+): Set<DrumPadId> => {
+  const set = new Set<DrumPadId>()
+
+  Object.values(steps).forEach((bar) => {
+    Object.values(bar).forEach((step) => {
+      Object.keys(step).forEach((padId) => {
+        set.add(padId as DrumPadId)
+      })
+    })
+  })
+
+  return set
+}
+
 export default defineComponent({
   name: 'DrumMachine',
   components: {
@@ -165,7 +182,7 @@ export default defineComponent({
     FxPanel,
     PatternsPanel,
     ExportPanel
-  },
+    },
   data() {
     const transport = useTransportStore()
     const patterns = usePatternsStore()
@@ -275,6 +292,8 @@ export default defineComponent({
       drawerTab: 'sound'
     }
   },
+
+
   computed: {
     gridSpec() {
       return this.patterns.currentPattern?.gridSpec ?? { ...DEFAULT_GRID_SPEC }
@@ -300,51 +319,65 @@ export default defineComponent({
     banks() {
       return this.soundbanks.banks
     },
+    stemEntries(): StemEntry[] {
+      if (!this.exportStems) {
+        return []
+      }
+
+      const bankPads = this.soundbanks.currentBank?.pads ?? {}
+
+      return Object.entries(this.exportStems).map(([padId, entry]) => ({
+        padId: padId as DrumPadId,
+        label: bankPads[padId as DrumPadId]?.name ?? padId,
+        fileName: entry.fileName
+      }))
+    },
     syncState() {
       return this.sync.state
     },
     capabilities() {
       return this.session.capabilities
     },
-    padStates(): Record<DrumPadId, PadState> {
-      const bankPads = this.soundbanks.currentBank?.pads ?? {}
-      const result: Record<DrumPadId, PadState> = {} as Record<DrumPadId, PadState>
-      const stepsPerPattern = Math.max(1, this.gridSpec.bars * this.gridSpec.division)
-      const normalizedStep = ((this.currentStep % stepsPerPattern) + stepsPerPattern) % stepsPerPattern
-      const barIndex = Math.floor(normalizedStep / this.gridSpec.division)
-      const stepIndex = normalizedStep % this.gridSpec.division
-      const currentRow = this.pattern.steps[barIndex]?.[stepIndex] ?? {}
-      const triggered = new Set<DrumPadId>(Object.keys(currentRow) as DrumPadId[])
-      const playingPads = new Set<DrumPadId>()
-      Object.values(this.pattern.steps).forEach((bar) => {
-        Object.values(bar).forEach((step) => {
-          Object.keys(step).forEach((padId) => playingPads.add(padId as DrumPadId))
-        })
-      })
-      this.pads.forEach((pad) => {
-        result[pad] = {
-          label: bankPads[pad]?.name ?? pad.toUpperCase(),
-          isTriggered: triggered.has(pad),
-          isPlaying: this.isPlaying && playingPads.has(pad)
-        }
-      })
-      return result
-    },
-    hasZipArtifacts(): boolean {
-      return Boolean(this.exportMetadata && this.exportAudioBlob)
-    },
-    stemEntries(): StemEntry[] {
-      if (!this.exportStems) {
-        return []
+  padStates(): Record<DrumPadId, PadState> {
+    const bankPads = this.soundbanks.currentBank?.pads ?? {}
+    const result = {} as Record<DrumPadId, PadState>
+
+    const stepsPerPattern = Math.max(
+      1,
+      this.gridSpec.bars * this.gridSpec.division
+    )
+
+    const normalizedStep =
+      ((this.currentStep % stepsPerPattern) + stepsPerPattern) %
+      stepsPerPattern
+
+    const barIndex = Math.floor(
+      normalizedStep / this.gridSpec.division
+    )
+    const stepIndex = normalizedStep % this.gridSpec.division
+
+    const currentRow =
+      this.pattern.steps[barIndex]?.[stepIndex] ?? {}
+
+    const triggered = new Set<DrumPadId>(
+      Object.keys(currentRow) as DrumPadId[]
+    )
+
+    const playingPads = collectPlayingPads(this.pattern.steps)
+
+    this.pads.forEach((pad) => {
+      result[pad] = {
+        label: bankPads[pad]?.name ?? pad.toUpperCase(),
+        isTriggered: triggered.has(pad),
+        isPlaying: this.isPlaying && playingPads.has(pad)
       }
-      const bankPads = this.soundbanks.currentBank?.pads ?? {}
-      return Object.entries(this.exportStems).map(([padId, entry]) => ({
-        padId: padId as DrumPadId,
-        label: bankPads[padId as DrumPadId]?.name ?? padId,
-        fileName: entry.fileName
-      }))
+    })
+
+    return result
     }
   },
+
+
   mounted() {
     const storedPatterns = this.patternStorage.load()
     if (storedPatterns.patterns.length > 0) {
@@ -395,6 +428,8 @@ export default defineComponent({
   beforeUnmount() {
     this.unwatchers.forEach((stop) => stop())
   },
+
+  
   methods: {
     addPattern(payload: { name?: string }) {
       this.patterns.addPattern(payload?.name)
@@ -665,52 +700,73 @@ export default defineComponent({
 
 <style scoped lang="less">
 .drumshell {
-  min-height: 100dvh;
+  min-height: 100svh;
   display: flex;
   flex-direction: column;
   overflow-x: hidden;
   overflow-y: auto;
+
+  .hardware-top {
+    flex: 0 0 56px;
+  }
+
+  .main-shell {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    gap: 16px;
+    overflow: hidden;
+
+    .pads-panel {
+      flex: 1 1 65%;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sequencer-panel {
+      flex: 0 0 auto;
+      height: clamp(72px, 8vh, 96px);
+      width: clamp(220px, 30vw, 360px);
+      min-width: 220px;
+    }
+  }
+
+  .drawer-wrapper {
+    flex: 0 0 auto;
+    height: clamp(220px, 28vh, 320px);
+    overflow: hidden;
+
+    .drawer-scroll {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      padding: 16px;
+
+      :deep(.v-card) {
+        border-radius: 12px;
+      }
+    }
+  }
 }
 
+/* ───────────── MOBILE ───────────── */
 
-.hardware-top {
-  flex: 0 0 56px;
-}
+@media (max-width: 768px) {
+  .drumshell {
+    .main-shell {
+      flex-direction: column;
 
-.main-shell {
-  flex: 1 1 auto;
-  min-height: 0;
-  display: flex;
-  gap: 16px;
-  min-height: 0;
-  overflow: visible;
-}
+      .sequencer-panel {
+        width: 100%;
+        min-width: 0;
+      }
+    }
 
-
-.pads-panel {
-  flex: 1 1 65%;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.sequencer-panel {
-  flex: 0 0 auto;
-  height: clamp(72px, 8vh, 96px);
-  width: clamp(220px, 30vw, 360px);
-}
-
-.drawer-wrapper {
-  flex: 0 0 auto;
-  height: clamp(220px, 28vh, 320px);
-  overflow: visible;
-}
-
-.drawer-scroll {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
-  padding: 16px;
+    .drawer-wrapper {
+      height: 34vh;
+    }
+  }
 }
 </style>
