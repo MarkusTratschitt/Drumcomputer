@@ -664,10 +664,10 @@ export default defineComponent({
 
 <style scoped lang="less">
 .drumshell {
-  height: 100dvh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .hardware-top {
@@ -678,7 +678,7 @@ export default defineComponent({
   flex: 1 1 auto;
   display: flex;
   gap: 16px;
-  height: 100vh;
+  min-height: 0;
   overflow: visible;
 }
 
