@@ -81,21 +81,42 @@
         :debugTimeline="exportTimeline"
       )
   v-row(v-if="stemEntries.length > 0")
-    v-col(cols="12")
-      v-card(class="mt-3")
-        v-card-title
-          | Stem exports
-          v-spacer
-          v-btn(text small color="secondary" :loading="isExporting" :disabled="isExporting" @click="downloadAllStems") Download all stems
-        v-card-text
-          p.mt-0.mb-3 Download mixes that isolate each pad so you can grab stems individually or all at once.
-          v-list(dense)
-            v-list-item(v-for="stem in stemEntries" :key="stem.padId")
-              v-list-item-content
-                v-list-item-title {{ stem.label }}
-                v-list-item-subtitle {{ stem.fileName }}
-              v-list-item-action
-                v-btn(text small color="primary" :loading="isExporting" :disabled="isExporting" @click="downloadStem(stem.padId)") Download
+  v-col(cols="12")
+    v-card(class="mt-3")
+      v-card-title
+        | Stem exports
+        v-spacer
+        v-btn(
+          variant="text"
+          size="small"
+          color="secondary"
+          :loading="isExporting"
+          :disabled="isExporting"
+          @click="downloadAllStems"
+        )
+          | Download all stems
+      v-card-text
+        p.mt-0.mb-3
+          | Download mixes that isolate each pad so you can grab stems individually or all at once.
+        v-list(density="compact")
+          v-list-item(
+            v-for="stem in stemEntries"
+            :key="stem.padId"
+          )
+            v-list-item-title {{ stem.label }}
+            v-list-item-subtitle {{ stem.fileName }}
+
+            template(#append)
+              v-btn(
+                variant="text"
+                size="small"
+                color="primary"
+                :loading="isExporting"
+                :disabled="isExporting"
+                @click="downloadStem(stem.padId)"
+              )
+                | Download
+
 </template>
 
 <script lang="ts">
