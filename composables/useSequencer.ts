@@ -1,13 +1,14 @@
-import { ref } from 'vue'
+import { ref, type Ref } from 'vue'
 import { quantizeToStep } from '~/domain/quantize'
 import { normalizeGridSpec, secondsPerStep } from '~/domain/timing'
 import type { DrumPadId, Pattern } from '~/types/drums'
 import type { SampleRef, Soundbank } from '~/types/audio'
 import type { GridSpec, StepAddress } from '~/types/time'
 import { useTransportStore } from '~/stores/transport'
-import { useScheduler } from './useScheduler'
+import { useScheduler, type ScheduledTask } from './useScheduler'
 import { useAudioEngine } from './useAudioEngine.client'
 import { clampVelocity, cycleVelocity, DEFAULT_STEP_VELOCITY } from '~/domain/velocity'
+import { createRenderClock, type RenderClock } from '~/domain/audio/clock'
 
 interface SequencerOptions {
   getPattern: () => Pattern
@@ -16,18 +17,82 @@ interface SequencerOptions {
   onPatternBoundary?: () => Pattern | void
 }
 
-interface ScheduledStep {
+interface SchedulerLike {
+  schedule: (task: ScheduledTask) => void
+}
+
+export interface ScheduledStep {
   when: number
   stepAddress: StepAddress
+}
+
+const totalStepsForGrid = (gridSpec: GridSpec) => gridSpec.bars * gridSpec.division
+
+export interface ScheduleStepOptions {
+  clock: RenderClock
+  scheduler: SchedulerLike
+  audio: ReturnType<typeof useAudioEngine>
+  transport: ReturnType<typeof useTransportStore>
+  getPattern: () => Pattern
+  currentStep: Ref<number>
+  pendingSteps: Ref<ScheduledStep[]>
+  onPatternBoundary?: () => Pattern | void
+}
+
+export function scheduleStep(options: ScheduleStepOptions, when: number) {
+  const pattern = options.getPattern()
+  const totalSteps = totalStepsForGrid(pattern.gridSpec)
+  const stepIndex = options.currentStep.value % totalSteps
+  const barIndex = Math.floor(stepIndex / pattern.gridSpec.division)
+  const stepInBar = stepIndex % pattern.gridSpec.division
+  const scheduledWhen = Math.max(when, options.clock.now())
+  options.pendingSteps.value.push({ when: scheduledWhen, stepAddress: { barIndex, stepInBar } })
+
+  options.scheduler.schedule({
+    when: scheduledWhen,
+    callback: () => {
+      const bar = pattern.steps[barIndex]
+      const stepRow = bar?.[stepInBar]
+      if (stepRow) {
+        Object.entries(stepRow).forEach(([padId, cell]) => {
+          options.audio.trigger({
+            padId: padId as DrumPadId,
+            when: scheduledWhen,
+            velocity: cell?.velocity?.value ?? 1
+          })
+        })
+      }
+
+      options.currentStep.value = (options.currentStep.value + 1) % totalSteps
+      options.transport.setCurrentStep(options.currentStep.value)
+      const isPatternBoundary = options.currentStep.value === 0
+      let nextPattern = pattern
+      if (isPatternBoundary && options.onPatternBoundary) {
+        const candidate = options.onPatternBoundary()
+        if (candidate) {
+          nextPattern = candidate
+          options.transport.setGridSpec(nextPattern.gridSpec)
+        } else {
+          nextPattern = options.getPattern()
+        }
+      }
+
+      if (options.transport.loop) {
+        const stepDuration = secondsPerStep(options.transport.bpm, nextPattern.gridSpec.division)
+        scheduleStep(options, scheduledWhen + stepDuration)
+      }
+    }
+  })
 }
 
 export function useSequencer(options: SequencerOptions) {
   const transport = useTransportStore()
   const audio = useAudioEngine()
+  let renderClock: RenderClock | null = null
   const scheduler = useScheduler({
     lookahead: options.lookahead ?? 25,
     scheduleAheadSec: options.scheduleAheadSec ?? 0.1,
-    getTime: () => audio.ensureContext().currentTime
+    getTime: () => renderClock?.now() ?? 0
   })
 
   const currentStep = ref(0)
@@ -35,63 +100,33 @@ export function useSequencer(options: SequencerOptions) {
   const pendingSteps = ref<ScheduledStep[]>([])
   let loopStartTime = 0
 
-  const totalStepsForGrid = (gridSpec: GridSpec) => gridSpec.bars * gridSpec.division
-
-  const scheduleStep = (when: number) => {
-    const pattern = options.getPattern()
-    const totalSteps = totalStepsForGrid(pattern.gridSpec)
-    const stepIndex = currentStep.value % totalSteps
-    const barIndex = Math.floor(stepIndex / pattern.gridSpec.division)
-    const stepInBar = stepIndex % pattern.gridSpec.division
-    pendingSteps.value.push({ when, stepAddress: { barIndex, stepInBar } })
-    scheduler.schedule({
-      when,
-      callback: () => {
-        playStep(pattern, when, { barIndex, stepInBar })
-        currentStep.value = (currentStep.value + 1) % totalSteps
-        transport.setCurrentStep(currentStep.value)
-        const isPatternBoundary = currentStep.value === 0
-        let nextPattern = pattern
-        if (isPatternBoundary && options.onPatternBoundary) {
-          const candidate = options.onPatternBoundary()
-          if (candidate) {
-            nextPattern = candidate
-            transport.setGridSpec(nextPattern.gridSpec)
-          } else {
-            nextPattern = options.getPattern()
-          }
-        }
-        if (transport.loop) {
-          const stepDuration = secondsPerStep(transport.bpm, nextPattern.gridSpec.division)
-          scheduleStep(when + stepDuration)
-        }
-      }
-    })
-  }
-
-  const playStep = (pattern: Pattern, when: number, step: StepAddress) => {
-    const bar = pattern.steps[step.barIndex]
-    const stepRow = bar?.[step.stepInBar]
-    if (!stepRow) return
-    Object.entries(stepRow).forEach(([padId, cell]) => {
-      audio.trigger({ padId: padId as DrumPadId, when, velocity: cell?.velocity?.value ?? 1 })
-    })
-  }
+  const buildStepOptions = (clock: RenderClock): ScheduleStepOptions => ({
+    clock,
+    scheduler,
+    audio,
+    transport,
+    getPattern: options.getPattern,
+    currentStep,
+    pendingSteps,
+    onPatternBoundary: options.onPatternBoundary
+  })
 
   const start = () => {
     if (transport.isPlaying) return
     const ctx = audio.ensureContext()
+    renderClock = createRenderClock(ctx)
     const pattern = options.getPattern()
     const gridSpec = normalizeGridSpec(pattern.gridSpec)
     pattern.gridSpec = gridSpec
     transport.setGridSpec(gridSpec)
-    loopStartTime = ctx.currentTime
+    loopStartTime = renderClock.now()
     currentStep.value = 0
     pendingSteps.value = []
     transport.setCurrentStep(0)
     transport.setPlaying(true)
     scheduler.clear()
-    scheduleStep(loopStartTime)
+    const stepOptions = buildStepOptions(renderClock)
+    scheduleStep(stepOptions, loopStartTime)
     scheduler.start()
     scheduler.tick()
   }
@@ -104,6 +139,7 @@ export function useSequencer(options: SequencerOptions) {
     currentStep.value = 0
     transport.setCurrentStep(0)
     loopStartTime = 0
+    renderClock = null
   }
 
   const toggleStep = (barIndex: number, stepInBar: number, padId: DrumPadId) => {
@@ -157,7 +193,7 @@ export function useSequencer(options: SequencerOptions) {
     await audio.applySoundbank(bank)
   }
 
-  const getAudioTime = () => audio.ensureContext().currentTime
+  const getAudioTime = () => renderClock?.now() ?? audio.ensureContext().currentTime
 
   return {
     currentStep,

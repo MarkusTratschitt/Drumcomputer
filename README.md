@@ -26,6 +26,7 @@ npm run typecheck
 ## Timing & Sync
 
 - AudioContext is the sole clock authority; the lookahead scheduler, sequencer, and MIDI clock master all derive their timings from `AudioContext.currentTime`.
+- A small `RenderClock` wrapper now feeds every scheduler/step planner from the shared `scheduleStep` helper so live playback and future offline renders can work off the same time basis.
 - MIDI clock output follows the audio clock (scheduled via the lookahead worker); incoming MIDI clock only drives phase counters/start-stop follow and never retimes audio events.
 - BPM updates are clamped and restored on sync mode/role changes to prevent drift when switching between internal and MIDI clock roles; transport BPM remains the master source.
 
@@ -41,6 +42,11 @@ npm run typecheck
 - Audio input uses `getUserMedia`; user denial disables monitoring/capture.
 - AudioContext needs a user gesture before it can play in some browsers; first pad tap will resume the context.
 - Background throttling can delay scheduled steps despite lookahead; keep tab focused for tight timing.
+
+## Deterministic FX & Export
+
+- The FX chain now derives from a serializable `FxSettings` snapshot and only applies filter/drive/reverb updates via `setValueAtTime`, making the graph stable for live and rendered sessions alike.
+- The convolution impulse uses the new seeded RNG helper, and the audio engine exposes `getFxSnapshot`/`setFxRandomSource` so exports can rebuild identical FX + randomness when supplied with the same seed.
 
 ## Roadmap
 
