@@ -64,7 +64,10 @@ export function useSoundbankStorage() {
     const db = await ensureDb()
     return new Promise<void>((resolve, reject) => {
       const tx = db.transaction(['samples'], 'readwrite')
-      const record: StoredSampleRecord = { id: sample.id, name: sample.name, format: sample.format, blob: sample.blob }
+      const record: StoredSampleRecord = { id: sample.id, name: sample.name, blob: sample.blob }
+      if (sample.format) {
+        record.format = sample.format
+      }
       tx.objectStore('samples').put(record)
       tx.oncomplete = () => resolve()
       tx.onerror = () => reject(tx.error)
@@ -92,7 +95,12 @@ export function useSoundbankStorage() {
           resolve(null)
           return
         }
-        resolve({ id: result.id, name: result.name, format: result.format as SampleRef['format'], blob: result.blob })
+        const restored: SampleRef = { id: result.id, name: result.name, blob: result.blob }
+        const format = result.format as SampleRef['format'] | undefined
+        if (format) {
+          restored.format = format
+        }
+        resolve(restored)
       }
       request.onerror = () => reject(request.error)
     })

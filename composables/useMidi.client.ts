@@ -48,12 +48,15 @@ export function useMidi() {
     const data2 = event.data[2]
     if (status === undefined) return
     const type = status & 0xf0
+    const hasNoteData = typeof data1 === 'number' && typeof data2 === 'number'
     const message: MidiMessage | null =
-      type === 0x90 && data2 > 0
+      type === 0x90 && hasNoteData && data2 > 0
         ? { type: 'noteon', note: data1, velocity: data2 / 127 }
-        : type === 0x80 || (type === 0x90 && data2 === 0)
+        : type === 0x80 && hasNoteData
           ? { type: 'noteoff', note: data1, velocity: data2 / 127 }
-          : status === 0xf8
+          : type === 0x90 && hasNoteData && data2 === 0
+            ? { type: 'noteoff', note: data1, velocity: data2 / 127 }
+            : status === 0xf8
             ? { type: 'clock' }
             : status === 0xfa
               ? { type: 'start' }

@@ -62,12 +62,14 @@ export function useSync(initialMode: SyncMode = 'internal', deps?: SyncDeps) {
     if (!scheduler || nextClockAt === null) return
     scheduler.schedule({
       when: nextClockAt,
-      callback: () => {
-        deps?.midi?.sendClockTick()
-        tick()
+    callback: () => {
+      deps?.midi?.sendClockTick()
+      tick()
+      if (nextClockAt !== null) {
         nextClockAt = nextClockAt + secondsPerClockTick()
         scheduleClockTick()
       }
+    }
     })
   }
 

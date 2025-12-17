@@ -199,7 +199,10 @@ export const usePatternsStore = defineStore('patterns', {
       this.scenePosition = 0
       const scene = this.currentScene
       if (scene && scene.patternIds.length > 0) {
-        this.selectedPatternId = scene.patternIds[0]
+        const nextId = scene.patternIds[0]
+        if (nextId) {
+          this.selectedPatternId = nextId
+        }
         this.scenePosition = scene.patternIds.length > 1 ? 1 : 0
       }
     },

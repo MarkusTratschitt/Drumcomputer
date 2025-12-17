@@ -104,7 +104,7 @@ import SampleBrowser from './SampleBrowser.vue'
 import FxPanel from './FxPanel.vue'
 import PatternScenePanel from './PatternScenePanel.vue'
 import ExportResultPanel from './ExportResultPanel.vue'
-import type { DrumPadId } from '~/types/drums'
+import type { DrumPadId, Scene } from '~/types/drums'
 import type { TimeDivision } from '~/types/time'
 import type { FxSettings, SampleRef, Soundbank } from '~/types/audio'
 import type { RenderEvent, RenderMetadata } from '~/types/render'
@@ -325,10 +325,16 @@ export default defineComponent({
       this.patterns.addScene(payload?.name ?? 'Scene', payload?.patternIds ?? [])
     },
     updateScene(payload: { id: string; name?: string; patternIds?: string[] }) {
-      this.patterns.updateScene(payload.id, {
-        name: payload.name ?? undefined,
-        patternIds: payload.patternIds
-      })
+      const updates: Partial<Scene> = {}
+      if (typeof payload.name === 'string') {
+        updates.name = payload.name
+      }
+      if (Array.isArray(payload.patternIds)) {
+        updates.patternIds = payload.patternIds
+      }
+      if (Object.keys(updates).length > 0) {
+        this.patterns.updateScene(payload.id, updates)
+      }
     },
     selectScene(id: string | null) {
       this.patterns.selectScene(id)
@@ -413,11 +419,16 @@ export default defineComponent({
     },
     async replacePadSample(payload: { padId: DrumPadId; file: File }) {
       const bank = this.soundbanks.currentBank ?? this.defaultBank
+      const existing = bank.pads[payload.padId]
+      if (existing?.url && existing.url.startsWith('blob:')) {
+        URL.revokeObjectURL(existing.url)
+      }
       const sampleId = `${payload.padId}-${Date.now()}`
+      const format = this.inferFormatFromName(payload.file.name) ?? 'wav'
       const sample: SampleRef = {
         id: sampleId,
         name: payload.file.name,
-        format: this.inferFormatFromName(payload.file.name),
+        format,
         blob: payload.file,
         url: URL.createObjectURL(payload.file)
       }

@@ -66,7 +66,14 @@ const audioBufferToWav = (buffer: AudioBuffer) => {
 
   while (offset < length) {
     for (let i = 0; i < numOfChan; i += 1) {
-      const sample = Math.max(-1, Math.min(1, channels[i][(offset - 44) / (2 * numOfChan)]))
+      const channel = channels[i]
+      if (!channel) {
+        offset += 2
+        continue
+      }
+      const sampleIndex = Math.floor((offset - 44) / (2 * numOfChan))
+      const rawSample = channel[sampleIndex] ?? 0
+      const sample = Math.max(-1, Math.min(1, rawSample))
       view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7fff, true)
       offset += 2
     }
@@ -106,31 +113,41 @@ const normalizePattern = (pattern: Pattern): Pattern => {
   }
 }
 
-const patternFromMidi = (midi: Midi, mapping: MidiMapping): Pattern => {
-  const gridSpec: GridSpec = { bars: 1, division: 16 }
-  const steps: Pattern['steps'] = {}
-  const track = midi.tracks[0]
-  const ticksPerBeat = midi.header.ppq
-  const stepTicks = (ticksPerBeat * 4) / gridSpec.division
-  track.notes.forEach((note) => {
-    const stepIndex = Math.round(note.ticks / stepTicks)
-    const barIndex = Math.floor(stepIndex / gridSpec.division)
-    const stepInBar = stepIndex % gridSpec.division
-    const pad = mapping.noteMap[note.midi]
-    if (!pad) return
-    const bar = steps[barIndex] ?? {}
-    const row = bar[stepInBar] ?? {}
-    row[pad] = { velocity: { value: clampVelocity(note.velocity) } }
-    bar[stepInBar] = row
-    steps[barIndex] = bar
-  })
-  return normalizePattern({
-    id: 'imported-pattern',
-    name: track?.name || 'Imported Pattern',
-    gridSpec,
-    steps
-  })
-}
+  const patternFromMidi = (midi: Midi, mapping: MidiMapping): Pattern => {
+    const gridSpec: GridSpec = { bars: 1, division: 16 }
+    const steps: Pattern['steps'] = {}
+    const track = midi.tracks[0]
+    if (!track) {
+      return normalizePattern({
+        id: 'imported-pattern',
+        name: 'Imported Pattern',
+        gridSpec,
+        steps
+      })
+    }
+    const ticksPerBeat = midi.header.ppq
+    const stepTicks = (ticksPerBeat * 4) / gridSpec.division
+    const notes = track.notes ?? []
+    notes.forEach((note) => {
+      const stepIndex = Math.round(note.ticks / stepTicks)
+      const barIndex = Math.floor(stepIndex / gridSpec.division)
+      const stepInBar = stepIndex % gridSpec.division
+      const pad = mapping.noteMap[note.midi]
+      if (!pad) return
+      const bar = steps[barIndex] ?? {}
+      const row = bar[stepInBar] ?? {}
+      const velocity = typeof note.velocity === 'number' ? note.velocity : DEFAULT_STEP_VELOCITY
+      row[pad] = { velocity: { value: clampVelocity(velocity) } }
+      bar[stepInBar] = row
+      steps[barIndex] = bar
+    })
+    return normalizePattern({
+      id: 'imported-pattern',
+      name: track.name ?? 'Imported Pattern',
+      gridSpec,
+      steps
+    })
+  }
 
 export function useImportExport() {
   const exportPattern = (pattern: Pattern) => {
@@ -168,7 +185,9 @@ export function useImportExport() {
       const row = pattern.steps[barIndex]?.[stepInBar]
       if (!row) continue
       Object.entries(row).forEach(([padId, cell]) => {
-        const note = mapping.noteMapInverse?.[padId] ?? Object.entries(mapping.noteMap).find(([, pad]) => pad === padId)?.[0]
+        const drumPad = padId as DrumPadId
+        const note = mapping.noteMapInverse?.[drumPad] ?? Object.entries(mapping.noteMap).find(([, pad]) => pad === drumPad)?.[0]
+        if (typeof note !== 'string' && typeof note !== 'number') return
         const midiNote = typeof note === 'string' ? Number(note) : note
         if (typeof midiNote !== 'number') return
         track.addNote({
@@ -179,7 +198,9 @@ export function useImportExport() {
         })
       })
     }
-    const blob = new Blob([midi.toArray()], { type: 'audio/midi' })
+    const midiArray = midi.toArray()
+    const midiBuffer = midiArray.buffer as ArrayBuffer
+    const blob = new Blob([midiBuffer], { type: 'audio/midi' })
     saveAs(blob, `${pattern.name}.mid`)
   }
 
@@ -232,8 +253,10 @@ export function useImportExport() {
         tasks.sort((a, b) => a.when - b.when)
       },
       run() {
-        while (tasks.length > 0 && tasks[0].when <= limit) {
-          const next = tasks.shift()!
+        while (tasks.length > 0) {
+          const next = tasks[0]
+          if (!next || next.when > limit) break
+          tasks.shift()
           updateClock(next.when)
           next.callback()
         }
@@ -312,15 +335,16 @@ export function useImportExport() {
     const pendingSteps = ref<ScheduledStep[]>([])
 
     const initialGridSpec = normalizeGridSpec(initialPattern.gridSpec ?? transport.gridSpec)
-    const offlineTransport = {
+    const offlineTransportBase = {
       loop: transport.loop,
       bpm: transport.bpm,
       gridSpec: initialGridSpec,
       setCurrentStep: () => {},
       setGridSpec(gridSpec: GridSpec) {
-        offlineTransport.gridSpec = normalizeGridSpec(gridSpec)
+        offlineTransportBase.gridSpec = normalizeGridSpec(gridSpec)
       }
     }
+    const offlineTransport = offlineTransportBase as unknown as ScheduleStepOptions['transport']
 
     const stepOptions: ScheduleStepOptions = {
       clock: renderClock,
@@ -389,11 +413,16 @@ export function useImportExport() {
     }, {})
     const manifest = {
       bank: { ...bank, pads: padEntries },
-      samples: samples.map((sample) => ({
-        id: sample.id,
-        name: sample.name,
-        format: sample.format
-      }))
+      samples: samples.map((sample) => {
+        const entry: { id: string; name: string; format?: SampleRef['format'] } = {
+          id: sample.id,
+          name: sample.name
+        }
+        if (sample.format) {
+          entry.format = sample.format
+        }
+        return entry
+      })
     }
     saveAs(new Blob([JSON.stringify(manifest, null, 2)], { type: 'application/json' }), `${bank.name}-manifest.json`)
     samples.forEach((sample) => {
@@ -410,7 +439,10 @@ export function useImportExport() {
       const sampleMap = new Map(sampleFiles.map((file) => [file.name, file]))
       const hydratedSamples: SampleRef[] = parsed.samples.map((sample) => {
         const blob = sampleMap.get(sample.name)
-        return { ...sample, blob: blob ?? undefined }
+        if (blob) {
+          return { ...sample, blob }
+        }
+        return { ...sample }
       })
       const padAssignments: Partial<Record<string, SampleRef>> = {}
       Object.entries(parsed.bank.pads ?? {}).forEach(([padId, sampleInfo]) => {

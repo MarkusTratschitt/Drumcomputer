@@ -42,7 +42,7 @@ export function usePatternStorage() {
   const lastSavedAt = ref<number | null>(null)
 
   const save = (payload: StoredState) => {
-    if (!process.client) return
+    if (typeof window === 'undefined') return
     const normalizedPatterns = payload.patterns.map((pattern, index) => ensurePatternShape(pattern, index))
     const stored: StoredPatternsV2 = {
       version: STORAGE_VERSION,
@@ -57,7 +57,7 @@ export function usePatternStorage() {
   }
 
   const load = (): StoredState => {
-    if (!process.client) {
+    if (typeof window === 'undefined') {
       return { patterns: [], scenes: [], selectedPatternId: 'pattern-1', activeSceneId: null }
     }
     const raw = localStorage.getItem(STORAGE_KEY)
@@ -99,7 +99,7 @@ export function usePatternStorage() {
   }
 
   const clear = () => {
-    if (!process.client) return
+    if (typeof window === 'undefined') return
     localStorage.removeItem(STORAGE_KEY)
   }
 

@@ -100,6 +100,7 @@ export function useSequencer(options: SequencerOptions) {
   const pendingSteps = ref<ScheduledStep[]>([])
   let loopStartTime = 0
 
+  const boundaryCallback = options.onPatternBoundary ?? (() => undefined)
   const buildStepOptions = (clock: RenderClock): ScheduleStepOptions => ({
     clock,
     scheduler,
@@ -108,7 +109,7 @@ export function useSequencer(options: SequencerOptions) {
     getPattern: options.getPattern,
     currentStep,
     pendingSteps,
-    onPatternBoundary: options.onPatternBoundary
+    onPatternBoundary: boundaryCallback
   })
 
   const start = () => {

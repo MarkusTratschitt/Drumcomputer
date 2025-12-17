@@ -4,15 +4,15 @@ v-card
   v-card-text
     dl.export-metadata
       dt Seed
-      dd {{ metadata.seed }}
+      dd {{ seedLabel }}
       dt BPM
-      dd {{ metadata.bpm }}
+      dd {{ bpmLabel }}
       dt Duration
-      dd {{ formatSeconds(metadata.durationSec) }}
+      dd {{ durationLabel }}
       dt Grid spec
       dd {{ gridSpecLabel }}
       dt Scene
-      dd {{ metadata.sceneId ?? '—' }}
+      dd {{ sceneLabel }}
       dt Pattern chain
       dd {{ patternChainLabel }}
       dt Event count
@@ -48,7 +48,7 @@ import type { RenderEvent, RenderMetadata } from '~/types/render'
 export default defineComponent({
   name: 'ExportResultPanel',
   props: {
-    metadata: { type: Object as () => RenderMetadata, required: true },
+    metadata: { type: Object as () => RenderMetadata | null, required: true },
     audioBlob: { type: Object as () => Blob | null, required: false, default: null },
     debugTimeline: { type: Array as () => RenderEvent[] | undefined, required: false }
   },
@@ -60,17 +60,34 @@ export default defineComponent({
   },
   computed: {
     gridSpecLabel(): string {
-      const spec = this.metadata.gridSpec
+      const spec = this.metadata?.gridSpec
+      if (!spec) return '—'
       return `${spec.bars} bar${spec.bars === 1 ? '' : 's'} • division ${spec.division}`
     },
     patternChainLabel(): string {
-      return this.metadata.patternChain.join(' → ')
+      const chain = this.metadata?.patternChain ?? []
+      if (chain.length === 0) return '—'
+      return chain.join(' → ')
+    },
+    seedLabel(): string {
+      return this.metadata?.seed ?? '—'
+    },
+    bpmLabel(): string {
+      return typeof this.metadata?.bpm === 'number' ? String(this.metadata.bpm) : '—'
+    },
+    durationLabel(): string {
+      const duration = typeof this.metadata?.durationSec === 'number' ? this.metadata.durationSec : null
+      return this.formatSeconds(duration)
+    },
+    sceneLabel(): string {
+      return this.metadata?.sceneId ?? '—'
     },
     eventCountLabel(): string {
       if (!this.debugTimeline) return 'N/A'
       return String(this.debugTimeline.length)
     },
-    metaBlob(): Blob {
+    metaBlob(): Blob | null {
+      if (!this.metadata) return null
       return new Blob([JSON.stringify(this.metadata, null, 2)], { type: 'application/json' })
     },
     hasTimeline(): boolean {
@@ -80,14 +97,24 @@ export default defineComponent({
       return (this.debugTimeline ?? []).slice(0, 20)
     },
     firstEventTime(): number | null {
-      return this.debugTimeline?.[0]?.time ?? null
+      const first = this.timelinePreview[0]
+      return first?.time ?? null
     },
     lastEventTime(): number | null {
-      const events = this.debugTimeline ?? []
-      return events.length ? events[events.length - 1].time : null
+      const events = this.timelinePreview
+      const lastEvent = events[events.length - 1]
+      return lastEvent?.time ?? null
     },
     devMode(): boolean {
-      return typeof process !== 'undefined' && Boolean(process.dev)
+      if (typeof process !== 'undefined') {
+        return Boolean(process.dev)
+      }
+      return Boolean(import.meta.env?.DEV)
+    }
+  },
+  beforeUnmount() {
+    if (this.copyTimer) {
+      clearTimeout(this.copyTimer)
     }
   },
   methods: {
@@ -96,10 +123,15 @@ export default defineComponent({
       saveAs(this.audioBlob, 'mixdown.wav')
     },
     downloadMeta() {
+      if (!this.metaBlob) return
       saveAs(this.metaBlob, 'render-meta.json')
     },
     async copySeed() {
-      const seed = this.metadata.seed
+      const seed = this.metadata?.seed
+      if (!seed) {
+        this.setCopyFeedback('Seed unavailable')
+        return
+      }
       try {
         if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
           await navigator.clipboard.writeText(seed)
@@ -142,10 +174,5 @@ export default defineComponent({
       return `${value.toFixed(2)}s`
     }
   },
-  beforeUnmount() {
-    if (this.copyTimer) {
-      clearTimeout(this.copyTimer)
-    }
-  }
 })
 </script>
