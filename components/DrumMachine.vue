@@ -670,7 +670,6 @@ export default defineComponent({
   display: flex;
   gap: 16px;
   min-height: 0;
-  overflow: hidden;
   padding-bottom: 16px;
 }
 
@@ -679,14 +678,12 @@ export default defineComponent({
   min-height: 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
 }
 
 .sequencer-panel {
   flex: 0 0 auto;
   min-height: 0;
   height: clamp(72px, 8vh, 96px);
-  overflow: hidden;
   width: clamp(220px, 30vw, 360px);
 }
 
@@ -694,7 +691,6 @@ export default defineComponent({
   flex: 0 0 auto;
   height: clamp(220px, 28vh, 320px);
   min-height: 56px;
-  overflow: hidden;
 }
 
 .drawer-scroll {
@@ -702,7 +698,7 @@ export default defineComponent({
   min-height: 0;
   display: flex;
   flex-direction: column;
-  overflow: auto;
+  overflow-y: auto;
   padding: 16px;
 }
 </style>
