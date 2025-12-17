@@ -30,13 +30,26 @@
           @update:model-value="setNewPatternName"
           hide-details
         )
-        v-btn(color="primary" block class="mt-1" @click="addPattern">Add Pattern</v-btn)
-        v-row(class="mt-2" dense>
+        v-btn(
+          color="primary"
+          block
+          class="mt-1"
+          @click="addPattern"
+        ) Add Pattern
+        v-row(class="mt-2" dense)
           v-col(cols="6")
-            v-btn(color="secondary" block @click="$emit('pattern:undo')") Undo
+            v-btn(
+              color="secondary"
+              block
+              @click="emitPatternUndo"
+            ) Undo
           v-col(cols="6")
-            v-btn(color="secondary" block variant="outlined" @click="$emit('pattern:redo')") Redo
-        )
+            v-btn(
+              color="secondary"
+              block
+              variant="outlined"
+              @click="emitPatternRedo"
+            ) Redo
       v-col(cols="12" md="6")
         v-select(
           label="Active Scene"
@@ -70,7 +83,12 @@
           @update:model-value="setScenePatternIds"
           hide-details
         )
-        v-btn(color="secondary" block class="mt-1" @click="addScene">Add Scene</v-btn)
+        v-btn(
+          color="secondary"
+          block
+          class="mt-1"
+          @click="addScene"
+        ) Add Scene
 </template>
 
 <script lang="ts">
@@ -130,6 +148,12 @@ export default defineComponent({
     },
     handlePatternSelect(id: string | null) {
       if (id) this.$emit('pattern:select', id)
+    },
+    emitPatternUndo() {
+      this.$emit('pattern:undo')
+    },
+    emitPatternRedo() {
+      this.$emit('pattern:redo')
     },
     updateRenameValue(value: string) {
       this.renameValue = value
