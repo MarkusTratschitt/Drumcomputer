@@ -1,6 +1,6 @@
 <template lang="pug">
 .drumshell
-  // ───────────── TOP ─────────────
+  // ───────── TOP ─────────
   .hardware-top
     TransportBar(
       :bpm="bpm"
@@ -15,7 +15,7 @@
       @division:update="setDivision"
     )
 
-  // ───────────── MAIN ─────────────
+  // ───────── MAIN ─────────
   .main-shell
     .pads-panel
       PadGrid(
@@ -36,7 +36,7 @@
         @step:toggle="toggleStep"
       )
 
-  // ───────────── DRAWER ─────────────
+  // ───────── DRAWER ─────────
   .drawer-wrapper
     .drawer-scroll
       TabPanel(v-model="drawerTab")
@@ -85,6 +85,7 @@
             @download:stems="downloadAllStems"
           )
 </template>
+
 
 
 <script lang="ts">
