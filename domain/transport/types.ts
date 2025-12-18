@@ -17,4 +17,5 @@ export type StepTogglePayload = {
 export interface TransportConfig {
   readonly bpm: number
   readonly gridSpec: GridSpec
+  swing?: number
 }

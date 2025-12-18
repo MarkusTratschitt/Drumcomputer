@@ -19,35 +19,47 @@ const clampInt = (value: number): number => {
   return Math.floor(value)
 }
 
+
+
 export function createTransportEngine(
   clock: RenderClock,
   scheduler: Scheduler,
   initial: TransportConfig,
   audioHooks?: TransportAudioHooks
-): TransportEngine {
-  let cfg: TransportConfig = initial
+  ): TransportEngine {
+    let cfg: TransportConfig = initial
 
-  let isPlaying = false
-  let startTimeSec = 0
-  let lastStep = -1
+    let isPlaying = false
+    let startTimeSec = 0
+    let lastStep = -1
 
-  const listeners = new Set<TransportListener>()
-
-  const totalSteps = (): number => {
-    const steps = cfg.gridSpec.bars * cfg.gridSpec.division
-    return Math.max(0, clampInt(steps))
-  }
-
-  const stepDurationSec = (): number => {
-    // 1 beat = quarter note
-    // division = steps per bar? (your GridSpec: bars * division)
-    // We'll interpret "division" as steps per bar, and bar is 4/4.
-    // If your bar length differs, this is the single place to change it.
+    const listeners = new Set<TransportListener>()
+    const stepDurationSec = (): number => {
     const stepsPerBar = Math.max(1, cfg.gridSpec.division)
     const beatsPerBar = 4
     const beatsPerStep = beatsPerBar / stepsPerBar
     const secPerBeat = 60 / Math.max(1, cfg.bpm)
     return beatsPerStep * secPerBeat
+    }
+  
+    const totalSteps = (): number => {
+      const steps = cfg.gridSpec.bars * cfg.gridSpec.division
+      return Math.max(0, clampInt(steps))
+    }
+
+    const swingOffsetSec = (stepIndex: number): number => {
+    const swing = cfg.swing ?? 0
+    if (swing <= 0) {
+      return 0
+    }
+
+    // apply swing to off-beats only
+    const isOffBeat = stepIndex % 2 === 1
+    if (!isOffBeat) {
+      return 0
+    }
+
+    return stepDurationSec() * swing * 0.5
   }
 
   const emit = (): void => {
@@ -63,7 +75,7 @@ export function createTransportEngine(
       listener(state)
     }
   }
-
+  
   const computeStepAt = (timeSec: number): number => {
     const steps = Math.max(totalSteps(), 1)
     const dur = stepDurationSec()
@@ -72,15 +84,25 @@ export function createTransportEngine(
     return ((step % steps) + steps) % steps
   }
 
+  let lastScheduledStep = -1
+
   const scheduleStepBoundary = (stepIndex: number): void => {
+    if (stepIndex === lastScheduledStep) {
+      return
+    }
+
+    lastScheduledStep = stepIndex
+
     const stepTimeSec =
-      startTimeSec + stepIndex * stepDurationSec()
+      startTimeSec +
+      stepIndex * stepDurationSec() +
+      swingOffsetSec(stepIndex)
 
     scheduler.schedule(stepTimeSec, (audioTime) => {
-      // Hier darf Audio rein
       audioHooks?.onStep(stepIndex, audioTime)
     })
   }
+
 
   const advance = (): void => {
     const now = clock.audioTime()
@@ -88,7 +110,7 @@ export function createTransportEngine(
 
     if (current !== lastStep) {
       lastStep = current
-      scheduleStepBoundary(current)
+      scheduleStepBoundary(current + 1)
       emit()
     }
   }
@@ -101,8 +123,12 @@ export function createTransportEngine(
       isPlaying = true
       startTimeSec = clock.audioTime()
       lastStep = -1
+      lastScheduledStep = -1
+      scheduler.clear()
       scheduler.start()
+      lastStep = computeStepAt(startTimeSec)
       emit()
+      scheduleStepBoundary(lastStep + 1)
     },
 
     stop(): void {
@@ -113,6 +139,7 @@ export function createTransportEngine(
       scheduler.stop()
       scheduler.clear()
       lastStep = -1
+      lastScheduledStep = -1
       emit()
     },
 
@@ -125,8 +152,9 @@ export function createTransportEngine(
         const dur = stepDurationSec()
         const steps = Math.max(totalSteps(), 1)
         const current = ((lastStep % steps) + steps) % steps
-        startTimeSec = now - current * dur
+        startTimeSec = now - current * dur - swingOffsetSec(current)
       }
+      lastScheduledStep = -1
       emit()
     },
 
