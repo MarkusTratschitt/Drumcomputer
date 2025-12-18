@@ -11,7 +11,7 @@
     "lint": "eslint .",
     "typecheck": "vue-tsc --noEmit",
     "build:test": "tsc -p tsconfig.test.json",
-    "test": "npm run build:test && mocha \"dist-test/tests/**/*.spec.js\"",
+    "test": "mocha --require tsx --require jsdom-global/register tests/**/*.spec.ts",
     "test:watch": "mocha --watch --loader ts-node/esm --require jsdom-global/register tests/**/*.spec.ts"
   },
   "dependencies": {

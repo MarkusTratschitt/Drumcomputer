@@ -9,6 +9,14 @@
     "sourceMap": true
   },
   "include": [
-    "tests/**/*.ts"
+    "tests/**/*.ts",
+    "components/**/*.vue",
+    "composables/**/*.ts",
+    "utils/**/*.ts",
+    "stores/**/*.ts",
+    "./tests/*.spec.ts",
+    "./components/**/*.vue",
+    "./types/**/*.d.ts"
+
   ]
 }
