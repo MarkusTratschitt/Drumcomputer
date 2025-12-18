@@ -7,23 +7,44 @@ div.playhead-overlay(
 
 <script lang="ts">
 import { defineComponent } from 'vue'
+import type { CSSProperties } from 'vue'
 
 export default defineComponent({
   name: 'PlayheadOverlay',
+
   props: {
-    currentStep: { type: Number, required: true },
-    totalSteps: { type: Number, required: true },
-    isPlaying: { type: Boolean, required: true }
+    currentStep: {
+      type: Number,
+      required: true
+    },
+    totalSteps: {
+      type: Number,
+      required: true
+    },
+    isPlaying: {
+      type: Boolean,
+      required: true
+    }
   },
+
   computed: {
-    overlayStyle() {
-      const cappedSteps = Math.max(this.totalSteps, 1)
-      const normalizedStep = ((this.currentStep % cappedSteps) + cappedSteps) % cappedSteps
-      const width = 100 / cappedSteps
-      const left = normalizedStep * width
+    safeTotalSteps(): number {
+      return Math.max(this.totalSteps, 1)
+    },
+
+    stepWidth(): number {
+      return 100 / this.safeTotalSteps
+    },
+
+    normalizedStep(): number {
+      const steps = this.safeTotalSteps
+      return ((this.currentStep % steps) + steps) % steps
+    },
+
+    overlayStyle(): CSSProperties {
       return {
-        width: `${width}%`,
-        left: `${left}%`
+        width: `${this.stepWidth}%`,
+        left: `${this.normalizedStep * this.stepWidth}%`
       }
     }
   }
@@ -42,7 +63,7 @@ export default defineComponent({
   pointer-events: none;
   border-radius: 4px;
   box-shadow: inset 0 0 12px rgba(0, 255, 255, 0.35);
-  z-index: 0;
+  z-index: 1;
 
   &.is-active {
     opacity: 1;
