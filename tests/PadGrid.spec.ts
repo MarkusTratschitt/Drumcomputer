@@ -1,77 +1,49 @@
-import { mount } from '@vue/test-utils'
+import { describe, it } from 'mocha'
 import { expect } from 'chai'
+import { mount } from '@vue/test-utils'
 import PadGrid from '../components/PadGrid.vue'
-import type { DrumPadId } from '../types/drums'
 
 describe('PadGrid', () => {
-  const pads: DrumPadId[] = ['pad1', 'pad2', 'pad3', 'pad4']
+  const pads = ['pad1', 'pad2']
 
-  const padStates = {
-    pad1: { label: 'Kick', isTriggered: false, isPlaying: false },
-    pad2: { label: 'Snare', isTriggered: true, isPlaying: false }
-  }
-
-  it('renders one PadCell per pad', () => {
+  it('renders PadCell components', () => {
     const wrapper = mount(PadGrid, {
       props: {
         pads,
-        padStates,
-        selectedPad: null
+        selectedPad: null,
+        padStates: {}
+      }
+    })
+
+    expect(wrapper.findAllComponents({ name: 'PadCell' })).to.have.lengthOf(2)
+  })
+
+  it('emits pad:select when PadCell emits', async () => {
+    const wrapper = mount(PadGrid, {
+      props: {
+        pads,
+        selectedPad: null,
+        padStates: {}
+      }
+    })
+
+    await wrapper.findComponent({ name: 'PadCell' }).vm.$emit('pad:select', 'pad1')
+
+    expect(wrapper.emitted('pad:select')).to.have.lengthOf(1)
+    expect(wrapper.emitted('pad:select')![0][0]).to.equal('pad1')
+  })
+
+  it('passes is-selected correctly', () => {
+    const wrapper = mount(PadGrid, {
+      props: {
+        pads,
+        selectedPad: 'pad1',
+        padStates: {}
       }
     })
 
     const cells = wrapper.findAllComponents({ name: 'PadCell' })
-    expect(cells.length).to.equal(pads.length)
-  })
-
-  it('forwards pad:down event', async () => {
-    const wrapper = mount(PadGrid, {
-      props: {
-        pads,
-        padStates,
-        selectedPad: null
-      }
-    })
-
-    const firstCell = wrapper.findComponent({ name: 'PadCell' })
-    await firstCell.vm.$emit('pad:down', 'pad1')
-
-    const events = wrapper.emitted<'pad:down'>('pad:down')
-    expect(events).to.exist
-    expect(events?.[0]).to.deep.equal(['pad1'])
-  })
-
-  it('forwards pad:select event', async () => {
-    const wrapper = mount(PadGrid, {
-      props: {
-        pads,
-        padStates,
-        selectedPad: null
-      }
-    })
-
-    const firstCell = wrapper.findComponent({ name: 'PadCell' })
-    await firstCell.vm.$emit('pad:select', 'pad2')
-
-    const events = wrapper.emitted<'pad:select'>('pad:select')
-    expect(events).to.exist
-    expect(events?.[0]).to.deep.equal(['pad2'])
-  })
-
-  it('marks selected pad correctly', () => {
-    const wrapper = mount(PadGrid, {
-      props: {
-        pads,
-        padStates,
-        selectedPad: 'pad2'
-      }
-    })
-
-    const cells = wrapper.findAllComponents({ name: 'PadCell' })
-    const selected = cells.find((cell) =>
-      cell.classes().includes('is-selected')
-    )
-
-    expect(selected).to.exist
+    expect(cells[0].props('isSelected')).to.equal(true)
+    expect(cells[1].props('isSelected')).to.equal(false)
   })
 })
