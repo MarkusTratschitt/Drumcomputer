@@ -10,6 +10,7 @@
     "preview": "nuxt preview",
     "lint": "eslint .",
     "typecheck": "vue-tsc --noEmit",
+    "build:test": "tsc -p tsconfig.test.json",
     "test": "mocha --loader ts-node/esm --require jsdom-global/register tests/**/*.spec.ts",
     "test:watch": "mocha --watch --loader ts-node/esm --require jsdom-global/register tests/**/*.spec.ts"
   },
