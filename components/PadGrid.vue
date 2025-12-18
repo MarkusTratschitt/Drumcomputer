@@ -39,21 +39,42 @@ export default defineComponent({
   methods: {
     padLabel(pad: DrumPadId) {
       return this.padStates[pad]?.label ?? pad.toUpperCase()
+    },
+
+    moveSelection(offset: number) {
+      if (!this.selectedPad) return
+
+      const index = this.pads.indexOf(this.selectedPad)
+      if (index === -1) return
+
+      const nextIndex = index + offset
+      if (nextIndex < 0 || nextIndex >= this.pads.length) return
+
+      const nextPad = this.pads[nextIndex]
+      this.$emit('pad:select', nextPad)
     }
   }
 })
 </script>
 
 <style scoped lang="less">
-.pad-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  grid-template-rows: repeat(4, minmax(0, 1fr));
-  gap: 10px;
-  padding: 12px;
-  background: #0a0d12;
-  border-radius: 16px;
-  border: 1px solid #1f2838;
-  height: 100%;
-}
+.pad-grid(
+  role="grid"
+  @keydown.arrow-up.prevent="moveSelection(-4)"
+  @keydown.arrow-down.prevent="moveSelection(4)"
+  @keydown.arrow-left.prevent="moveSelection(-1)"
+  @keydown.arrow-right.prevent="moveSelection(1)"
+)
+  PadCell(
+    v-for="pad in pads"
+    :key="pad"
+    :pad-id="pad"
+    :label="padLabel(pad)"
+    :is-selected="selectedPad === pad"
+    :is-triggered="padStates[pad]?.isTriggered ?? false"
+    :is-playing="padStates[pad]?.isPlaying ?? false"
+    @pad:down="$emit('pad:down', $event)"
+    @pad:select="$emit('pad:select', $event)"
+  )
+
 </style>
