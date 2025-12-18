@@ -2,13 +2,13 @@
 .step-grid-shell
   .step-row
     StepCell(
-      v-for="index in totalSteps"
-      :key="index"
-      :display-label="String(index)"
-      :is-active="isActive(index - 1)"
-      :is-accent="isAccent(index - 1)"
-      :is-current="isCurrent(index - 1)"
-      @cell:toggle="emitToggle(index - 1)"
+      v-for="stepIndex in totalSteps"
+      :key="stepIndex"
+      :display-label="String(stepIndex)"
+      :is-active="isActive(stepIndex - 1)"
+      :is-accent="isAccent(stepIndex - 1)"
+      :is-current="isCurrent(stepIndex - 1)"
+      @cell:toggle="emitToggle(stepIndex - 1)"
     )
     PlayheadOverlay(
       v-if="totalSteps > 0"
@@ -42,7 +42,7 @@ export default defineComponent({
   emits: ['step:toggle'],
   computed: {
     totalSteps(): number {
-      return this.gridSpec.bars * this.gridSpec.division
+      return Math.max(0, this.gridSpec.bars * this.gridSpec.division)
     },
     currentStepNormalized(): number {
       const steps = Math.max(this.totalSteps, 1)
@@ -50,31 +50,56 @@ export default defineComponent({
     }
   },
   methods: {
-    emitToggle(index: number) {
+    resolveStepPosition(index: number): { barIndex: number; stepInBar: number } {
       const barIndex = Math.floor(index / this.gridSpec.division)
       const stepInBar = index % this.gridSpec.division
-      if (this.selectedPad) {
-        this.$emit('step:toggle', { barIndex, stepInBar, padId: this.selectedPad })
-      }
+      return { barIndex, stepInBar }
     },
-    velocityAt(index: number): number | undefined {
+
+    emitToggle(index: number): void {
       if (!this.selectedPad) {
-        return undefined
+        return
       }
-      const barIndex = Math.floor(index / this.gridSpec.division)
-      const stepInBar = index % this.gridSpec.division
-      return this.steps[barIndex]?.[stepInBar]?.[this.selectedPad]?.velocity?.value
+
+      const { barIndex, stepInBar } = this.resolveStepPosition(index)
+
+      this.$emit('step:toggle', {
+        barIndex,
+        stepInBar,
+        padId: this.selectedPad
+      })
     },
-    isActive(index: number) {
-      return Boolean(this.velocityAt(index))
+
+    velocityAt(index: number): number | null {
+      if (!this.selectedPad) {
+        return null
+      }
+
+      const { barIndex, stepInBar } = this.resolveStepPosition(index)
+
+      return (
+        this.steps[barIndex]?.[stepInBar]?.[this.selectedPad]?.velocity?.value ??
+        null
+      )
     },
-    isAccent(index: number) {
+
+    isActive(index: number): boolean {
+      return this.velocityAt(index) !== null
+    },
+
+    isAccent(index: number): boolean {
       const velocity = this.velocityAt(index)
-      return velocity !== undefined && velocity >= ACCENT_STEP_VELOCITY - 0.01
+      const ACCENT_EPSILON = 0.01
+
+      return (
+        velocity !== null &&
+        velocity >= ACCENT_STEP_VELOCITY - ACCENT_EPSILON
+      )
     },
-    isCurrent(index: number) {
+
+    isCurrent(index: number): boolean {
       return index === this.currentStepNormalized
-    },
+    }
   }
 })
 </script>
@@ -99,7 +124,16 @@ export default defineComponent({
   position: relative;
   overflow: visible;
 
-  .step-cell:nth-child(4n + 1) {
+  >.playhead-overlay {
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  >.step-cell {
+    z-index: 1;
+  }
+
+  >.step-cell:nth-child(4n + 1) {
     border-left: 2px solid rgba(255, 255, 255, 0.12);
     padding-left: 12px;
   }

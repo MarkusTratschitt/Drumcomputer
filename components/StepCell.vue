@@ -2,8 +2,8 @@
 button.step-cell(
   type="button"
   :class="cellClasses"
-  @click="$emit('cell:toggle')"
-  aria-pressed="isActive"
+  :aria-pressed="isActive"
+  @click="onToggle"
 )
   span.step-tag {{ displayLabel }}
 </template>
@@ -13,26 +13,46 @@ import { defineComponent } from 'vue'
 
 export default defineComponent({
   name: 'StepCell',
+
   props: {
-    displayLabel: { type: String, required: true },
-    isActive: { type: Boolean, default: false },
-    isAccent: { type: Boolean, default: false },
-    isCurrent: { type: Boolean, default: false }
+    displayLabel: {
+      type: String,
+      required: true
+    },
+    isActive: {
+      type: Boolean,
+      default: false
+    },
+    isAccent: {
+      type: Boolean,
+      default: false
+    },
+    isCurrent: {
+      type: Boolean,
+      default: false
+    }
   },
+
   emits: ['cell:toggle'],
+
   computed: {
-    cellClasses() {
+    cellClasses(): Record<string, boolean> {
       return {
         'is-active': this.isActive,
         'is-accent': this.isAccent,
         'is-current': this.isCurrent
       }
     }
+  },
+
+  methods: {
+    onToggle(): void {
+      this.$emit('cell:toggle')
+    }
   }
 })
 </script>
 
-<style scoped lang="less">
 .step-cell {
   border: none;
   border-radius: 6px;
@@ -45,11 +65,11 @@ export default defineComponent({
   padding: 8px 0;
   transition: background 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
   position: relative;
-  overflow: visible;
   cursor: pointer;
   width: 100%;
   height: 100%;
   box-sizing: border-box;
+  z-index: 1;
 
   &:not(.is-active):hover {
     background: rgba(120, 125, 140, 0.35);
@@ -59,23 +79,37 @@ export default defineComponent({
     transform: scale(0.97);
   }
 
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(0, 255, 255, 0.6);
+  }
+
   &.is-active {
     background: rgba(0, 255, 255, 0.15);
   }
 
   &.is-accent {
-    background: linear-gradient(135deg, rgba(255, 180, 0, 0.25), rgba(255, 120, 0, 0.65));
+    background: linear-gradient(
+      135deg,
+      rgba(255, 180, 0, 0.25),
+      rgba(255, 120, 0, 0.65)
+    );
+  }
+
+  &.is-active.is-accent {
+    background: linear-gradient(
+      135deg,
+      rgba(255, 200, 80, 0.35),
+      rgba(0, 255, 255, 0.35)
+    );
   }
 
   &.is-current {
     box-shadow: inset 0 0 0 2px rgba(0, 255, 255, 0.9);
   }
-
-  z-index: 1;
 }
 
 .step-tag {
   font-size: 0.7rem;
   letter-spacing: 0.08em;
 }
-</style>
