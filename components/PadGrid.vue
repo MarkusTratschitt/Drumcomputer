@@ -21,6 +21,7 @@ button.pad-cell(
   @keydown.enter.prevent="handleActivate"
   @keydown.space.prevent="handleActivate"
   :aria-pressed="isSelected"
+  :style="velocityStyle"
 )
 
   PadCell(
@@ -55,6 +56,7 @@ export default defineComponent({
   props: {
     pads: { type: Array as () => DrumPadId[], required: true },
     selectedPad: { type: String as () => DrumPadId | null, default: null },
+    velocity: { type: Number, default: 1 }, // 0..1
     padStates: {
       type: Object as () => Partial<Record<DrumPadId, PadState>>,
       default: () => ({})
@@ -67,6 +69,12 @@ export default defineComponent({
         'is-selected': this.isSelected,
         'is-triggered': this.isTriggered,
         'is-playing': this.isPlaying
+      }
+    },
+    velocityStyle(): Record<string, string> {
+      const clamped = Math.min(1, Math.max(0, this.velocity))
+      return {
+        '--pad-velocity': clamped.toString()
       }
     }
   },
@@ -127,7 +135,18 @@ export default defineComponent({
   
     this.$emit('pad:select', this.pads[nextIndex])
     }
+  },
+
+  async handlePad(pad: DrumPadId, velocity = 1) {
+    try {
+      await this.sequencer.recordHit(pad, velocity, true)
+    } catch (error) {
+      console.error('Failed to trigger pad', error)
+    }
+    this.selectPad(pad) // ⬅️ Selection setzen
   }
+
+
 })
 </script>
 
@@ -158,4 +177,8 @@ export default defineComponent({
   outline-offset: 3px;
 }
 
+.pad-cell.is-triggered::after {
+  box-shadow: 0 0 calc(12px * var(--pad-velocity))
+    rgba(0, 255, 255, calc(0.2 + 0.6 * var(--pad-velocity)));
+}
 </style>

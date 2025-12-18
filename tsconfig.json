@@ -4,7 +4,22 @@
     "strict": true,
     "noImplicitAny": true,
     "exactOptionalPropertyTypes": true,
-    "types": ["node"],
-    "typeRoots": ["./types", "./node_modules/@types"]
-  }
+
+    "types": ["node", "mocha"],
+
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./*"]
+    }
+  },
+  "include": [
+    "tests/**/*.ts",
+    "components/**/*.vue",
+    "composables/**/*.ts",
+    "utils/**/*.ts",
+    "stores/**/*.ts",
+    "./tests/*.spec.ts",
+    "./components/**/*.vue",
+    "./types/**/*.d.ts"
+  ]
 }

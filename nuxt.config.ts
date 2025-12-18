@@ -1,4 +1,5 @@
 import { defineNuxtConfig } from 'nuxt/config'
+import { pwaConfig } from './config/pwa'
 
 const DEFAULT_HMR_PORT = 24678
 const hmrPort = Number.isInteger(Number(process.env.HMR_PORT)) && process.env.HMR_PORT
@@ -10,7 +11,12 @@ export default defineNuxtConfig({
   debug: true,
   compatibilityDate: '2024-04-03',
   devtools: { enabled: true },
-  modules: ['@pinia/nuxt', '@vite-pwa/nuxt'],
+  modules: [
+    '@pinia/nuxt',
+    ['@vite-pwa/nuxt', pwaConfig],
+    ],
+
+  
   css: ['vuetify/styles', '~/styles/drum-machine.less', '~/styles/vuetify-overrides.less'],
   typescript: {
     strict: true,
@@ -51,18 +57,6 @@ export default defineNuxtConfig({
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
         { name: 'description', content: 'Nuxt 4 Drumcomputer with WebAudio and MIDI' }
       ]
-    }
-  },
-  pwa: {
-    manifest: {
-      name: 'Drumcomputer',
-      short_name: 'Drumcomputer',
-      theme_color: '#121212',
-      background_color: '#121212',
-      display: 'standalone'
-    },
-    workbox: {
-      globPatterns: ['**/*.{js,css,html,png,svg,ico}']
     }
   }
 })
