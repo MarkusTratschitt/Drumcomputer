@@ -1,10 +1,10 @@
 import { describe, it, beforeEach } from 'mocha'
 import { expect } from 'chai'
-import { createTransportEngine } from '../domain/transport/transportEngine'
-import type { RenderClock } from '../domain/clock/renderClock'
-import type { Scheduler, ScheduledFn } from '../domain/clock/scheduler'
-import type { TransportAudioHooks } from '../domain/transport/audioHooks'
-import type { TransportConfig, TransportState } from '../domain/transport/types'
+import { createTransportEngine } from '@/domain/transport/transportEngine'
+import type { RenderClock } from '@/domain/clock/renderClock'
+import type { Scheduler, ScheduledFn } from '@/domain/clock/scheduler'
+import type { TransportAudioHooks } from '@/domain/transport/audioHooks'
+import type { TransportConfig, TransportState } from '@/domain/transport/types'
 
 type ScheduledCall = { at: number, fn: ScheduledFn }
 
