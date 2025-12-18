@@ -1,16 +1,41 @@
 <template lang="pug">
-.pad-grid
+.pad-grid(
+  role="grid"
+  tabindex="0"
+  @keydown.arrow-up.prevent="moveSelection(-4)"
+  @keydown.arrow-down.prevent="moveSelection(4)"
+  @keydown.arrow-left.prevent="moveSelection(-1)"
+  @keydown.arrow-right.prevent="moveSelection(1)"
+  @keydown.home.prevent="selectIndex(0)"
+  @keydown.end.prevent="selectIndex(pads.length - 1)"
+  @keydown.page-up.prevent="selectRow(0)"
+  @keydown.page-down.prevent="selectRow(3)"
+)
+
+button.pad-cell(
+  type="button"
+  :class="padClasses"
+  :tabindex="isFocusable ? 0 : -1"
+  @pointerdown.prevent="handleActivate"
+  @click.prevent="handleActivate"
+  @keydown.enter.prevent="handleActivate"
+  @keydown.space.prevent="handleActivate"
+  :aria-pressed="isSelected"
+)
+
   PadCell(
     v-for="pad in pads"
     :key="pad"
     :pad-id="pad"
     :label="padLabel(pad)"
     :is-selected="selectedPad === pad"
+    :is-focusable="selectedPad === pad"
     :is-triggered="padStates[pad]?.isTriggered ?? false"
     :is-playing="padStates[pad]?.isPlaying ?? false"
     @pad:down="$emit('pad:down', $event)"
     @pad:select="$emit('pad:select', $event)"
   )
+
 </template>
 
 <script lang="ts">
@@ -36,45 +61,101 @@ export default defineComponent({
     }
   },
   emits: ['pad:down', 'pad:select'],
+  computed: {
+    padClasses(): Record<string, boolean> {
+      return {
+        'is-selected': this.isSelected,
+        'is-triggered': this.isTriggered,
+        'is-playing': this.isPlaying
+      }
+    }
+  },
+  watch: {
+    selectedPad(newPad) {
+      if (!newPad) return
+
+      this.$nextTick(() => {
+        const ref = this.$refs[newPad]
+        const el = Array.isArray(ref) ? ref[0] : ref
+        el?.$el?.focus?.()
+      })
+    }
+  },
+  mounted() {
+    if (!this.selectedPad && this.pads.length > 0) {
+      this.$emit('pad:select', this.pads[0])
+    }
+  },
   methods: {
     padLabel(pad: DrumPadId) {
       return this.padStates[pad]?.label ?? pad.toUpperCase()
     },
+    selectIndex(index: number) {
+    if (index < 0 || index >= this.pads.length) return
+    this.$emit('pad:select', this.pads[index])
+  },
 
-    moveSelection(offset: number) {
-      if (!this.selectedPad) return
+  selectRow(row: number) {
+    const columns = 4
+    const index = row * columns
+    if (index < this.pads.length) {
+      this.$emit('pad:select', this.pads[index])
+    }
+  },
 
-      const index = this.pads.indexOf(this.selectedPad)
-      if (index === -1) return
-
-      const nextIndex = index + offset
-      if (nextIndex < 0 || nextIndex >= this.pads.length) return
-
-      const nextPad = this.pads[nextIndex]
-      this.$emit('pad:select', nextPad)
+  moveSelection(offset: number) {
+    if (!this.selectedPad) return
+  
+    const index = this.pads.indexOf(this.selectedPad)
+    if (index === -1) return
+  
+    const columns = 4
+    let nextIndex = index + offset
+  
+    // wrap left
+    if (offset === -1 && index % columns === 0) {
+      nextIndex = index + (columns - 1)
+    }
+  
+    // wrap right
+    if (offset === 1 && (index + 1) % columns === 0) {
+      nextIndex = index - (columns - 1)
+    }
+  
+    // clamp vertical
+    if (nextIndex < 0 || nextIndex >= this.pads.length) return
+  
+    this.$emit('pad:select', this.pads[nextIndex])
     }
   }
 })
 </script>
 
 <style scoped lang="less">
-.pad-grid(
-  role="grid"
-  @keydown.arrow-up.prevent="moveSelection(-4)"
-  @keydown.arrow-down.prevent="moveSelection(4)"
-  @keydown.arrow-left.prevent="moveSelection(-1)"
-  @keydown.arrow-right.prevent="moveSelection(1)"
-)
-  PadCell(
-    v-for="pad in pads"
-    :key="pad"
-    :pad-id="pad"
-    :label="padLabel(pad)"
-    :is-selected="selectedPad === pad"
-    :is-triggered="padStates[pad]?.isTriggered ?? false"
-    :is-playing="padStates[pad]?.isPlaying ?? false"
-    @pad:down="$emit('pad:down', $event)"
-    @pad:select="$emit('pad:select', $event)"
-  )
+.pad-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-rows: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  padding: 12px;
+  background: #0a0d12;
+  border-radius: 16px;
+  border: 1px solid #1f2838;
+  height: 100%;
+}
+
+.pad-grid:focus-visible {
+  outline: 2px solid #00f8ff;
+  outline-offset: 4px;
+}
+
+.pad-cell.is-selected {
+  border-color: #00f8ff;
+}
+
+.pad-cell:focus-visible:not(.is-selected) {
+  outline: 2px dashed #00f8ff;
+  outline-offset: 3px;
+}
 
 </style>
