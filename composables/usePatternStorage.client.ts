@@ -1,6 +1,6 @@
 import { ref } from 'vue'
-import { DEFAULT_GRID_SPEC, normalizeGridSpec } from '~/domain/timing'
-import type { Pattern, Scene } from '~/types/drums'
+import { DEFAULT_GRID_SPEC, normalizeGridSpec } from '@/domain/timing'
+import type { Pattern, Scene } from '@/types/drums'
 
 const STORAGE_KEY = 'drum-machine/patterns'
 const STORAGE_VERSION = 'v2'

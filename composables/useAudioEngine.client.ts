@@ -1,8 +1,8 @@
 import { onBeforeUnmount, ref } from 'vue'
-import type { DrumPadId } from '~/types/drums'
-import type { FxSettings, SampleRef, Soundbank } from '~/types/audio'
-import { createSeededRandom, type RandomSource } from '~/utils/seededRandom'
-import { createFxGraph, connectFxGraph, updateFxGraph, type FxGraphNodes } from '~/domain/audio/fxGraph'
+import type { DrumPadId } from '@/types/drums'
+import type { FxSettings, SampleRef, Soundbank } from '@/types/audio'
+import { createSeededRandom, type RandomSource } from '@/utils/seededRandom'
+import { createFxGraph, connectFxGraph, updateFxGraph, type FxGraphNodes } from '@/audio/fxGraph'
 
 interface TriggerRequest {
   padId: DrumPadId

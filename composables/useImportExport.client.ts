@@ -247,7 +247,7 @@ export function useImportExport() {
     }
     let currentPatternId = patternList[0] ?? patternsStore.selectedPatternId ?? fallbackPattern.id
     let scenePosition = patternList.length > 1 ? 1 : 0
-    const resolvePattern = (id: string) => patternsStore.patterns.find((pattern) => pattern.id === id) ?? fallbackPattern
+    const resolvePattern = (id: string) => patternsStore.patterns.find((pattern: Pattern) => pattern.id === id) ?? fallbackPattern
     const getPattern = () => resolvePattern(currentPatternId)
     const advancePattern = () => {
       if (!scene || patternList.length === 0) {

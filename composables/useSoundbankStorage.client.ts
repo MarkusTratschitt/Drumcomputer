@@ -1,6 +1,6 @@
 import { ref } from 'vue'
-import type { DrumPadId, Pattern } from '~/types/drums'
-import type { Soundbank, SampleRef } from '~/types/audio'
+import type { DrumPadId, Pattern } from '@/types/drums'
+import type { Soundbank, SampleRef } from '@/types/audio'
 
 const DB_NAME = 'drum-machine-db'
 const DB_VERSION = 2

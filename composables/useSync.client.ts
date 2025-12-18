@@ -1,7 +1,7 @@
 import { onBeforeUnmount, ref } from 'vue'
 import { useScheduler } from './useScheduler'
-import type { ClockAuthority, SyncMode, SyncRole, SyncState } from '~/types/sync'
-import type { MidiMessage } from '~/types/midi'
+import type { ClockAuthority, SyncMode, SyncRole, SyncState } from '@/types/sync'
+import type { MidiMessage } from '@/types/midi'
 
 interface SyncDeps {
   midi?: {
@@ -32,10 +32,10 @@ export function useSync(initialMode: SyncMode = 'internal', deps?: SyncDeps) {
   })
   const scheduler = deps?.getAudioTime
     ? useScheduler({
-        lookahead: 25,
-        scheduleAheadSec: 0.05,
-        getTime: deps.getAudioTime
-      })
+      lookahead: 25,
+      scheduleAheadSec: 0.05,
+      getTime: deps.getAudioTime
+    })
     : null
   const lastStableBpm = ref(state.value.bpm)
   let nextClockAt: number | null = null
@@ -62,14 +62,14 @@ export function useSync(initialMode: SyncMode = 'internal', deps?: SyncDeps) {
     if (!scheduler || nextClockAt === null) return
     scheduler.schedule({
       when: nextClockAt,
-    callback: () => {
-      deps?.midi?.sendClockTick()
-      tick()
-      if (nextClockAt !== null) {
-        nextClockAt = nextClockAt + secondsPerClockTick()
-        scheduleClockTick()
+      callback: () => {
+        deps?.midi?.sendClockTick()
+        tick()
+        if (nextClockAt !== null) {
+          nextClockAt = nextClockAt + secondsPerClockTick()
+          scheduleClockTick()
+        }
       }
-    }
     })
   }
 

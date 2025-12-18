@@ -1,6 +1,6 @@
 import { ref } from 'vue'
-import type { MidiDeviceInfo, MidiMapping, MidiMessage } from '~/types/midi'
-import { defaultMidiMapping } from '~/domain/midiMapping'
+import type { MidiDeviceInfo, MidiMapping, MidiMessage } from '@/types/midi'
+import { defaultMidiMapping } from '@/domain/midiMapping'
 
 export function useMidi() {
   const access = ref<MIDIAccess | null>(null)
@@ -57,12 +57,12 @@ export function useMidi() {
           : type === 0x90 && hasNoteData && data2 === 0
             ? { type: 'noteoff', note: data1, velocity: data2 / 127 }
             : status === 0xf8
-            ? { type: 'clock' }
-            : status === 0xfa
-              ? { type: 'start' }
-              : status === 0xfc
-                ? { type: 'stop' }
-                : null
+              ? { type: 'clock' }
+              : status === 0xfa
+                ? { type: 'start' }
+                : status === 0xfc
+                  ? { type: 'stop' }
+                  : null
     if (!message) return
     listeners.value.forEach((cb) => cb(message))
   }

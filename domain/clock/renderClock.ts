@@ -12,15 +12,23 @@ export interface RenderClock {
    * This is always based on the underlying AudioContext.
    */
   audioTime(): number
+
+  /**
+   * Alias für audioTime(), für Kompatibilität.
+   */
+  now(): number
 }
 
 export function createRenderClock(
+
+
   ctx: BaseAudioContext,
   isOffline = false
 ): RenderClock {
   return {
     ctx,
     isOffline,
-    audioTime: () => ctx.currentTime
+    audioTime: () => ctx.currentTime,
+    now: () => ctx.currentTime
   }
 }

@@ -1,14 +1,14 @@
 import { ref, type Ref } from 'vue'
-import { quantizeToStep } from '~/domain/quantize'
-import { normalizeGridSpec, secondsPerStep } from '~/domain/timing'
-import type { DrumPadId, Pattern } from '~/types/drums'
-import type { SampleRef, Soundbank } from '~/types/audio'
-import type { GridSpec, StepAddress } from '~/types/time'
-import { useTransportStore } from '~/stores/transport'
+import { quantizeToStep } from '@/domain/quantize'
+import { normalizeGridSpec, secondsPerStep } from '@/domain/timing'
+import type { DrumPadId, Pattern } from '@/types/drums'
+import type { SampleRef, Soundbank } from '@/types/audio'
+import type { GridSpec, StepAddress } from '@/types/time'
+import { useTransportStore } from '@/stores/transport'
 import { useScheduler, type ScheduledTask } from './useScheduler'
 import { useAudioEngine } from './useAudioEngine.client'
-import { clampVelocity, cycleVelocity, DEFAULT_STEP_VELOCITY } from '~/domain/velocity'
-import { createRenderClock, type RenderClock } from '~/domain/audio/clock'
+import { clampVelocity, cycleVelocity, DEFAULT_STEP_VELOCITY } from '@/domain/velocity'
+import { createRenderClock, type RenderClock } from '@/domain/clock/renderClock'
 
 interface SequencerOptions {
   getPattern: () => Pattern

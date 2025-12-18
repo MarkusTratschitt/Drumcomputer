@@ -1,6 +1,6 @@
-import type { DrumPadId } from '../../types/drums'
+import type { DrumPadId } from '@/types/drums'
 // Update the import path below to the correct relative path where GridSpec is defined
-import type { GridSpec } from '../../types/time'
+import type { GridSpec } from '@/types/time'
 // Or adjust the path as needed based on your project structure
 
 export interface TransportState {

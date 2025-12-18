@@ -1,5 +1,5 @@
 // Update the import path if the file is located elsewhere, for example:
-import { velocityToGain } from '../../velocity/velocityToGain'
+import { velocityToGain } from '@/domain/velocity/velocityToGain'
 // Or create the file '../velocity/velocityToGain.ts' if it does not exist.
 
 export function createTransportAudioHooks(
