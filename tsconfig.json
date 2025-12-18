@@ -4,7 +4,7 @@
     "strict": true,
     "noImplicitAny": true,
     "exactOptionalPropertyTypes": true,
-
+    "forceConsistentCasingInFileNames": true,
     "types": ["node", "mocha"],
 
     "baseUrl": ".",
