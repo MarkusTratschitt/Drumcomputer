@@ -405,7 +405,8 @@ export function useImportExport() {
       const renderClock: ScheduleStepOptions['clock'] = {
         ctx: baseClock.ctx,
         isOffline: true,
-        now: () => simulatedTime
+        now: () => simulatedTime,
+        audioTime: () => baseClock.audioTime()
       }
 
       const offlineScheduler = createOfflineScheduler(duration, (time) => {

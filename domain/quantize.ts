@@ -1,4 +1,4 @@
-import type { StepAddress } from '~/types/time'
+import type { StepAddress } from '@/types/time'
 
 export function quantizeToStep(time: number, secondsPerStep: number, bars: number, division: number): StepAddress {
   const totalSteps = bars * division

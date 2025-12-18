@@ -1,4 +1,4 @@
-import type { GridSpec, TimeDivision } from '~/types/time'
+import type { GridSpec, TimeDivision } from '@/types/time'
 
 export const GRID_DIVISIONS: readonly TimeDivision[] = [1, 2, 4, 8, 16, 32, 64] as const
 export const DEFAULT_GRID_SPEC: GridSpec = { bars: 1, division: 16 }

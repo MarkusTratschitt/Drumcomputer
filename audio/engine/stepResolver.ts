@@ -1,5 +1,5 @@
-import type { StepGrid, DrumPadId } from '@//types/drums'
-import type { GridSpec } from '@/types/time'
+import type { StepGrid, DrumPadId } from '../../types/drums'
+import type { GridSpec } from '../../types/time'
 
 export interface StepNote {
   buffer: AudioBuffer

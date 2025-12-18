@@ -1,5 +1,5 @@
-import type { FxSettings } from '~/types/audio'
-import type { RandomSource } from '~/utils/seededRandom'
+import type { FxSettings } from '@/types/audio'
+import type { RandomSource } from '@/utils/seededRandom'
 
 export interface FxGraphNodes {
   fxInput: GainNode

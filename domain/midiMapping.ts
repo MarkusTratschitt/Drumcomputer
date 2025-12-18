@@ -1,5 +1,5 @@
-import type { MidiMapping } from '~/types/midi'
-import type { DrumPadId } from '~/types/drums'
+import type { MidiMapping } from '@/types/midi'
+import type { DrumPadId } from '@/types/drums'
 
 const defaultPads: DrumPadId[] = [
   'pad1',
