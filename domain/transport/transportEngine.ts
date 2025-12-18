@@ -1,7 +1,7 @@
 import type { RenderClock } from '../clock/renderClock'
 import type { Scheduler } from '../clock/scheduler'
 import type { TransportConfig, TransportState } from './types'
-
+import type { TransportAudioHooks } from './audioHooks'
 export type TransportListener = (state: TransportState) => void
 
 export interface TransportEngine {
@@ -22,7 +22,8 @@ const clampInt = (value: number): number => {
 export function createTransportEngine(
   clock: RenderClock,
   scheduler: Scheduler,
-  initial: TransportConfig
+  initial: TransportConfig,
+  audioHooks?: TransportAudioHooks
 ): TransportEngine {
   let cfg: TransportConfig = initial
 
@@ -72,11 +73,13 @@ export function createTransportEngine(
   }
 
   const scheduleStepBoundary = (stepIndex: number): void => {
-    // Hook point: schedule sample-accurate audio events for this step.
-    // This stays domain-side; UI never schedules audio.
-    // Example:
-    // scheduler.schedule(atTime, () => audioEngine.playStep(stepIndex))
-    void stepIndex
+    const stepTimeSec =
+      startTimeSec + stepIndex * stepDurationSec()
+
+    scheduler.schedule(stepTimeSec, (audioTime) => {
+      // Hier darf Audio rein
+      audioHooks?.onStep(stepIndex, audioTime)
+    })
   }
 
   const advance = (): void => {

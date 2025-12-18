@@ -1,6 +1,6 @@
 import type { RenderClock } from './renderClock'
 
-export type ScheduledFn = () => void
+export type ScheduledFn = (audioTime: number) => void
 
 export interface SchedulerOptions {
   readonly lookaheadSec: number
@@ -52,7 +52,7 @@ export function createScheduler(clock: RenderClock, options: Partial<SchedulerOp
 
     // Execute all due items in order
     for (const item of due) {
-      item.fn()
+      item.fn(item.at)
     }
   }
 
