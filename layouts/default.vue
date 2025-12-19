@@ -4,6 +4,7 @@
       .device-stage
         // Main working area
         .device-main
+          slot
           slot(name="main")
 
         // Bottom-right hardware corner
