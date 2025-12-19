@@ -18,13 +18,7 @@ import { defineComponent } from 'vue'
 
 export default defineComponent({
   name: 'StepCell',
-  emits: [
-    'cell:toggle',
-    'cell:pointerdown',
-    'cell:pointermove',
-    'cell:pointerup',
-    'cell:pointercancel'
-  ],
+
   props: {
     isAccent: {
       type: Boolean,
@@ -47,6 +41,15 @@ export default defineComponent({
       default: ''
     }
   },
+
+    emits: [
+    'cell:toggle',
+    'cell:pointerdown',
+    'cell:pointermove',
+    'cell:pointerup',
+    'cell:pointercancel'
+  ],
+  
   computed: {
     cellClasses(): Record<string, boolean> {
       return {

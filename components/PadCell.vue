@@ -24,7 +24,8 @@ export default defineComponent({
     label: { type: String, required: true },
     isSelected: { type: Boolean, default: false },
     isTriggered: { type: Boolean, default: false },
-    isPlaying: { type: Boolean, default: false }
+    isPlaying: { type: Boolean, default: false },
+    keyLabel: { type: String, default: null }
   },
   emits: ['pad:down', 'pad:select'],
   computed: {
