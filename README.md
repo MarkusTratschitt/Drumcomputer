@@ -65,6 +65,26 @@ The Export audio card sits under the soundbank/Fx controls and invokes `exportAu
 ### Reproducing exports with the seed
 Copy the exported seed from the metadata panel (or the JSON blob) and supply it to `exportAudio(renderDuration, sampleRate, { seed: Number(seedValue) })` together with the scene's FX snapshot/grid spec, and the offline render will replay the exact same randomness, FX response, and scheduling that produced the mixdown.
 
+## Current Status (2025-12-19)
+
+- Local QA not re-run in this review session; last documented commands: `npm run lint`, `npm run typecheck`.
+- Transport engine covered by unit tests in `tests/unitTests/transportEngine.spec.ts`; UI surface relies on manual checks.
+- Audio/export stack described above remains feature-complete; persistence uses LocalStorage (patterns/scenes) and IndexedDB (soundbanks/samples/pattern copies).
+- UI uses Vue 3 Options API + Vuetify; pad/step grids handle keyboard navigation and playhead overlay for live feedback.
+
+## Diagrams
+
+- Transport timing: `diagrams/transport-engine.md`
+- UI sequencer flow: `diagrams/ui-sequencer.md`
+- Persistence + audio pipeline: `diagrams/persistence-and-audio.md`
+
+## Code Review Findings (2025-12-19)
+
+- `components/PadGrid.vue`: Template contains a standalone `button.pad-cell` wired to undefined bindings (`padClasses`, `isFocusable`, `handleActivate`, `isSelected`, `velocityStyle`). Any interaction will throw and the element does not map to the pad model—likely leftover code that should be removed or folded into `PadCell`.
+- `components/PadGrid.vue`: The watcher tries to focus the selected pad via `$refs[newPad]`, but no `ref` is attached to `PadCell` instances. Focus restoration currently never works; add a `ref` per pad or alternative focus management.
+- `domain/transport/transportEngine.ts`: `setConfig` recalculates `startTimeSec`/phase but does not clear or re-queue scheduled boundaries. Pending scheduler items from the previous tempo/grid remain, so a mid-playback config change can fire steps at stale times. Clearing/reseeding the scheduler (with swing-aware offsets) on config changes would keep timing consistent.
+- `domain/transport/transportEngine.ts`: Scheduling always pushes `currentStep + 1` with raw step indices (not wrapped to total steps). With long play sessions and reconfigurations, `lastScheduledStep` monotonic growth can skip re-scheduling when the modulo-wrapped step repeats. Normalizing scheduled indices to the current grid would make the duplicate-guard reliable across loops.
+
 ## Current UI / Editing State
 
 - 16-pad surface shows three states (selected, currently triggered at the playhead, or playing anywhere in the pattern) and derives pad labels from the active soundbank.
@@ -88,4 +108,8 @@ Copy the exported seed from the metadata panel (or the JSON blob) and supply it 
 
 ## Roadmap
 
-- FX chain (filter/drive), pattern scenes, and extended sample browser with drag/drop.
+- Stabilize transport scheduling: normalize queued step indices across loops, clear/reseed scheduler queues on config changes, and extend tests for swing + lookahead edge cases.
+- Fix PadGrid focus/activation: remove the stray root button or wire it correctly, attach `ref`s to `PadCell` for focus restoration, and add keyboard-focus tests.
+- Expand automated coverage: integrate component tests for `PadGrid`/`StepGrid` interactions and regression tests around transport start/stop/reconfigure flows.
+- UX polish: expose scheduler/debug timelines in dev mode, improve empty-state messaging for pads without a selected bank/pad, and add ARIA labels around sequencing controls.
+- Stretch: FX chain enhancements (filter/drive) and an extended sample browser with drag/drop and manifest previews.
