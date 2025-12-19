@@ -12,6 +12,6 @@ import { definePageMeta } from '#imports'
 
 definePageMeta({
   title: 'Drum Machine',
-  layout: 'false'
+  layout: false
 })
 </script>

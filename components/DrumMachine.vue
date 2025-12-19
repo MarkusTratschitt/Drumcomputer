@@ -23,7 +23,7 @@
           :loop="transport.loop"
           :division="gridSpec.division"
           :divisions="divisions"
-          :is-midi-learning="midiLearn.isLearning.value"
+          :is-midi-learning="midiLearn.isLearning"
           @play="start"
           @stop="stop"
           @bpm:update="updateBpm"
@@ -33,7 +33,7 @@
           @loop:update="setLoop"
           @midi-learn:toggle="toggleMidiLearn"
         )
-        .midi-learn-status(v-if="midiLearn.isLearning.value")
+        .midi-learn-status(v-if="midiLearn.isLearning")
           span {{ midiLearnLabel }}
 
       template(#pads)
@@ -320,8 +320,8 @@ computed: {
   
   midiLearnLabel(): string {
     return (
-      this.midiLearn.learningLabel.value ??
-      this.midiLearn.status.value ??
+      this.midiLearn.learningLabel ??
+      this.midiLearn.status ??
       'Listening for MIDI...'
     )
   },
@@ -405,13 +405,14 @@ computed: {
       }
 
       if (message.type === 'noteon' && typeof message.note === 'number') {
-        const transportNote = this.midi.mapping.value.transportMap?.play === message.note
+        const transportMap = this.midi.mapping?.transportMap
+        const transportNote = transportMap?.play === message.note
           ? 'play'
-          : this.midi.mapping.value.transportMap?.stop === message.note
+          : transportMap?.stop === message.note
             ? 'stop'
-            : this.midi.mapping.value.transportMap?.bpmUp === message.note
+            : transportMap?.bpmUp === message.note
               ? 'bpmUp'
-              : this.midi.mapping.value.transportMap?.bpmDown === message.note
+              : transportMap?.bpmDown === message.note
                 ? 'bpmDown'
                 : null
 
@@ -490,7 +491,7 @@ computed: {
     },
     async start() {
       if (this.transport.isPlaying) return
-      if (this.midiLearn.isLearning.value) {
+      if (this.midiLearn.isLearning) {
         this.midiLearn.setTarget({ type: 'transport', action: 'play' })
       }
       this.patterns.prepareScenePlayback()
@@ -498,7 +499,7 @@ computed: {
       this.sync.startTransport(this.transport.bpm)
     },
     stop() {
-      if (this.midiLearn.isLearning.value) {
+      if (this.midiLearn.isLearning) {
         this.midiLearn.setTarget({ type: 'transport', action: 'stop' })
       }
       this.sequencer.stop()
@@ -515,7 +516,7 @@ computed: {
     selectPad(pad: DrumPadId) {
       this.selectedPadId = pad
       this.focusStepGrid()
-      if (this.midiLearn.isLearning.value) {
+      if (this.midiLearn.isLearning) {
         this.midiLearn.setTarget({ type: 'pad', padId: pad })
       }
     },
@@ -582,19 +583,19 @@ computed: {
       this.transport.setLoop(loop)
     },
     incrementBpm() {
-      if (this.midiLearn.isLearning.value) {
+      if (this.midiLearn.isLearning) {
         this.midiLearn.setTarget({ type: 'transport', action: 'bpmUp' })
       }
       this.updateBpm(this.bpm + 1)
     },
     decrementBpm() {
-      if (this.midiLearn.isLearning.value) {
+      if (this.midiLearn.isLearning) {
         this.midiLearn.setTarget({ type: 'transport', action: 'bpmDown' })
       }
       this.updateBpm(this.bpm - 1)
     },
     toggleMidiLearn() {
-      if (this.midiLearn.isLearning.value) {
+      if (this.midiLearn.isLearning) {
         this.midiLearn.disable()
       } else {
         this.midiLearn.enable()
