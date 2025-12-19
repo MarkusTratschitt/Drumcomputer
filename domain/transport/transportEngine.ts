@@ -88,10 +88,6 @@ export function createTransportEngine(
       return clampInt(raw)
     }
 
-    const computeStepAt = (timeSec: number): number => {
-      return normalizeStep(computeAbsoluteStepAt(timeSec))
-    }
-
     let lastScheduledStep = -1
 
     const scheduleStepBoundary = (stepIndexAbsolute: number): void => {
