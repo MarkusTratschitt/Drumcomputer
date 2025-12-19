@@ -11,22 +11,10 @@
   @keydown.page-up.prevent="selectRow(0)"
   @keydown.page-down.prevent="selectRow(3)"
 )
-
-button.pad-cell(
-  type="button"
-  :class="padClasses"
-  :tabindex="isFocusable ? 0 : -1"
-  @pointerdown.prevent="handleActivate"
-  @click.prevent="handleActivate"
-  @keydown.enter.prevent="handleActivate"
-  @keydown.space.prevent="handleActivate"
-  :aria-pressed="isSelected"
-  :style="velocityStyle"
-)
-
   PadCell(
     v-for="pad in pads"
     :key="pad"
+    :ref="setPadRef(pad)"
     :pad-id="pad"
     :label="padLabel(pad)"
     :is-selected="selectedPad === pad"
@@ -66,10 +54,20 @@ export default defineComponent({
 
   emits: ['pad:down', 'pad:select'],
 
+  data() {
+    return {
+      internalPadRefs: {} as Record<DrumPadId, InstanceType<typeof PadCell> | undefined>
+    }
+  },
+
   computed: {
     velocityStyle(): Record<string, string> {
       const clamped = Math.min(1, Math.max(0, this.velocity))
       return { '--pad-velocity': clamped.toString() }
+    },
+
+    padRefs(): Record<DrumPadId, InstanceType<typeof PadCell> | undefined> {
+      return this.internalPadRefs
     }
   },
 
@@ -77,9 +75,8 @@ export default defineComponent({
     selectedPad(newPad: DrumPadId | null) {
       if (!newPad) return
       this.$nextTick(() => {
-        const ref = this.$refs[newPad as unknown as string]
-        const el = Array.isArray(ref) ? ref[0] : ref
-        el?.$el?.focus?.()
+        const ref = this.padRefs[newPad]
+        ref?.$el?.focus?.()
       })
     }
   },
@@ -91,6 +88,16 @@ export default defineComponent({
   },
 
   methods: {
+    setPadRef(pad: DrumPadId) {
+      return (el: InstanceType<typeof PadCell> | null) => {
+        if (el) {
+          this.internalPadRefs[pad] = el
+        } else {
+          delete this.internalPadRefs[pad]
+        }
+      }
+    },
+
     padLabel(pad: DrumPadId): string {
       return this.padStates[pad]?.label ?? pad.toUpperCase()
     },

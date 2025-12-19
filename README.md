@@ -65,6 +65,11 @@ The Export audio card sits under the soundbank/Fx controls and invokes `exportAu
 ### Reproducing exports with the seed
 Copy the exported seed from the metadata panel (or the JSON blob) and supply it to `exportAudio(renderDuration, sampleRate, { seed: Number(seedValue) })` together with the scene's FX snapshot/grid spec, and the offline render will replay the exact same randomness, FX response, and scheduling that produced the mixdown.
 
+## Recent Fixes / Transport & Pad Grid
+
+- Removed stray `button.pad-cell` with undefined bindings and wired PadGrid focus restoration via stable PadCell refs, preventing runtime errors and restoring keyboard focus after selection changes.
+- Transport engine now clears/reseeds scheduler queues on config changes and schedules step boundaries using absolute step indices with wrap-safe guards, avoiding duplicate or dropped triggers during tempo/division updates or loop wraparounds.
+
 ## Current Status (2025-12-19)
 
 - Local QA not re-run in this review session; last documented commands: `npm run lint`, `npm run typecheck`.

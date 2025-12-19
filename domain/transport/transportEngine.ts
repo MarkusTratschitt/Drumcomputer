@@ -32,6 +32,7 @@ export function createTransportEngine(
     let isPlaying = false
     let startTimeSec = 0
     let lastStep = -1
+    let lastAbsoluteStep = -1
 
     const listeners = new Set<TransportListener>()
     const stepDurationSec = (): number => {
@@ -45,6 +46,11 @@ export function createTransportEngine(
     const totalSteps = (): number => {
       const steps = cfg.gridSpec.bars * cfg.gridSpec.division
       return Math.max(0, clampInt(steps))
+    }
+
+    const normalizeStep = (step: number): number => {
+      const steps = Math.max(totalSteps(), 1)
+      return ((step % steps) + steps) % steps
     }
 
     const swingOffsetSec = (stepIndex: number): number => {
@@ -73,47 +79,52 @@ export function createTransportEngine(
 
     for (const listener of listeners) {
       listener(state)
+      }
     }
-  }
-  
-  const computeStepAt = (timeSec: number): number => {
-    const steps = Math.max(totalSteps(), 1)
-    const dur = stepDurationSec()
-    const raw = (timeSec - startTimeSec) / dur
-    const step = clampInt(raw)
-    return ((step % steps) + steps) % steps
-  }
-
-  let lastScheduledStep = -1
-
-  const scheduleStepBoundary = (stepIndex: number): void => {
-    if (stepIndex === lastScheduledStep) {
-      return
+    
+    const computeAbsoluteStepAt = (timeSec: number): number => {
+      const dur = stepDurationSec()
+      const raw = (timeSec - startTimeSec) / dur
+      return clampInt(raw)
     }
 
-    lastScheduledStep = stepIndex
-
-    const stepTimeSec =
-      startTimeSec +
-      stepIndex * stepDurationSec() +
-      swingOffsetSec(stepIndex)
-
-    scheduler.schedule(stepTimeSec, (audioTime) => {
-      audioHooks?.onStep(stepIndex, audioTime)
-    })
-  }
-
-
-  const advance = (): void => {
-    const now = clock.audioTime()
-    const current = computeStepAt(now)
-
-    if (current !== lastStep) {
-      lastStep = current
-      scheduleStepBoundary(current + 1)
-      emit()
+    const computeStepAt = (timeSec: number): number => {
+      return normalizeStep(computeAbsoluteStepAt(timeSec))
     }
-  }
+
+    let lastScheduledStep = -1
+
+    const scheduleStepBoundary = (stepIndexAbsolute: number): void => {
+      if (stepIndexAbsolute === lastScheduledStep) {
+        return
+      }
+
+      const normalizedStep = normalizeStep(stepIndexAbsolute)
+      lastScheduledStep = stepIndexAbsolute
+
+      const stepTimeSec =
+        startTimeSec +
+        stepIndexAbsolute * stepDurationSec() +
+        swingOffsetSec(normalizedStep)
+
+      scheduler.schedule(stepTimeSec, (audioTime) => {
+        audioHooks?.onStep(normalizedStep, audioTime)
+      })
+    }
+
+
+    const advance = (): void => {
+      const now = clock.audioTime()
+      const currentAbsolute = computeAbsoluteStepAt(now)
+      const current = normalizeStep(currentAbsolute)
+
+      if (current !== lastStep) {
+        lastStep = current
+        lastAbsoluteStep = currentAbsolute
+        scheduleStepBoundary(lastAbsoluteStep + 1)
+        emit()
+      }
+    }
 
   return {
     start(): void {
@@ -123,12 +134,14 @@ export function createTransportEngine(
       isPlaying = true
       startTimeSec = clock.audioTime()
       lastStep = -1
+      lastAbsoluteStep = -1
       lastScheduledStep = -1
       scheduler.clear()
       scheduler.start()
-      lastStep = computeStepAt(startTimeSec)
+      lastAbsoluteStep = computeAbsoluteStepAt(startTimeSec)
+      lastStep = normalizeStep(lastAbsoluteStep)
       emit()
-      scheduleStepBoundary(lastStep + 1)
+      scheduleStepBoundary(lastAbsoluteStep + 1)
     },
 
     stop(): void {
@@ -152,9 +165,15 @@ export function createTransportEngine(
         const dur = stepDurationSec()
         const steps = Math.max(totalSteps(), 1)
         const current = ((lastStep % steps) + steps) % steps
-        startTimeSec = now - current * dur - swingOffsetSec(current)
+        startTimeSec = now - lastAbsoluteStep * dur - swingOffsetSec(current)
+        scheduler.clear()
+        lastScheduledStep = -1
+        lastAbsoluteStep = computeAbsoluteStepAt(now)
+        lastStep = normalizeStep(lastAbsoluteStep)
+        scheduleStepBoundary(lastAbsoluteStep + 1)
+      } else {
+        lastScheduledStep = -1
       }
-      lastScheduledStep = -1
       emit()
     },
 
