@@ -1,90 +1,91 @@
 <template lang="pug">
-.panel-shell
-  .panel-header FX
-  v-expansion-panels(
-    v-model="activeSlot"
-    accordion
-    class="fx-panels"
-  )
-    v-expansion-panel(value="filter")
-      v-expansion-panel-title Filter
-      v-expansion-panel-text
-        v-switch(
-          label="Enabled"
-          dense
-          :model-value="localFx.filter.enabled"
-          @update:model-value="toggleFilter"
-        )
-        v-slider(
-          dense
-          v-if="localFx.filter.enabled"
-          label="Cutoff"
-          hide-details
-          min="200"
-          max="18000"
-          step="50"
-          thumb-label
-          :model-value="localFx.filter.frequency"
-          @update:model-value="setFilterFreq"
-        )
-        v-slider(
-          dense
-          v-if="localFx.filter.enabled"
-          label="Resonance (Q)"
-          hide-details
-          min="0.1"
-          max="12"
-          step="0.1"
-          thumb-label
-          :model-value="localFx.filter.q"
-          @update:model-value="setFilterQ"
-        )
-    v-expansion-panel(value="drive")
-      v-expansion-panel-title Drive
-      v-expansion-panel-text
-        v-switch(
-          label="Enabled"
-          dense
-          :model-value="localFx.drive.enabled"
-          @update:model-value="toggleDrive"
-        )
-        v-slider(
-          dense
-          v-if="localFx.drive.enabled"
-          label="Amount"
-          hide-details
-          min="0"
-          max="1"
-          step="0.05"
-          thumb-label
-          :model-value="localFx.drive.amount"
-          @update:model-value="setDriveAmount"
-        )
-    v-expansion-panel(value="reverb")
-      v-expansion-panel-title Reverb
-      v-expansion-panel-text
-        v-switch(
-          label="Enabled"
-          dense
-          :model-value="localFx.reverb.enabled"
-          @update:model-value="toggleReverb"
-        )
-        v-slider(
-          dense
-          v-if="localFx.reverb.enabled"
-          label="Mix"
-          hide-details
-          min="0"
-          max="0.6"
-          step="0.02"
-          thumb-label
-          :model-value="localFx.reverb.mix"
-          @update:model-value="setReverbMix"
-        )
-    v-expansion-panel(value="routing")
-      v-expansion-panel-title Routing
-      v-expansion-panel-text
-        p Subtle master shaping slot. No additional controls yet.
+  client-only(tag="div")
+    .panel-shell
+    .panel-header FX
+      v-expansion-panels(
+        v-model="activeSlot"
+        accordion
+        class="fx-panels"
+      )
+        v-expansion-panel(value="filter")
+          v-expansion-panel-title Filter
+          v-expansion-panel-text
+            v-switch(
+              label="Enabled"
+              dense
+              :model-value="localFx.filter.enabled"
+              @update:model-value="toggleFilter"
+            )
+            v-slider(
+              dense
+              v-if="localFx.filter.enabled"
+              label="Cutoff"
+              hide-details
+              min="200"
+              max="18000"
+              step="50"
+              thumb-label
+              :model-value="localFx.filter.frequency"
+              @update:model-value="setFilterFreq"
+            )
+            v-slider(
+              dense
+              v-if="localFx.filter.enabled"
+              label="Resonance (Q)"
+              hide-details
+              min="0.1"
+              max="12"
+              step="0.1"
+              thumb-label
+              :model-value="localFx.filter.q"
+              @update:model-value="setFilterQ"
+            )
+        v-expansion-panel(value="drive")
+          v-expansion-panel-title Drive
+          v-expansion-panel-text
+            v-switch(
+              label="Enabled"
+              dense
+              :model-value="localFx.drive.enabled"
+              @update:model-value="toggleDrive"
+            )
+            v-slider(
+              dense
+              v-if="localFx.drive.enabled"
+              label="Amount"
+              hide-details
+              min="0"
+              max="1"
+              step="0.05"
+              thumb-label
+              :model-value="localFx.drive.amount"
+              @update:model-value="setDriveAmount"
+            )
+        v-expansion-panel(value="reverb")
+          v-expansion-panel-title Reverb
+          v-expansion-panel-text
+            v-switch(
+              label="Enabled"
+              dense
+              :model-value="localFx.reverb.enabled"
+              @update:model-value="toggleReverb"
+            )
+            v-slider(
+              dense
+              v-if="localFx.reverb.enabled"
+              label="Mix"
+              hide-details
+              min="0"
+              max="0.6"
+              step="0.02"
+              thumb-label
+              :model-value="localFx.reverb.mix"
+              @update:model-value="setReverbMix"
+            )
+        v-expansion-panel(value="routing")
+          v-expansion-panel-title Routing
+          v-expansion-panel-text
+            p Subtle master shaping slot. No additional controls yet.
 </template>
 
 <script lang="ts">
@@ -199,4 +200,21 @@ export default defineComponent({
     }
   }
 }
+
+.fx-popup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(720px, 92vw);
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  background: #080b10;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 20px;
+  z-index: 2000;
+}
+
+
 </style>

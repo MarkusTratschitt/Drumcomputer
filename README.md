@@ -52,6 +52,13 @@ PORT=3001 HMR_PORT=24679 npm run dev
 - AudioContext needs a user gesture before it can play in some browsers; first pad tap will resume the context.
 - Background throttling can delay scheduled steps despite lookahead; keep tab focused for tight timing.
 
+## BFCache Compatibility
+
+- Web Audio: AudioContext is suspended on `pagehide` and resumed on `pageshow` to avoid active audio blocking BFCache restores.
+- Media Input: Microphone streams and their AudioContext are stopped/closed on `pagehide`.
+- MIDI: Device listeners detach on `pagehide` and reattach/refresh on `pageshow` when access is available.
+- Scheduling: Lookahead intervals for sequencer/sync pause on `pagehide` and restart on `pageshow` when they were running.
+
 ## Deterministic FX & Export
 
 - The FX chain now derives from a serializable `FxSettings` snapshot and only applies filter/drive/reverb updates via `setValueAtTime`, making the graph stable for live and rendered sessions alike.
@@ -65,10 +72,11 @@ The Export audio card sits under the soundbank/Fx controls and invokes `exportAu
 ### Reproducing exports with the seed
 Copy the exported seed from the metadata panel (or the JSON blob) and supply it to `exportAudio(renderDuration, sampleRate, { seed: Number(seedValue) })` together with the scene's FX snapshot/grid spec, and the offline render will replay the exact same randomness, FX response, and scheduling that produced the mixdown.
 
-## Recent Fixes / Transport & Pad Grid
+## Recent Fixes / Stability & Diagrams
 
-- Removed stray `button.pad-cell` with undefined bindings and wired PadGrid focus restoration via stable PadCell refs, preventing runtime errors and restoring keyboard focus after selection changes.
-- Transport engine now clears/reseeds scheduler queues on config changes and schedules step boundaries using absolute step indices with wrap-safe guards, avoiding duplicate or dropped triggers during tempo/division updates or loop wraparounds.
+- PadGrid: Stray `button.pad-cell` entfernt; Fokus-Restore nutzt stabile PadCell-Refs und vermeidet Runtime-Errors.
+- TransportEngine: Scheduler wird bei Config-Changes gecleart/neu befüllt; Step-Boundaries nutzen absolute Schritte mit Wrap-Guards, sodass Tempo/Division-Wechsel keine doppelten oder fehlenden Triggers erzeugen.
+- Docs: Mermaid-Diagramme korrigiert (gültige IDs/Arrows, GitHub-kompatibel).
 
 ## Current Status (2025-12-19)
 

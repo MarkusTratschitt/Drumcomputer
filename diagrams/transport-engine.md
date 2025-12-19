@@ -12,11 +12,11 @@ sequenceDiagram
     UI->>Transport: start()
     Transport->>Clock: audioTime()
     Transport->>Transport: set startTimeSec, lastStep
-    Transport->>Scheduler: clear(); start()
+    Transport->>Scheduler: clear() + start()
     Transport->>Scheduler: schedule(next boundary)
     Scheduler-->>Hooks: onStep(stepIndex, audioTime)
     Hooks-->>Subs: (audio pipeline triggered elsewhere)
-    loop tick()
+    loop tick
         UI->>Transport: tick()
         Transport->>Clock: audioTime()
         Transport->>Transport: compute currentStep

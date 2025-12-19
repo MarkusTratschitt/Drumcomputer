@@ -17,7 +17,7 @@ export default defineNuxtConfig({
     ],
 
   
-  css: ['vuetify/styles', '~/styles/drum-machine.less', '~/styles/vuetify-overrides.less'],
+  css: ['vuetify/styles'],
   typescript: {
     strict: true,
     typeCheck: false

@@ -1,21 +1,22 @@
 <template lang="pug">
-.drawer-shell
-  v-tabs(
-    v-model="internalTab"
-    density="comfortable"
-    variant="text"
-    class="drawer-tabs"
-  )
-    v-tab(v-for="tab in tabs" :key="tab.value" :value="tab.value") {{ tab.label }}
-  v-tabs-window(v-model="internalTab" class="drawer-window")
-    v-tabs-window-item(value="sound")
-      slot(name="sound")
-    v-tabs-window-item(value="fx")
-      slot(name="fx")
-    v-tabs-window-item(value="patterns")
-      slot(name="patterns")
-    v-tabs-window-item(value="export")
-      slot(name="export")
+  client-only(tag="div")
+    .drawer-shell
+      v-tabs(
+        v-model="internalTab"
+        density="comfortable"
+        variant="text"
+        class="drawer-tabs"
+      )
+        v-tab(v-for="tab in tabs" :key="tab.value" :value="tab.value") {{ tab.label }}
+      v-tabs-window(v-model="internalTab" class="drawer-window")
+        v-tabs-window-item(value="sound")
+          slot(name="sound")
+        v-tabs-window-item(value="fx")
+          slot(name="fx")
+        v-tabs-window-item(value="patterns")
+          slot(name="patterns")
+        v-tabs-window-item(value="export")
+          slot(name="export")
 </template>
 
 <script lang="ts">

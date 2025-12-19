@@ -1,94 +1,95 @@
 <template lang="pug">
-.panel-shell
-  .panel-header Patterns
-  .panel-body
-    v-row
-      v-col(cols="12" md="6")
-        v-select(
-          label="Current Pattern"
-          dense
-          :items="patternItems"
-          item-title="title"
-          item-value="value"
-          :model-value="selectedPatternId"
-          @update:model-value="handlePatternSelect"
-          hide-details
-        )
-        v-text-field(
-          label="Rename Pattern"
-          dense
-          :model-value="renameValue"
-          :placeholder="currentPattern?.name || 'Pattern'"
-          @update:model-value="updateRenameValue"
-          @change="submitRename"
-          hide-details
-        )
-        v-text-field(
-          label="New Pattern Name"
-          dense
-          :model-value="newPatternName"
-          @update:model-value="setNewPatternName"
-          hide-details
-        )
-        v-btn(
-          color="primary"
-          block
-          class="mt-1"
-          @click="addPattern"
-        ) Add Pattern
-        v-row(class="mt-2" dense)
-          v-col(cols="6")
+  client-only(tag="div")
+    .panel-shell
+      .panel-header Patterns
+      .panel-body
+        v-row
+          v-col(cols="12" md="6")
+            v-select(
+              label="Current Pattern"
+              dense
+              :items="patternItems"
+              item-title="title"
+              item-value="value"
+              :model-value="selectedPatternId"
+              @update:model-value="handlePatternSelect"
+              hide-details
+            )
+            v-text-field(
+              label="Rename Pattern"
+              dense
+              :model-value="renameValue"
+              :placeholder="currentPattern?.name || 'Pattern'"
+              @update:model-value="updateRenameValue"
+              @change="submitRename"
+              hide-details
+            )
+            v-text-field(
+              label="New Pattern Name"
+              dense
+              :model-value="newPatternName"
+              @update:model-value="setNewPatternName"
+              hide-details
+            )
+            v-btn(
+              color="primary"
+              block
+              class="mt-1"
+              @click="addPattern"
+            ) Add Pattern
+            v-row(class="mt-2" dense)
+              v-col(cols="6")
+                v-btn(
+                  color="secondary"
+                  block
+                  @click="emitPatternUndo"
+                ) Undo
+              v-col(cols="6")
+                v-btn(
+                  color="secondary"
+                  block
+                  variant="outlined"
+                  @click="emitPatternRedo"
+                ) Redo
+          v-col(cols="12" md="6")
+            v-select(
+              label="Active Scene"
+              dense
+              :items="sceneItems"
+              item-title="title"
+              item-value="value"
+              :model-value="activeSceneId"
+              @update:model-value="selectScene"
+              hide-details
+              clearable
+            )
+            v-text-field(
+              label="Scene Name"
+              dense
+              :model-value="sceneName"
+              @update:model-value="updateSceneName"
+              @change="emitSceneUpdate"
+              hide-details
+            )
+            v-combobox(
+              label="Pattern Chain"
+              dense
+              clearable
+              multiple
+              chips
+              :items="patternItems"
+              item-title="title"
+              item-value="value"
+              :model-value="scenePatternIds"
+              @update:model-value="setScenePatternIds"
+              hide-details
+            )
             v-btn(
               color="secondary"
               block
-              @click="emitPatternUndo"
-            ) Undo
-          v-col(cols="6")
-            v-btn(
-              color="secondary"
-              block
-              variant="outlined"
-              @click="emitPatternRedo"
-            ) Redo
-      v-col(cols="12" md="6")
-        v-select(
-          label="Active Scene"
-          dense
-          :items="sceneItems"
-          item-title="title"
-          item-value="value"
-          :model-value="activeSceneId"
-          @update:model-value="selectScene"
-          hide-details
-          clearable
-        )
-        v-text-field(
-          label="Scene Name"
-          dense
-          :model-value="sceneName"
-          @update:model-value="updateSceneName"
-          @change="emitSceneUpdate"
-          hide-details
-        )
-        v-combobox(
-          label="Pattern Chain"
-          dense
-          clearable
-          multiple
-          chips
-          :items="patternItems"
-          item-title="title"
-          item-value="value"
-          :model-value="scenePatternIds"
-          @update:model-value="setScenePatternIds"
-          hide-details
-        )
-        v-btn(
-          color="secondary"
-          block
-          class="mt-1"
-          @click="addScene"
-        ) Add Scene
+              class="mt-1"
+              @click="addScene"
+            ) Add Scene
 </template>
 
 <script lang="ts">

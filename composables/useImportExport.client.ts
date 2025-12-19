@@ -1,6 +1,6 @@
 import { ref } from 'vue'
 import { saveAs } from 'file-saver'
-import MidiPkg, { Midi as MidiType } from '@tonejs/midi'
+import { Midi as MidiType } from '@tonejs/midi'
 import { defaultMidiMapping } from '@/domain/midiMapping'
 import { DEFAULT_GRID_SPEC, normalizeGridSpec } from '@/domain/timing'
 import { clampVelocity, DEFAULT_STEP_VELOCITY } from '@/domain/velocity'
@@ -19,7 +19,7 @@ import type { SampleRef, Soundbank } from '@/types/audio'
 import type { RenderMetadata, RenderEvent } from '@/types/render'
 import type { DrumPadId, Pattern } from '@/types/drums'
 
-const Midi = (typeof MidiPkg !== 'undefined' && MidiPkg && MidiPkg.Midi) ? MidiPkg.Midi : undefined
+const Midi = MidiType
 const encoderHeader = 'Drumcomputer Pattern Export'
 
 const audioBufferToWav = (buffer: AudioBuffer) => {

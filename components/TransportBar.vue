@@ -1,35 +1,36 @@
 <template lang="pug">
-v-app-bar(dense flat class="transport-bar")
-  .transport-controls
-    v-btn(icon :disabled="isPlaying" color="primary" @click="$emit('play')" aria-label="Play")
-      v-icon mdi-play
-    v-btn(icon :disabled="!isPlaying" color="error" @click="$emit('stop')" aria-label="Stop")
-      v-icon mdi-stop
-  .transport-parameters
-    v-text-field(
-      dense
-      type="number"
-      class="bpm-input"
-      label="BPM"
-      :model-value="bpm"
-      @update:model-value="onBpm"
-      min="40"
-      max="240"
-      hide-details
-    )
-    v-select(
-      dense
-      class="division-select"
-      label="Division"
-      :items="divisionItems"
-      item-title="title"
-      item-value="value"
-      :model-value="division"
-      @update:model-value="onDivision"
-      hide-details
-    )
-    v-btn(icon class="loop-toggle" :color="loop ? 'cyan' : 'grey'" @click="toggleLoop" aria-label="Loop")
-      v-icon(:class="{ 'mdi-spin': loop }") mdi-repeat
+  client-only(tag="div")
+    v-app-bar(dense flat class="transport-bar")
+      .transport-controls
+        v-btn(icon :disabled="isPlaying" color="primary" @click="$emit('play')" aria-label="Play")
+          v-icon mdi-play
+        v-btn(icon :disabled="!isPlaying" color="error" @click="$emit('stop')" aria-label="Stop")
+          v-icon mdi-stop
+      .transport-parameters
+        v-text-field(
+          dense
+          type="number"
+          class="bpm-input"
+          label="BPM"
+          :model-value="bpm"
+          @update:model-value="onBpm"
+          min="40"
+          max="240"
+          hide-details
+        )
+        v-select(
+          dense
+          class="division-select"
+          label="Division"
+          :items="divisionItems"
+          item-title="title"
+          item-value="value"
+          :model-value="division"
+          @update:model-value="onDivision"
+          hide-details
+        )
+        v-btn(icon class="loop-toggle" :color="loop ? 'cyan' : 'grey'" @click="toggleLoop" aria-label="Loop")
+        v-icon(:class="{ 'mdi-spin': loop }") mdi-repeat
 </template>
 
 <script lang="ts">

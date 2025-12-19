@@ -1,11 +1,12 @@
 <template lang="pug">
-button.step-cell(
-  type="button"
-  :class="cellClasses"
-  :aria-pressed="isActive"
-  @click="onToggle"
-)
-  span.step-tag {{ displayLabel }}
+  client-only(tag="div")
+    button.step-cell(
+      type="button"
+      :class="cellClasses"
+      :aria-pressed="isActive"
+      @click="onToggle"
+    )
+    span.step-tag {{ displayLabel }}
 </template>
 
 <script lang="ts">

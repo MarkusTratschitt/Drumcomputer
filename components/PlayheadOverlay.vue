@@ -1,8 +1,9 @@
 <template lang="pug">
-div.playhead-overlay(
-  :style="overlayStyle"
-  :class="{ 'is-active': isPlaying }"
-)
+  client-only(tag="div")
+    div.playhead-overlay(
+      :style="overlayStyle"
+      :class="{ 'is-active': isPlaying }"
+    )
 </template>
 
 <script lang="ts">

@@ -1,58 +1,59 @@
 <template lang="pug">
-.panel-shell
-  .panel-header Export
-  .panel-body
-    v-btn(
-      color="primary"
-      block
-      :loading="isExporting"
-      :disabled="isExporting"
-      @click="$emit('export')"
-    ) Export mixdown
-    v-alert(
-      v-if="exportError"
-      type="error"
-      dense
-      class="mt-2"
-    ) {{ exportError }}
-    .metadata-grid
-      .metadata-row
-        span.label Seed
-        span.value {{ metadata?.seed ?? '—' }}
-      .metadata-row
-        span.label BPM
-        span.value {{ metadata?.bpm ?? '—' }}
-      .metadata-row
-        span.label Duration
-        span.value {{ formattedDuration }}
-      .metadata-row
-        span.label Grid
-        span.value {{ gridLabel }}
-    v-btn(
-      color="secondary"
-      block
-      :disabled="!audioBlob || isExporting"
-      class="mt-2"
-      @click="$emit('download:mixdown')"
-    ) Download WAV
-    v-btn(
-      color="secondary"
-      block
-      :disabled="!hasZipArtifacts || isExporting"
-      class="mt-2"
-      variant="outlined"
-      @click="$emit('download:zip')"
-    ) Download ZIP bundle
-    v-divider(class="my-3")
-    .stem-header(v-if="stemEntries.length > 0")
-      span Stem exports
-      v-btn(text small class="ml-auto" :disabled="isExporting" @click="$emit('download:stems')") Download all
-    v-list(v-if="stemEntries.length > 0" density="compact")
-      v-list-item(v-for="stem in stemEntries" :key="stem.padId")
-        v-list-item-title {{ stem.label }}
-        v-list-item-subtitle {{ stem.fileName }}
-        template(#append)
-          v-btn(text small :disabled="isExporting" @click="$emit('download:stem', stem.padId)") Download
+  client-only(tag="div")
+    .panel-shell
+      .panel-header Export
+      .panel-body
+        v-btn(
+          color="primary"
+          block
+          :loading="isExporting"
+          :disabled="isExporting"
+          @click="$emit('export')"
+        ) Export mixdown
+        v-alert(
+          v-if="exportError"
+          type="error"
+          dense
+          class="mt-2"
+        ) {{ exportError }}
+        .metadata-grid
+          .metadata-row
+            span.label Seed
+            span.value {{ metadata?.seed ?? '—' }}
+          .metadata-row
+            span.label BPM
+            span.value {{ metadata?.bpm ?? '—' }}
+          .metadata-row
+            span.label Duration
+            span.value {{ formattedDuration }}
+          .metadata-row
+            span.label Grid
+            span.value {{ gridLabel }}
+        v-btn(
+          color="secondary"
+          block
+          :disabled="!audioBlob || isExporting"
+          class="mt-2"
+          @click="$emit('download:mixdown')"
+        ) Download WAV
+        v-btn(
+          color="secondary"
+          block
+          :disabled="!hasZipArtifacts || isExporting"
+          class="mt-2"
+          variant="outlined"
+          @click="$emit('download:zip')"
+        ) Download ZIP bundle
+        v-divider(class="my-3")
+        .stem-header(v-if="stemEntries.length > 0")
+          span Stem exports
+          v-btn(text small class="ml-auto" :disabled="isExporting" @click="$emit('download:stems')") Download all
+        v-list(v-if="stemEntries.length > 0" density="compact")
+          v-list-item(v-for="stem in stemEntries" :key="stem.padId")
+            v-list-item-title {{ stem.label }}
+            v-list-item-subtitle {{ stem.fileName }}
+            template(#append)
+              v-btn(text small :disabled="isExporting" @click="$emit('download:stem', stem.padId)") Download
 </template>
 
 <script lang="ts">

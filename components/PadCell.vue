@@ -1,14 +1,16 @@
 <template lang="pug">
-button.pad-cell(
-  type="button"
-  :class="padClasses"
-  @pointerdown.prevent="handleActivate"
-  @click.prevent="handleActivate"
-  @keydown.enter.prevent="handleActivate"
-  @keydown.space.prevent="handleActivate"
-  :aria-pressed="isSelected"
-)
-  span.pad-label {{ label }}
+  client-only(tag="div")
+    button.pad-cell(
+      type="button"
+      :class="padClasses"
+      @pointerdown.prevent="handleActivate"
+      @click.prevent="handleActivate"
+      @keydown.enter.prevent="handleActivate"
+      @keydown.space.prevent="handleActivate"
+      :aria-pressed="isSelected"
+    )
+    span.pad-label {{ label }}
+    span.pad-key {{ keyLabel }}
 </template>
 
 <script lang="ts">
@@ -45,74 +47,61 @@ export default defineComponent({
 
 <style scoped lang="less">
 .pad-cell {
-  border-radius: 12px;
-  border: 2px solid transparent;
-  background: linear-gradient(135deg, #12151b, #1c2130);
-  color: #f5f7fb;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.3s ease;
-  position: relative;
-  overflow: visible;
-
-  &:active {
-    transform: scale(0.97);
-    box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.8);
-  }
-
-  &.is-selected {
-    border-color: #00f8ff;
-  }
-
-  &.is-playing {
-    animation: padPulse 2s ease-in-out infinite;
-  }
-
-  &:focus-visible {
-    outline: 2px solid #00f8ff;
-    outline-offset: 2px;
-  }
-
-
-  &.is-triggered {
-    &:after {
-      content: '';
-      position: absolute;
-      inset: 4px;
-      border-radius: 10px;
-      border: 2px solid rgba(0, 255, 255, 0.9);
-      animation: triggerFlash 0.35s ease-out;
-    }
-  }
+  /* Basis */
+  background-color: #1a2230; /* geladen, neutral blau */
+  border: 1px solid #2a3344;
+  transition: background-color 0.08s linear, box-shadow 0.08s linear;
 }
 
 .pad-label {
+  font-size: 12px;
+  opacity: 0.75;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ───────── Unbelegt ───────── */
+.pad-cell.is-empty {
+  background-color: #f2f1e8; /* weiß mit minimalem Gelbstich */
+  border-color: #d6d4c8;
+}
+
+/* Fokus & Auswahl bleiben wie bei dir definiert */
+.pad-cell.is-selected {
+  border-color: #00f8ff;
+}
+
+/* ───────── Trigger / Velocity ───────── */
+/* Je höher Velocity, desto dunkler */
+.pad-cell.is-triggered {
+  background-color: color-mix(
+    in srgb,
+    #1a2230 calc(100% - (var(--pad-velocity) * 60%)),
+    #000000
+  );
+}
+
+.pad-cell.is-triggered .pad-label {
+  opacity: 0.85;
+}
+
+/* Optional: geladene Pads leicht abdunkeln bei Velocity */
+.pad-cell:not(.is-empty).is-triggered::after {
+  box-shadow: 0 0
+    calc(10px * var(--pad-velocity))
+    rgba(0, 200, 220, calc(0.15 + 0.4 * var(--pad-velocity)));
+}
+
+.pad-key {
+  position: absolute;
+  bottom: 6px;
+  left: 6px;
+  font-size: 10px;
+  opacity: 0;
   pointer-events: none;
 }
 
-@keyframes triggerFlash {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0;
-    transform: scale(1.1);
-  }
-}
-
-@keyframes padPulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(0, 255, 255, 0.15);
-  }
-  50% {
-    box-shadow: 0 0 12px 6px rgba(0, 255, 255, 0.2);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(0, 255, 255, 0);
-  }
+.pad-grid:focus-visible .pad-key {
+  opacity: 0.35;
 }
 </style>

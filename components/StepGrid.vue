@@ -1,21 +1,22 @@
 <template lang="pug">
-.step-grid-shell
-  .step-row
-    StepCell(
-      v-for="stepIndex in totalSteps"
-      :key="stepIndex"
-      :display-label="String(stepIndex)"
-      :is-active="isActive(stepIndex - 1)"
-      :is-accent="isAccent(stepIndex - 1)"
-      :is-current="isCurrent(stepIndex - 1)"
-      @cell:toggle="emitToggle(stepIndex - 1)"
-    )
-    PlayheadOverlay(
-      v-if="totalSteps > 0"
-      :current-step="currentStepNormalized"
-      :total-steps="totalSteps"
-      :is-playing="isPlaying"
-    )
+  client-only(tag="div")
+    .step-grid-shell
+      .step-row
+        StepCell(
+          v-for="stepIndex in totalSteps"
+          :key="stepIndex"
+          :display-label="String(stepIndex)"
+          :is-active="isActive(stepIndex - 1)"
+          :is-accent="isAccent(stepIndex - 1)"
+          :is-current="isCurrent(stepIndex - 1)"
+          @cell:toggle="emitToggle(stepIndex - 1)"
+        )
+        PlayheadOverlay(
+          v-if="totalSteps > 0"
+          :current-step="currentStepNormalized"
+          :total-steps="totalSteps"
+          :is-playing="isPlaying"
+        )
 </template>
 
 <script lang="ts">

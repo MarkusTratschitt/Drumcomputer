@@ -14,6 +14,7 @@ export interface ScheduledTask {
 export function useScheduler(config: SchedulerConfig) {
   const tasks = ref<ScheduledTask[]>([])
   const intervalId = ref<number | null>(null)
+  let wasRunningOnHide = false
 
   const tick = () => {
     const now = config.getTime()
@@ -43,7 +44,34 @@ export function useScheduler(config: SchedulerConfig) {
     tasks.value = []
   }
 
-  onBeforeUnmount(stop)
+  if (typeof window !== 'undefined') {
+    const handlePageHide = () => {
+      if (intervalId.value !== null) {
+        wasRunningOnHide = true
+        stop()
+      } else {
+        wasRunningOnHide = false
+      }
+    }
+
+    const handlePageShow = () => {
+      if (wasRunningOnHide) {
+        start()
+        tick()
+      }
+    }
+
+    window.addEventListener('pagehide', handlePageHide)
+    window.addEventListener('pageshow', handlePageShow)
+
+    onBeforeUnmount(() => {
+      stop()
+      window.removeEventListener('pagehide', handlePageHide)
+      window.removeEventListener('pageshow', handlePageShow)
+    })
+  } else {
+    onBeforeUnmount(stop)
+  }
 
   return {
     start,
