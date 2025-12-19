@@ -24,6 +24,10 @@
 <style scoped lang="less">
 @import '@/styles/variables.less';
 
+:deep(.v-application) {
+  height: 100%;
+}
+
 /* ───────── Root ───────── */
 
 .device-root {
@@ -39,9 +43,11 @@
 .device-stage {
   flex: 1 1 auto;
   min-height: 0;
+  min-width: 0;
   display: flex;
   gap: @space-m;
   padding: @space-m;
+  align-items: stretch;
 }
 
 /* ───────── Main Working Area ───────── */
@@ -51,11 +57,12 @@
   min-width: 0;
   min-height: 0;
   display: flex;
+  flex-direction: column;
   background: @color-surface-1;
   border: 1px solid @color-border-1;
   border-radius: @radius-l;
   padding: @space-m;
-  overflow: hidden;
+  overflow: visible;
 }
 
 /* ───────── Hardware Area (rechts) ───────── */
@@ -63,6 +70,7 @@
 .device-hardware {
   flex: 0 0 auto;
   min-width: 380px;
+  min-height: 0;
   display: flex;
   flex-direction: row;
   align-items: stretch;
@@ -78,6 +86,7 @@
   min-width: 260px;
   display: flex;
   align-items: center;
+  justify-content: center;
   background: @color-surface-1;
   border: 1px solid @color-border-1;
   border-radius: @radius-m;
@@ -89,6 +98,7 @@
 .device-pads {
   flex: 1 1 auto;
   min-width: 120px;
+  min-height: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -103,6 +113,7 @@
 .pads-square {
   width: 100%;
   max-width: 420px; /* Obergrenze für sehr große Screens */
+  max-height: 100%;
   aspect-ratio: 1 / 1;
   display: flex;
 }
