@@ -28,5 +28,5 @@ export function defaultMidiMapping(): MidiMapping {
     noteMap[note] = padId
     noteMapInverse[padId] = note
   })
-  return { noteMap, noteMapInverse }
+  return { noteMap, noteMapInverse, transportMap: {} }
 }

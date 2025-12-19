@@ -4,16 +4,52 @@
       template(#main)
         .drumshell
           .main-shell
-            slot
+            StepGrid(
+              ref="stepGrid"
+              :grid-spec="gridSpec"
+              :steps="pattern.steps"
+              :selected-pad="selectedPadId"
+              :current-step="currentStep"
+              :is-playing="isPlaying"
+              @step:toggle="toggleStep"
+              @playhead:scrub="scrubPlayhead"
+              @step:velocity="updateStepVelocity"
+            )
 
       template(#transport)
-        TransportBar
+        TransportBar(
+          :bpm="bpm"
+          :is-playing="isPlaying"
+          :loop="transport.loop"
+          :division="gridSpec.division"
+          :divisions="divisions"
+          :is-midi-learning="midiLearn.isLearning.value"
+          @play="start"
+          @stop="stop"
+          @bpm:update="updateBpm"
+          @bpm:increment="incrementBpm"
+          @bpm:decrement="decrementBpm"
+          @division:update="setDivision"
+          @loop:update="setLoop"
+          @midi-learn:toggle="toggleMidiLearn"
+        )
+        .midi-learn-status(v-if="midiLearn.isLearning.value")
+          span {{ midiLearnLabel }}
 
       template(#pads)
-        PadGrid
+        PadGrid(
+          :pads="pads"
+          :pad-states="padStates"
+          :selected-pad="selectedPadId"
+          @pad:down="handlePad"
+          @pad:select="selectPad"
+        )
 
       template(#drawer)
-        slot(name="drawer")
+        FxPanel(
+          :fx-settings="sequencer.fxSettings"
+          @fx:update="updateFx"
+        )
 </template>
 
 <script lang="ts">
@@ -31,6 +67,7 @@ import { usePatternStorage } from '@/composables/usePatternStorage.client'
 import { useSoundbankStorage } from '@/composables/useSoundbankStorage.client'
 import { useImportExport } from '@/composables/useImportExport.client'
 import { useCapabilities } from '@/composables/useCapabilities.client'
+import { useMidiLearn } from '@/composables/useMidiLearn'
 import TransportBar from './TransportBar.vue'
 import PadGrid from './PadGrid.vue'
 import StepGridComponent from './StepGrid.vue'
@@ -114,11 +151,12 @@ export default defineComponent({
     session.setCapabilities(capabilitiesProbe.capabilities.value)
 
     const importExport = useImportExport()
+    const midi = useMidi()
+    const midiLearn = useMidiLearn(midi)
     const sequencer = useSequencer({
       getPattern: () => patterns.currentPattern,
       onPatternBoundary: () => patterns.advanceScenePlayback()
     })
-    const midi = useMidi()
     const handleExternalStart = () => {
       if (!transport.isPlaying) {
         patterns.prepareScenePlayback()
@@ -197,6 +235,7 @@ export default defineComponent({
       sequencer,
       sync,
       midi,
+      midiLearn,
       patternStorage,
       soundbankStorage,
       pads,
@@ -279,6 +318,14 @@ computed: {
     return Boolean(this.exportMetadata && this.exportAudioBlob)
   },
   
+  midiLearnLabel(): string {
+    return (
+      this.midiLearn.learningLabel.value ??
+      this.midiLearn.status.value ??
+      'Listening for MIDI...'
+    )
+  },
+  
   padStates() {
     const bankPads = this.soundbanks.currentBank?.pads ?? {}
     const result = {} as Record<DrumPadId, PadState>
@@ -353,7 +400,38 @@ computed: {
       { deep: true }
     )
     const stopMidiListener = this.midi.listen((message) => {
+      if (this.midiLearn.handleMessage(message)) {
+        return
+      }
+
       if (message.type === 'noteon' && typeof message.note === 'number') {
+        const transportNote = this.midi.mapping.value.transportMap?.play === message.note
+          ? 'play'
+          : this.midi.mapping.value.transportMap?.stop === message.note
+            ? 'stop'
+            : this.midi.mapping.value.transportMap?.bpmUp === message.note
+              ? 'bpmUp'
+              : this.midi.mapping.value.transportMap?.bpmDown === message.note
+                ? 'bpmDown'
+                : null
+
+        if (transportNote === 'play') {
+          void this.start()
+          return
+        }
+        if (transportNote === 'stop') {
+          this.stop()
+          return
+        }
+        if (transportNote === 'bpmUp') {
+          this.updateBpm(this.bpm + 1)
+          return
+        }
+        if (transportNote === 'bpmDown') {
+          this.updateBpm(this.bpm - 1)
+          return
+        }
+
         const pad = this.midi.mapNoteToPad(message.note)
         if (pad) {
           this.handlePad(pad, message.velocity ?? 1)
@@ -412,11 +490,17 @@ computed: {
     },
     async start() {
       if (this.transport.isPlaying) return
+      if (this.midiLearn.isLearning.value) {
+        this.midiLearn.setTarget({ type: 'transport', action: 'play' })
+      }
       this.patterns.prepareScenePlayback()
       await this.sequencer.start()
       this.sync.startTransport(this.transport.bpm)
     },
     stop() {
+      if (this.midiLearn.isLearning.value) {
+        this.midiLearn.setTarget({ type: 'transport', action: 'stop' })
+      }
       this.sequencer.stop()
       this.sync.stopTransport()
     },
@@ -430,9 +514,35 @@ computed: {
     },
     selectPad(pad: DrumPadId) {
       this.selectedPadId = pad
+      this.focusStepGrid()
+      if (this.midiLearn.isLearning.value) {
+        this.midiLearn.setTarget({ type: 'pad', padId: pad })
+      }
     },
     toggleStep(payload: { barIndex: number; stepInBar: number; padId: DrumPadId }) {
       this.patterns.toggleStep(payload.barIndex, payload.stepInBar, payload.padId)
+    },
+    updateStepVelocity(payload: {
+      barIndex: number
+      stepInBar: number
+      padId: DrumPadId
+      velocity: number
+    }) {
+      this.patterns.setStepVelocity(
+        payload.barIndex,
+        payload.stepInBar,
+        payload.padId,
+        payload.velocity
+      )
+    },
+    scrubPlayhead(payload: { stepIndex: number }) {
+      this.transport.setCurrentStep(payload.stepIndex)
+    },
+    focusStepGrid() {
+      const grid = this.$refs.stepGrid as
+        | (InstanceType<typeof StepGridComponent> & { focusGrid?: () => void })
+        | undefined
+      grid?.focusGrid?.()
     },
     async requestMidi() {
       await this.midi.requestAccess()
@@ -470,6 +580,25 @@ computed: {
     },
     setLoop(loop: boolean) {
       this.transport.setLoop(loop)
+    },
+    incrementBpm() {
+      if (this.midiLearn.isLearning.value) {
+        this.midiLearn.setTarget({ type: 'transport', action: 'bpmUp' })
+      }
+      this.updateBpm(this.bpm + 1)
+    },
+    decrementBpm() {
+      if (this.midiLearn.isLearning.value) {
+        this.midiLearn.setTarget({ type: 'transport', action: 'bpmDown' })
+      }
+      this.updateBpm(this.bpm - 1)
+    },
+    toggleMidiLearn() {
+      if (this.midiLearn.isLearning.value) {
+        this.midiLearn.disable()
+      } else {
+        this.midiLearn.enable()
+      }
     },
     setDivision(division: TimeDivision) {
       const gridSpec = normalizeGridSpec({ ...this.gridSpec, division })
@@ -638,6 +767,8 @@ computed: {
 </script>
 
 <style scoped lang="less">
+@import '@/styles/variables.less';
+
 .drumshell {
   min-height: 100svh;
   display: flex;
@@ -707,5 +838,11 @@ computed: {
       height: 34vh;
     }
   }
+}
+
+.midi-learn-status {
+  margin-top: 8px;
+  color: @color-text-secondary;
+  font-size: @font-size-xs;
 }
 </style>

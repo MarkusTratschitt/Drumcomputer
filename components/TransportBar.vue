@@ -6,7 +6,22 @@
           v-icon mdi-play
         v-btn(icon :disabled="!isPlaying" color="error" @click="$emit('stop')" aria-label="Stop")
           v-icon mdi-stop
+        v-btn(
+          icon
+          :color="isMidiLearning ? 'cyan' : 'grey'"
+          @click="$emit('midi-learn:toggle')"
+          :aria-pressed="isMidiLearning"
+          aria-label="Toggle MIDI learn"
+        )
+          v-icon mdi-midi
       .transport-parameters
+        v-btn(
+          icon
+          density="compact"
+          @click="$emit('bpm:decrement')"
+          aria-label="BPM down"
+        )
+          v-icon mdi-minus
         v-text-field(
           dense
           type="number"
@@ -18,6 +33,13 @@
           max="240"
           hide-details
         )
+        v-btn(
+          icon
+          density="compact"
+          @click="$emit('bpm:increment')"
+          aria-label="BPM up"
+        )
+          v-icon mdi-plus
         v-select(
           dense
           class="division-select"
@@ -44,9 +66,19 @@ export default defineComponent({
     isPlaying: { type: Boolean, required: true },
     loop: { type: Boolean, required: true },
     division: { type: Number as () => TimeDivision, required: true },
-    divisions: { type: Array as () => TimeDivision[], required: true }
+    divisions: { type: Array as () => TimeDivision[], required: true },
+    isMidiLearning: { type: Boolean, default: false }
   },
-  emits: ['play', 'stop', 'bpm:update', 'loop:update', 'division:update'],
+  emits: [
+    'play',
+    'stop',
+    'bpm:update',
+    'bpm:increment',
+    'bpm:decrement',
+    'loop:update',
+    'division:update',
+    'midi-learn:toggle'
+  ],
   computed: {
     divisionItems(): Array<{ title: string; value: TimeDivision }> {
       return this.divisions.map((value) => ({
@@ -75,6 +107,8 @@ export default defineComponent({
 </script>
 
 <style scoped lang="less">
+@import '@/styles/variables.less';
+
 .transport-bar {
   background: @color-surface-2;
   border: 1px solid @color-border-2;
@@ -86,15 +120,15 @@ export default defineComponent({
   box-shadow: none;
 
   .transport-controls {
-   display: flex;
-   gap: @space-xs;
+    display: flex;
+    gap: @space-xs;
   }
 
   .transport-parameters {
-   display: flex;
-   align-items: center;
-   gap: @space-m;
-   margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: @space-m;
+    margin-left: auto;
   }
 
   .bpm-input,
@@ -103,8 +137,8 @@ export default defineComponent({
   }
 
   .loop-toggle {
-   border-radius: @radius-s;
-   border: 1px solid @color-border-2;
+  border-radius: @radius-s;
+  border: 1px solid @color-border-2;
   }
 }
 </style>

@@ -1,41 +1,52 @@
 <template lang="pug">
   client-only(tag="div")
     button.step-cell(
-      type="button"
-      :class="cellClasses"
-      :aria-pressed="isActive"
-      @click="onToggle"
-          box-shadow: 0 0 0 2px fade(@color-accent-primary, 60%);
-    span.step-tag {{ displayLabel }}
+      type="button",
+      :class="cellClasses",
+      :aria-pressed="isActive",
+      @click="onToggle",
+      @pointerdown="onPointerDown",
+      @pointermove="onPointerMove",
+      @pointerup="onPointerUp",
+      @pointercancel="onPointerCancel",
+      )
+      span.step-tag {{ displayLabel }}
 </template>
 
-          background: fade(@color-accent-primary, 15%);
+<script lang="ts">
 import { defineComponent } from 'vue'
 
 export default defineComponent({
-          background: linear-gradient(
-            135deg,
-            fade(@color-accent-warning, 25%),
-            fade(@color-accent-warning, 65%)
-          );
-      required: true
+  name: 'StepCell',
+  emits: [
+    'cell:toggle',
+    'cell:pointerdown',
+    'cell:pointermove',
+    'cell:pointerup',
+    'cell:pointercancel'
+  ],
+  props: {
+    isAccent: {
+      type: Boolean,
+      required: false,
+      default: false
     },
     isActive: {
-          background: linear-gradient(
-            135deg,
-            fade(@color-accent-warning, 35%),
-            fade(@color-accent-primary, 35%)
-          );
+      type: Boolean,
+      required: false,
       default: false
     },
     isCurrent: {
-          box-shadow: inset 0 0 0 2px fade(@color-accent-primary, 90%);
+      type: Boolean,
+      required: false,
       default: false
+    },
+    displayLabel: {
+      type: String,
+      required: false,
+      default: ''
     }
   },
-
-        font-size: @font-size-xs;
-        letter-spacing: @letter-spacing-tight;
   computed: {
     cellClasses(): Record<string, boolean> {
       return {
@@ -45,25 +56,41 @@ export default defineComponent({
       }
     }
   },
-
   methods: {
     onToggle(): void {
       this.$emit('cell:toggle')
+    },
+    onPointerDown(event: PointerEvent): void {
+      if (event.currentTarget instanceof HTMLElement) {
+        event.currentTarget.setPointerCapture(event.pointerId)
+      }
+      this.$emit('cell:pointerdown', event)
+    },
+    onPointerMove(event: PointerEvent): void {
+      this.$emit('cell:pointermove', event)
+    },
+    onPointerUp(event: PointerEvent): void {
+      this.$emit('cell:pointerup', event)
+    },
+    onPointerCancel(event: PointerEvent): void {
+      this.$emit('cell:pointercancel', event)
     }
   }
 })
 </script>
 
+<style lang="less" scoped>
+@import '@/styles/variables.less';
 .step-cell {
   border: none;
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.04);
-  color: #f8fafc;
+  border-radius: @radius-s;
+  background: fade(@color-accent-primary, 15%);
+  color: @color-text-primary;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.75rem;
-  padding: 8px 0;
+  font-size: @font-size-xs;
+  padding: @space-xs 0;
   transition: background 0.2s ease, transform 0.1s ease, box-shadow 0.2s ease;
   position: relative;
   cursor: pointer;
@@ -73,7 +100,7 @@ export default defineComponent({
   z-index: 1;
 
   &:not(.is-active):hover {
-    background: rgba(120, 125, 140, 0.35);
+    background: fade(@color-accent-primary, 25%);
   }
 
   &:active {
@@ -82,35 +109,58 @@ export default defineComponent({
 
   &:focus-visible {
     outline: none;
-    box-shadow: 0 0 0 2px rgba(0, 255, 255, 0.6);
+    box-shadow: 0 0 0 2px fade(@color-accent-primary, 60%);
   }
 
   &.is-active {
-    background: rgba(0, 255, 255, 0.15);
+    background: fade(@color-accent-primary, 15%);
   }
 
   &.is-accent {
     background: linear-gradient(
       135deg,
-      rgba(255, 180, 0, 0.25),
-      rgba(255, 120, 0, 0.65)
+      fade(@color-accent-warning, 25%),
+      fade(@color-accent-warning, 65%)
     );
   }
 
   &.is-active.is-accent {
     background: linear-gradient(
       135deg,
-      rgba(255, 200, 80, 0.35),
-      rgba(0, 255, 255, 0.35)
+      fade(@color-accent-warning, 35%),
+      fade(@color-accent-primary, 35%)
     );
   }
 
   &.is-current {
-    box-shadow: inset 0 0 0 2px rgba(0, 255, 255, 0.9);
+    box-shadow: inset 0 0 0 2px fade(@color-accent-primary, 90%);
+  }
+
+  &.is-accent.is-current {
+    box-shadow:
+      inset 0 0 0 2px fade(@color-accent-warning, 85%),
+      0 0 12px fade(@color-accent-warning, 32%);
+    animation: accent-scan-pulse 160ms ease-out 1;
   }
 }
 
 .step-tag {
-  font-size: 0.7rem;
-  letter-spacing: 0.08em;
+  font-size: @font-size-xs;
+  letter-spacing: @letter-spacing-tight;
 }
+
+@keyframes accent-scan-pulse {
+  from {
+    transform: scale(1.02);
+    box-shadow:
+      inset 0 0 0 2px fade(@color-accent-warning, 95%),
+      0 0 16px fade(@color-accent-warning, 38%);
+  }
+  to {
+    transform: scale(1);
+    box-shadow:
+      inset 0 0 0 2px fade(@color-accent-warning, 85%),
+      0 0 12px fade(@color-accent-warning, 32%);
+  }
+}
+</style>

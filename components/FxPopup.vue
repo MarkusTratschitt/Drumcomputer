@@ -17,6 +17,8 @@
 </script>
 
 <style lang="less" scoped>
+@import '@/styles/variables.less';
+
 .fx-popup {
   position: fixed;
   top: 50%;

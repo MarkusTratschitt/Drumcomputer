@@ -201,6 +201,9 @@ export function useMidi() {
     sendStop,
     mapNoteToPad,
     setPadForNote,
+    setMapping: (next: MidiMapping) => {
+      mapping.value = next
+    },
     setSelectedInput,
     setSelectedOutput
   }

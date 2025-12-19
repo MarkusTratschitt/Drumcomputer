@@ -89,6 +89,8 @@ export default defineComponent({
 </script>
 
 <style scoped lang="less">
+@import '@/styles/variables.less';
+
 .panel-shell {
   border: 1px solid @color-border-2;
   border-radius: @radius-l;

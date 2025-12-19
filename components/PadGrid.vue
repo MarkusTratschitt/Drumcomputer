@@ -3,6 +3,9 @@
     .pad-grid(
       role="grid"
       tabindex="0"
+      aria-label="Pad grid"
+      :aria-rowcount="4"
+      :aria-colcount="4"
       @keydown.arrow-up.prevent="moveSelection(-4)"
       @keydown.arrow-down.prevent="moveSelection(4)"
       @keydown.arrow-left.prevent="moveSelection(-1)"
@@ -24,7 +27,11 @@
       :is-triggered="padStates[pad]?.isTriggered ?? false"
       :is-playing="padStates[pad]?.isPlaying ?? false"
       :is-empty="!padStates[pad]"
-      :key-label="KEY_LABELS[index]"
+      :key-label="keyLabels[index]"
+      role="gridcell"
+      :aria-label="padAriaLabel(pad)"
+      :aria-rowindex="Math.floor(index / 4) + 1"
+      :aria-colindex="(index % 4) + 1"
       @pad:down="$emit('pad:down', $event)"
       @pad:select="$emit('pad:select', $event)"
     )
@@ -38,7 +45,8 @@ import type { DrumPadId } from '@/types/drums'
 const KEY_LABELS = [
   'Q','W','E','R',
   'A','S','D','F',
-  'Z','X','C','V'
+  'Z','X','C','V',
+  '1','2','3','4'
 ]
 
 type PadState = {
@@ -95,8 +103,10 @@ export default defineComponent({
   },
 
   mounted() {
-    if (!this.selectedPad && this.pads.length > 0) {
-      this.$emit('pad:select', this.pads[0])
+    if (this.pads.length !== this.keyLabels.length) {
+      console.warn(
+        `[PadGrid] pads (${this.pads.length}) ≠ keyLabels (${this.keyLabels.length})`
+      )
     }
   },
 
@@ -113,6 +123,11 @@ export default defineComponent({
 
     padLabel(pad: DrumPadId): string {
       return this.padStates[pad]?.label ?? pad.toUpperCase()
+    },
+
+    padAriaLabel(pad: DrumPadId): string {
+      const label = this.padLabel(pad)
+      return `${label} pad`
     },
 
     handlePadDown(pad: DrumPadId, velocity: number) {
@@ -161,38 +176,37 @@ export default defineComponent({
 </script>
 
 <style scoped lang="less">
+@import '@/styles/variables.less';
+
 .pad-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   grid-template-rows: repeat(4, minmax(0, 1fr));
-  gap: 10px;
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    grid-template-rows: repeat(4, minmax(0, 1fr));
-    gap: @space-s;
-    padding: @space-s;
-    background: @color-surface-2;
-    border-radius: @radius-l;
-    border: 1px solid @color-border-2;
-    height: 100%;
+  gap: @space-s;
+  padding: @space-s;
+  background: red;
+  border-radius: @radius-l;
+  border: 1px solid @color-border-2;
+  width: 100%;
+  height: 100%;
   outline-offset: 6px;
 }
   // Fokus-Outline nach variables.less
-  .pad-grid:focus-visible {
-    outline: @outline-focus;
-    outline-offset: @outline-focus-offset;
+.pad-grid:focus-visible {
+  outline: @outline-focus;
+  outline-offset: @outline-focus-offset;
   border-color: #00f8ff;
 }
   // Selektierte Pad-Farbe nach variables.less
-  .pad-cell.is-selected {
-    border-color: @color-accent-primary;
+.pad-cell.is-selected {
+  border-color: @color-accent-primary;
   outline: 2px dashed #00f8ff;
   outline-offset: 3px;
-  .pad-cell:focus-visible:not(.is-selected) {
-    outline: @outline-focus;
-    outline-offset: @outline-focus-offset;
-  box-shadow: 0 0 calc(12px * var(--pad-velocity))
-    rgba(0, 255, 255, calc(0.2 + 0.6 * var(--pad-velocity)));
 }
-    box-shadow: 0 0 calc(12px * var(--pad-velocity))
-      fade(@color-accent-primary, 60%);
+.pad-cell:focus-visible:not(.is-selected) {
+  outline: @outline-focus;
+  outline-offset: @outline-focus-offset;
+  box-shadow: 0 0 calc(12px * var(--pad-velocity)) ~"rgba(0, 255, 255, calc(0.2 + 0.6 * var(--pad-velocity)))";
+  box-shadow: 0 0 calc(12px * var(--pad-velocity)) fade(@color-accent-primary, 60%);
+}
+</style>

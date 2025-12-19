@@ -46,6 +46,8 @@ export default defineComponent({
 </script>
 
 <style scoped lang="less">
+@import '@/styles/variables.less';
+
 .pad-cell {
   /* Basis */
   background-color: #1a2230; /* geladen, neutral blau */
@@ -74,11 +76,11 @@ export default defineComponent({
 /* ───────── Trigger / Velocity ───────── */
 /* Je höher Velocity, desto dunkler */
 .pad-cell.is-triggered {
-  background-color: color-mix(
+  background-color: ~"color-mix(
     in srgb,
     @color-surface-1 calc(100% - (var(--pad-velocity) * 60%)),
     #000000
-  );
+  )";
 }
 
 .pad-cell.is-triggered .pad-label {

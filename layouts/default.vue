@@ -1,77 +1,136 @@
 <template lang="pug">
-  .device-root
-    .device-stage
-      // Main working area
-      .device-main
-        slot
+  v-app
+    .device-root
+      .device-stage
+        // Main working area
+        .device-main
+          slot(name="main")
 
-      // Bottom-right hardware corner
-      .device-hardware
-        .device-transport
-          slot(name="transport")
+        // Bottom-right hardware corner
+        .device-hardware
+          .device-transport
+            slot(name="transport")
 
         .device-pads
-          slot(name="pads")
+          .pads-square
+            slot(name="pads")
 
-    // Bottom drawer
-    .device-drawer
-      slot(name="drawer")
+      // Bottom drawer
+      .device-drawer
+        slot(name="drawer")
 </template>
 
 
-<script lang="ts">
+<style scoped lang="less">
+@import '@/styles/variables.less';
 
-</script>
+/* ───────── Root ───────── */
 
-<style lang="less">
 .device-root {
-  height: 100svh;
+  height: 100%;
+  width: 100%;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  background: @color-bg-root;
 }
+
+/* ───────── Stage (Main + Hardware) ───────── */
 
 .device-stage {
-  flex: 1;
+  flex: 1 1 auto;
+  min-height: 0;
   display: flex;
+  gap: @space-m;
+  padding: @space-m;
+}
+
+/* ───────── Main Working Area ───────── */
+
+.device-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  background: @color-surface-1;
+  border: 1px solid @color-border-1;
+  border-radius: @radius-l;
+  padding: @space-m;
   overflow: hidden;
 }
 
-.device-main {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-}
+/* ───────── Hardware Area (rechts) ───────── */
 
 .device-hardware {
   flex: 0 0 auto;
+  min-width: 380px;
   display: flex;
-  align-items: flex-end;
-  gap: 12px;
-  padding: 12px;
+  flex-direction: row;
+  align-items: stretch;
+  gap: @space-m;
 }
 
-.device-transport,
+
+/* Transport oben */
+
+.device-transport {
+  flex: 0 0 260px;
+  max-width: 260px;
+  min-width: 260px;
+  display: flex;
+  align-items: center;
+  background: @color-surface-1;
+  border: 1px solid @color-border-1;
+  border-radius: @radius-m;
+  padding: @space-s;
+}
+
+/* Pads unten rechts */
+
 .device-pads {
-  flex: 0 0 auto;
-}
-
-.device-drawer {
-  flex: 0 0 auto;
-  max-height: 32vh;
+  flex: 1 1 auto;
+  min-width: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 320px;
+  background: @color-surface-2;
+  border: 1px solid @color-border-2;
+  border-radius: @radius-l;
   overflow: hidden;
 }
 
-/* Phone Mode */
+/* Quadrat erzwingen */
+.pads-square {
+  width: 100%;
+  max-width: 420px; /* Obergrenze für sehr große Screens */
+  aspect-ratio: 1 / 1;
+  display: flex;
+}
+
+/* ───────── Drawer (unten) ───────── */
+
+.device-drawer {
+  flex: 0 0 260px;
+  background: @color-surface-3;
+  border-top: 1px solid @color-border-1;
+  padding: @space-m;
+  overflow-y: auto;
+}
+
+/* ───────── Responsive: Phone ───────── */
+
 @media (max-width: 768px) {
   .device-stage {
     flex-direction: column;
-    overflow-y: auto;
   }
 
   .device-hardware {
-    justify-content: center;
+    flex: 0 0 auto;
+    min-width: 0;
+  }
+
+  .device-drawer {
+    flex: 0 0 40vh;
   }
 }
-
 </style>

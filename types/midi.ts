@@ -20,6 +20,7 @@ export interface MidiMessage {
 export interface MidiMapping {
   noteMap: Partial<Record<number, DrumPadId>>
   noteMapInverse?: Partial<Record<DrumPadId, number>>
+  transportMap?: Partial<Record<'play' | 'stop' | 'bpmUp' | 'bpmDown', number>>
 }
 
 export interface MidiFileEvent {

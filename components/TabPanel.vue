@@ -52,6 +52,8 @@ export default defineComponent({
 </script>
 
 <style scoped lang="less">
+@import '@/styles/variables.less';
+
 .drawer-shell {
   margin-top: 24px;
   @radius-xl: 20px;
