@@ -49,7 +49,7 @@ export default defineComponent({
 .pad-cell {
   /* Basis */
   background-color: #1a2230; /* geladen, neutral blau */
-  border: 1px solid #2a3344;
+  border: 1px solid @color-border-2;
   transition: background-color 0.08s linear, box-shadow 0.08s linear;
 }
 
@@ -68,7 +68,7 @@ export default defineComponent({
 
 /* Fokus & Auswahl bleiben wie bei dir definiert */
 .pad-cell.is-selected {
-  border-color: #00f8ff;
+  border-color: @color-accent-primary;
 }
 
 /* ───────── Trigger / Velocity ───────── */
@@ -76,7 +76,7 @@ export default defineComponent({
 .pad-cell.is-triggered {
   background-color: color-mix(
     in srgb,
-    #1a2230 calc(100% - (var(--pad-velocity) * 60%)),
+    @color-surface-1 calc(100% - (var(--pad-velocity) * 60%)),
     #000000
   );
 }
@@ -89,14 +89,14 @@ export default defineComponent({
 .pad-cell:not(.is-empty).is-triggered::after {
   box-shadow: 0 0
     calc(10px * var(--pad-velocity))
-    rgba(0, 200, 220, calc(0.15 + 0.4 * var(--pad-velocity)));
+    fade(@color-accent-primary, 40%);
 }
 
 .pad-key {
   position: absolute;
-  bottom: 6px;
-  left: 6px;
-  font-size: 10px;
+  bottom: @space-xs;
+  left: @space-xs;
+  font-size: @font-size-xs;
   opacity: 0;
   pointer-events: none;
 }

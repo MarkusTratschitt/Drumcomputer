@@ -62,8 +62,8 @@ export default defineComponent({
   transition: opacity 0.4s ease;
   opacity: 0;
   pointer-events: none;
-  border-radius: 4px;
-  box-shadow: inset 0 0 12px rgba(0, 255, 255, 0.35);
+  border-radius: @radius-xs;
+  box-shadow: inset 0 0 12px fade(@color-accent-primary, 35%);
   z-index: 1;
 
   &.is-active {

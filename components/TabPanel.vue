@@ -54,9 +54,9 @@ export default defineComponent({
 <style scoped lang="less">
 .drawer-shell {
   margin-top: 24px;
-  border-radius: 20px;
-  background: #07090f;
-  border: 1px solid #1f2433;
+  @radius-xl: 20px;
+  background: @color-surface-2;
+  border: 1px solid @color-border-2;
   padding: 0;
   display: flex;
   flex-direction: column;
@@ -64,12 +64,12 @@ export default defineComponent({
 
   .drawer-tabs {
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    background: #0b0f16;
+    background: @color-surface-2;
     flex: 0 0 56px;
   }
 
   .drawer-window {
-    background: #05060b;
+    background: @color-surface-2;
     border-radius: 0 0 16px 16px;
     padding: 16px;
     flex: 1 1 auto;

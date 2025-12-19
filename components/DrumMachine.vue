@@ -684,7 +684,7 @@ computed: {
       padding: 16px;
 
       :deep(.v-card) {
-        border-radius: 12px;
+        @radius-xl: 12px;
       }
     }
   }

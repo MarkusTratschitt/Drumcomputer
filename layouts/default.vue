@@ -3,7 +3,7 @@
     .device-stage
       // Main working area
       .device-main
-        slot(name="main")
+        slot
 
       // Bottom-right hardware corner
       .device-hardware

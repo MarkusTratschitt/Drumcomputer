@@ -166,30 +166,33 @@ export default defineComponent({
   grid-template-columns: repeat(4, minmax(0, 1fr));
   grid-template-rows: repeat(4, minmax(0, 1fr));
   gap: 10px;
-  padding: 12px;
-  background: #0a0d12;
-  border-radius: 16px;
-  border: 1px solid #1f2838;
-  height: 100%;
-}
-
-.pad-grid:focus-visible {
-  outline: 1px solid rgba(0, 248, 255, 0.45);
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-rows: repeat(4, minmax(0, 1fr));
+    gap: @space-s;
+    padding: @space-s;
+    background: @color-surface-2;
+    border-radius: @radius-l;
+    border: 1px solid @color-border-2;
+    height: 100%;
   outline-offset: 6px;
 }
-
-
-.pad-cell.is-selected {
+  // Fokus-Outline nach variables.less
+  .pad-grid:focus-visible {
+    outline: @outline-focus;
+    outline-offset: @outline-focus-offset;
   border-color: #00f8ff;
 }
-
-.pad-cell:focus-visible:not(.is-selected) {
+  // Selektierte Pad-Farbe nach variables.less
+  .pad-cell.is-selected {
+    border-color: @color-accent-primary;
   outline: 2px dashed #00f8ff;
   outline-offset: 3px;
-}
-
-.pad-cell.is-triggered::after {
+  .pad-cell:focus-visible:not(.is-selected) {
+    outline: @outline-focus;
+    outline-offset: @outline-focus-offset;
   box-shadow: 0 0 calc(12px * var(--pad-velocity))
     rgba(0, 255, 255, calc(0.2 + 0.6 * var(--pad-velocity)));
 }
-</style>
+    box-shadow: 0 0 calc(12px * var(--pad-velocity))
+      fade(@color-accent-primary, 60%);

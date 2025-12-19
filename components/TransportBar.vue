@@ -76,25 +76,25 @@ export default defineComponent({
 
 <style scoped lang="less">
 .transport-bar {
-  background: #0f1115;
-  border: 1px solid #1d2430;
-  border-radius: 12px;
-  padding: 0 12px;
-  gap: 12px;
+  background: @color-surface-2;
+  border: 1px solid @color-border-2;
+  border-radius: @radius-m;
+  padding: 0 @space-s;
+  gap: @space-s;
   height: 100%;
   position: static;
   box-shadow: none;
 
   .transport-controls {
-    display: flex;
-    gap: 8px;
+   display: flex;
+   gap: @space-xs;
   }
 
   .transport-parameters {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-left: auto;
+   display: flex;
+   align-items: center;
+   gap: @space-m;
+   margin-left: auto;
   }
 
   .bpm-input,
@@ -103,8 +103,8 @@ export default defineComponent({
   }
 
   .loop-toggle {
-    border-radius: 6px;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+   border-radius: @radius-s;
+   border: 1px solid @color-border-2;
   }
 }
 </style>

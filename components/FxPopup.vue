@@ -26,9 +26,9 @@
   max-height: 92vh;
   display: flex;
   flex-direction: column;
-  background: #080b10;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 20px;
+  background: @color-surface-2;080b10;
+  border: 1px solid @color-border-2;
+  @radius-xl: 20px;
   z-index: 2000;
 }
 

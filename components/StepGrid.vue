@@ -109,9 +109,9 @@ export default defineComponent({
 .step-grid-shell {
   margin-top: 0;
   padding: 10px;
-  background: #090c11;
-  border: 1px solid #1d2430;
-  border-radius: 16px;
+  background: @color-surface-2;
+  border: 1px solid @color-border-2;
+  border-radius: @radius-l;
   position: relative;
   height: 100%;
   max-height: 96px;

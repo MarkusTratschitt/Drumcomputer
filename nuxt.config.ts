@@ -10,7 +10,13 @@ export default defineNuxtConfig({
   ssr: false,
   debug: true,
   compatibilityDate: '2024-04-03',
-  devtools: { enabled: true },
+  devtools: {
+    enabled: true,
+
+    timeline: {
+      enabled: true
+    }
+  },
   modules: [
     '@pinia/nuxt',
     ['@vite-pwa/nuxt', pwaConfig],

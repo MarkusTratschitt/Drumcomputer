@@ -5,37 +5,37 @@
       :class="cellClasses"
       :aria-pressed="isActive"
       @click="onToggle"
-    )
+          box-shadow: 0 0 0 2px fade(@color-accent-primary, 60%);
     span.step-tag {{ displayLabel }}
 </template>
 
-<script lang="ts">
+          background: fade(@color-accent-primary, 15%);
 import { defineComponent } from 'vue'
 
 export default defineComponent({
-  name: 'StepCell',
-
-  props: {
-    displayLabel: {
-      type: String,
+          background: linear-gradient(
+            135deg,
+            fade(@color-accent-warning, 25%),
+            fade(@color-accent-warning, 65%)
+          );
       required: true
     },
     isActive: {
-      type: Boolean,
-      default: false
-    },
-    isAccent: {
-      type: Boolean,
+          background: linear-gradient(
+            135deg,
+            fade(@color-accent-warning, 35%),
+            fade(@color-accent-primary, 35%)
+          );
       default: false
     },
     isCurrent: {
-      type: Boolean,
+          box-shadow: inset 0 0 0 2px fade(@color-accent-primary, 90%);
       default: false
     }
   },
 
-  emits: ['cell:toggle'],
-
+        font-size: @font-size-xs;
+        letter-spacing: @letter-spacing-tight;
   computed: {
     cellClasses(): Record<string, boolean> {
       return {

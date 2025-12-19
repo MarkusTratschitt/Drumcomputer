@@ -90,9 +90,9 @@ export default defineComponent({
 
 <style scoped lang="less">
 .panel-shell {
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
-  background: #080b10;
+  border: 1px solid @color-border-2;
+  border-radius: @radius-l;
+  background: @color-surface-2;
   padding: 16px;
   color: #f5f7fb;
 
