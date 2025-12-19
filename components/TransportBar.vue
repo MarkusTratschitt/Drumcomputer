@@ -34,7 +34,7 @@ v-app-bar(dense flat class="transport-bar")
 
 <script lang="ts">
 import { defineComponent } from 'vue'
-import type { TimeDivision } from '~/types/time'
+import type { TimeDivision } from '@/types/time'
 
 export default defineComponent({
   name: 'TransportBar',

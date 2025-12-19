@@ -22,9 +22,9 @@
 import { defineComponent } from 'vue'
 import StepCell from './StepCell.vue'
 import PlayheadOverlay from './PlayheadOverlay.vue'
-import type { GridSpec } from '~/types/time'
-import type { DrumPadId, StepGrid } from '~/types/drums'
-import { ACCENT_STEP_VELOCITY } from '~/domain/velocity'
+import type { GridSpec } from '@/types/time'
+import type { DrumPadId, StepGrid } from '@/types/drums'
+import { ACCENT_STEP_VELOCITY } from '@/domain/velocity'
 
 export default defineComponent({
   name: 'StepGrid',

@@ -13,7 +13,7 @@ button.pad-cell(
 
 <script lang="ts">
 import { defineComponent } from 'vue'
-import type { DrumPadId } from '~/types/drums'
+import type { DrumPadId } from '@/types/drums'
 
 export default defineComponent({
   name: 'PadCell',

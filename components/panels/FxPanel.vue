@@ -89,7 +89,7 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue'
-import type { FxSettings } from '~/types/audio'
+import type { FxSettings } from '@/types/audio'
 
 export default defineComponent({
   name: 'FxPanel',

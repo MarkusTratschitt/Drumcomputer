@@ -42,7 +42,7 @@ button.pad-cell(
 <script lang="ts">
 import { defineComponent } from 'vue'
 import PadCell from './PadCell.vue'
-import type { DrumPadId } from '~/types/drums'
+import type { DrumPadId } from '@/types/drums'
 
 type PadState = {
   label: string
@@ -53,100 +53,90 @@ type PadState = {
 export default defineComponent({
   name: 'PadGrid',
   components: { PadCell },
+
   props: {
     pads: { type: Array as () => DrumPadId[], required: true },
     selectedPad: { type: String as () => DrumPadId | null, default: null },
-    velocity: { type: Number, default: 1 }, // 0..1
+    velocity: { type: Number, default: 1 },
     padStates: {
       type: Object as () => Partial<Record<DrumPadId, PadState>>,
       default: () => ({})
     }
   },
+
   emits: ['pad:down', 'pad:select'],
+
   computed: {
-    padClasses(): Record<string, boolean> {
-      return {
-        'is-selected': this.isSelected,
-        'is-triggered': this.isTriggered,
-        'is-playing': this.isPlaying
-      }
-    },
     velocityStyle(): Record<string, string> {
       const clamped = Math.min(1, Math.max(0, this.velocity))
-      return {
-        '--pad-velocity': clamped.toString()
-      }
+      return { '--pad-velocity': clamped.toString() }
     }
   },
-  watch: {
-    selectedPad(newPad) {
-      if (!newPad) return
 
+  watch: {
+    selectedPad(newPad: DrumPadId | null) {
+      if (!newPad) return
       this.$nextTick(() => {
-        const ref = this.$refs[newPad]
+        const ref = this.$refs[newPad as unknown as string]
         const el = Array.isArray(ref) ? ref[0] : ref
         el?.$el?.focus?.()
       })
     }
   },
+
   mounted() {
     if (!this.selectedPad && this.pads.length > 0) {
       this.$emit('pad:select', this.pads[0])
     }
   },
+
   methods: {
-    padLabel(pad: DrumPadId) {
+    padLabel(pad: DrumPadId): string {
       return this.padStates[pad]?.label ?? pad.toUpperCase()
     },
+
+    handlePadDown(pad: DrumPadId, velocity: number) {
+      this.$emit('pad:down', pad, velocity)
+    },
+
+    handlePadSelect(pad: DrumPadId) {
+      this.$emit('pad:select', pad)
+    },
+
     selectIndex(index: number) {
-    if (index < 0 || index >= this.pads.length) return
-    this.$emit('pad:select', this.pads[index])
-  },
-
-  selectRow(row: number) {
-    const columns = 4
-    const index = row * columns
-    if (index < this.pads.length) {
+      if (index < 0 || index >= this.pads.length) return
       this.$emit('pad:select', this.pads[index])
-    }
-  },
+    },
 
-  moveSelection(offset: number) {
-    if (!this.selectedPad) return
-  
-    const index = this.pads.indexOf(this.selectedPad)
-    if (index === -1) return
-  
-    const columns = 4
-    let nextIndex = index + offset
-  
-    // wrap left
-    if (offset === -1 && index % columns === 0) {
-      nextIndex = index + (columns - 1)
-    }
-  
-    // wrap right
-    if (offset === 1 && (index + 1) % columns === 0) {
-      nextIndex = index - (columns - 1)
-    }
-  
-    // clamp vertical
-    if (nextIndex < 0 || nextIndex >= this.pads.length) return
-  
-    this.$emit('pad:select', this.pads[nextIndex])
-    }
-  },
+    selectRow(row: number) {
+      const columns = 4
+      const index = row * columns
+      if (index < this.pads.length) {
+        this.$emit('pad:select', this.pads[index])
+      }
+    },
 
-  async handlePad(pad: DrumPadId, velocity = 1) {
-    try {
-      await this.sequencer.recordHit(pad, velocity, true)
-    } catch (error) {
-      console.error('Failed to trigger pad', error)
+    moveSelection(offset: number) {
+      if (!this.selectedPad) return
+
+      const index = this.pads.indexOf(this.selectedPad)
+      if (index === -1) return
+
+      const columns = 4
+      let nextIndex = index + offset
+
+      if (offset === -1 && index % columns === 0) {
+        nextIndex = index + (columns - 1)
+      }
+
+      if (offset === 1 && (index + 1) % columns === 0) {
+        nextIndex = index - (columns - 1)
+      }
+
+      if (nextIndex < 0 || nextIndex >= this.pads.length) return
+      this.$emit('pad:select', this.pads[nextIndex])
     }
-    this.selectPad(pad) // ⬅️ Selection setzen
   }
-
-
 })
 </script>
 

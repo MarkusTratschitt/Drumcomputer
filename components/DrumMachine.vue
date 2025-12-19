@@ -95,31 +95,32 @@ client-only(tag="div")
 <script lang="ts">
 import { defineComponent } from 'vue'
 import { saveAs } from 'file-saver'
-import { DEFAULT_GRID_SPEC, GRID_DIVISIONS, normalizeGridSpec } from '~/domain/timing'
-import { useTransportStore } from '~/stores/transport'
-import { usePatternsStore } from '~/stores/patterns'
-import { useSoundbanksStore } from '~/stores/soundbanks'
-import { useSessionStore } from '~/stores/session'
-import { useSequencer } from '~/composables/useSequencer'
-import { useSync } from '~/composables/useSync.client'
-import { useMidi } from '~/composables/useMidi.client'
-import { usePatternStorage } from '~/composables/usePatternStorage.client'
-import { useSoundbankStorage } from '~/composables/useSoundbankStorage.client'
-import { useImportExport } from '~/composables/useImportExport.client'
-import { useCapabilities } from '~/composables/useCapabilities.client'
+import { DEFAULT_GRID_SPEC, GRID_DIVISIONS, normalizeGridSpec } from '@/domain/timing'
+import { useTransportStore } from '@/stores/transport'
+import { usePatternsStore } from '@/stores/patterns'
+import { useSoundbanksStore } from '@/stores/soundbanks'
+import { useSessionStore } from '@/stores/session'
+import { useSequencer } from '@/composables/useSequencer'
+import { useSync } from '@/composables/useSync.client'
+import { useMidi } from '@/composables/useMidi.client'
+import { usePatternStorage } from '@/composables/usePatternStorage.client'
+import { useSoundbankStorage } from '@/composables/useSoundbankStorage.client'
+import { useImportExport } from '@/composables/useImportExport.client'
+import { useCapabilities } from '@/composables/useCapabilities.client'
 import TransportBar from './TransportBar.vue'
 import PadGrid from './PadGrid.vue'
-import StepGrid from './StepGrid.vue'
+import StepGridComponent from './StepGrid.vue'
 import TabPanel from './TabPanel.vue'
 import SoundPanel from './panels/SoundPanel.vue'
 import FxPanel from './panels/FxPanel.vue'
 import PatternsPanel from './panels/PatternsPanel.vue'
 import ExportPanel from './panels/ExportPanel.vue'
-import { createZip, type ZipEntry } from '~/utils/zip'
-import type { DrumPadId, Scene } from '~/types/drums'
-import type { TimeDivision } from '~/types/time'
-import type { FxSettings, SampleRef, Soundbank } from '~/types/audio'
-import type { RenderEvent, RenderMetadata } from '~/types/render'
+import { createZip, type ZipEntry } from '@/utils/zip'
+import type { DrumPadId, Scene } from '@/types/drums'
+import type { TimeDivision } from '@/types/time'
+import type { FxSettings, SampleRef, Soundbank } from '@/types/audio'
+import type { RenderEvent, RenderMetadata } from '@/types/render'
+import type { StepGrid } from '@/types/drums'
 
 const slugify = (value: string): string => {
   const cleaned = value
@@ -154,10 +155,7 @@ type PadState = {
 
 const VISIBLE_DIVISIONS: TimeDivision[] = GRID_DIVISIONS.filter((value) => value <= 16)
 
-// 🔴 expensive part – now isolated
-const collectPlayingPads = (
-  steps: Record<number, Record<number, Record<DrumPadId, boolean>>>
-): Set<DrumPadId> => {
+const collectPlayingPads = (steps: StepGrid): Set<DrumPadId> => {
   const set = new Set<DrumPadId>()
 
   Object.values(steps).forEach((bar) => {
@@ -176,13 +174,13 @@ export default defineComponent({
   components: {
     TransportBar,
     PadGrid,
-    StepGrid,
+    StepGrid: StepGridComponent,
     TabPanel,
     SoundPanel,
     FxPanel,
     PatternsPanel,
     ExportPanel
-    },
+  },
   data() {
     const transport = useTransportStore()
     const patterns = usePatternsStore()
@@ -294,51 +292,70 @@ export default defineComponent({
   },
 
 
-  computed: {
-    gridSpec() {
-      return this.patterns.currentPattern?.gridSpec ?? { ...DEFAULT_GRID_SPEC }
-    },
-    pattern() {
-      return this.patterns.currentPattern ?? { id: 'pattern-1', name: 'Pattern 1', gridSpec: { ...DEFAULT_GRID_SPEC }, steps: {} }
-    },
-    currentStep() {
-      return this.transport.currentStep
-    },
-    bpm() {
-      return this.transport.bpm
-    },
-    isPlaying() {
-      return this.transport.isPlaying
-    },
-    midiInputs() {
-      return this.midi.inputs
-    },
-    midiOutputs() {
-      return this.midi.outputs
-    },
-    banks() {
-      return this.soundbanks.banks
-    },
-    stemEntries(): StemEntry[] {
-      if (!this.exportStems) {
-        return []
+computed: {
+  gridSpec() {
+    return this.patterns.currentPattern?.gridSpec ?? { ...DEFAULT_GRID_SPEC }
+  },
+
+  pattern() {
+    return (
+      this.patterns.currentPattern ?? {
+        id: 'pattern-1',
+        name: 'Pattern 1',
+        gridSpec: { ...DEFAULT_GRID_SPEC },
+        steps: {}
       }
+    )
+  },
 
-      const bankPads = this.soundbanks.currentBank?.pads ?? {}
+  currentStep() {
+    return this.transport.currentStep
+  },
 
-      return Object.entries(this.exportStems).map(([padId, entry]) => ({
-        padId: padId as DrumPadId,
-        label: bankPads[padId as DrumPadId]?.name ?? padId,
-        fileName: entry.fileName
-      }))
-    },
-    syncState() {
-      return this.sync.state
-    },
-    capabilities() {
-      return this.session.capabilities
-    },
-  padStates(): Record<DrumPadId, PadState> {
+  bpm() {
+    return this.transport.bpm
+  },
+
+  isPlaying() {
+    return this.transport.isPlaying
+  },
+
+  midiInputs() {
+    return this.midi.inputs
+  },
+
+  midiOutputs() {
+    return this.midi.outputs
+  },
+
+  banks() {
+    return this.soundbanks.banks
+  },
+
+  stemEntries(): StemEntry[] {
+    if (!this.exportStems) return []
+    const bankPads = this.soundbanks.currentBank?.pads ?? {}
+
+    return Object.entries(this.exportStems).map(([padId, entry]) => ({
+      padId: padId as DrumPadId,
+      label: bankPads[padId as DrumPadId]?.name ?? padId,
+      fileName: entry.fileName
+    }))
+  },
+
+  syncState() {
+    return this.sync.state
+  },
+
+  capabilities() {
+    return this.session.capabilities
+  }, 
+
+  hasZipArtifacts(): boolean {
+    return Boolean(this.exportMetadata && this.exportAudioBlob)
+  },
+  
+  padStates() {
     const bankPads = this.soundbanks.currentBank?.pads ?? {}
     const result = {} as Record<DrumPadId, PadState>
 
@@ -351,9 +368,7 @@ export default defineComponent({
       ((this.currentStep % stepsPerPattern) + stepsPerPattern) %
       stepsPerPattern
 
-    const barIndex = Math.floor(
-      normalizedStep / this.gridSpec.division
-    )
+    const barIndex = Math.floor(normalizedStep / this.gridSpec.division)
     const stepIndex = normalizedStep % this.gridSpec.division
 
     const currentRow =
@@ -374,8 +389,8 @@ export default defineComponent({
     })
 
     return result
-    }
-  },
+  }
+},
 
 
   mounted() {

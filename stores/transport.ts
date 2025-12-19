@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
-import { DEFAULT_GRID_SPEC, normalizeGridSpec } from '~/domain/timing'
-import type { GridSpec } from '~/types/time'
+import { DEFAULT_GRID_SPEC, normalizeGridSpec } from '@/domain/timing'
+import type { GridSpec } from '@/types/time'
 
 export const useTransportStore = defineStore('transport', {
   state: () => ({

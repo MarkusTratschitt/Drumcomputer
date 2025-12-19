@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import type { Soundbank } from '~/types/audio'
+import type { Soundbank } from '@/types/audio'
 
 export const useSoundbanksStore = defineStore('soundbanks', {
   state: () => ({

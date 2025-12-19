@@ -1,8 +1,8 @@
 import { defineStore } from 'pinia'
-import type { DrumPadId, Pattern, Scene, StepGrid } from '~/types/drums'
-import type { GridSpec } from '~/types/time'
-import { DEFAULT_GRID_SPEC, normalizeGridSpec } from '~/domain/timing'
-import { clampVelocity, cycleVelocity, DEFAULT_STEP_VELOCITY } from '~/domain/velocity'
+import type { DrumPadId, Pattern, Scene, StepGrid } from '@/types/drums'
+import type { GridSpec } from '@/types/time'
+import { DEFAULT_GRID_SPEC, normalizeGridSpec } from '@/domain/timing'
+import { clampVelocity, cycleVelocity, DEFAULT_STEP_VELOCITY } from '@/domain/velocity'
 
 const createDefaultGrid = (): GridSpec => ({ ...DEFAULT_GRID_SPEC })
 

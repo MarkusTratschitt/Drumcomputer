@@ -93,7 +93,7 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue'
-import type { Pattern, Scene } from '~/types/drums'
+import type { Pattern, Scene } from '@/types/drums'
 
 export default defineComponent({
   name: 'PatternsPanel',

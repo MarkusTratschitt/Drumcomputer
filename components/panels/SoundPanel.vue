@@ -34,8 +34,8 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue'
-import type { Soundbank } from '~/types/audio'
-import type { DrumPadId } from '~/types/drums'
+import type { Soundbank } from '@/types/audio'
+import type { DrumPadId } from '@/types/drums'
 
 export default defineComponent({
   name: 'SoundPanel',

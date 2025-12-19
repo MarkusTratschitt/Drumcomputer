@@ -6,14 +6,18 @@ import type { Scheduler, ScheduledFn } from '@/domain/clock/scheduler'
 import type { TransportAudioHooks } from '@/domain/transport/audioHooks'
 import type { TransportConfig, TransportState } from '@/domain/transport/types'
 
-type ScheduledCall = { at: number, fn: ScheduledFn }
+type ScheduledCall = { at: number; fn: ScheduledFn }
 
-const createTestClock = (initialTime = 0): { clock: RenderClock, setTime: (next: number) => void } => {
+const createTestClock = (
+  initialTime = 0
+): { clock: RenderClock; setTime: (next: number) => void } => {
   let now = initialTime
+
   const clock: RenderClock = {
     ctx: {} as BaseAudioContext,
     isOffline: false,
-    audioTime: () => now
+    audioTime: () => now,
+    now: () => now
   }
 
   return {
@@ -25,9 +29,9 @@ const createTestClock = (initialTime = 0): { clock: RenderClock, setTime: (next:
 }
 
 const createStubScheduler = (): {
-  scheduler: Scheduler,
-  calls: ScheduledCall[],
-  counts: () => { start: number, stop: number, clear: number }
+  scheduler: Scheduler
+  calls: ScheduledCall[]
+  counts: () => { start: number; stop: number; clear: number }
 } => {
   const calls: ScheduledCall[] = []
   let start = 0
@@ -82,6 +86,7 @@ describe('transportEngine', () => {
 
     const lastState = states[states.length - 1]
     expect(lastState).to.deep.equal({ isPlaying: true, currentStep: 0 })
+
     const counts = schedulerStub.counts()
     expect(counts.start).to.equal(1)
     expect(counts.clear).to.equal(1)
@@ -120,6 +125,7 @@ describe('transportEngine', () => {
     const counts = schedulerStub.counts()
     expect(counts.stop).to.equal(1)
     expect(counts.clear).to.equal(2)
+
     const lastState = states[states.length - 1]
     expect(lastState).to.deep.equal({ isPlaying: false, currentStep: 3 })
 
@@ -136,23 +142,20 @@ describe('transportEngine', () => {
     engine.start()
     setTime(0.51)
     engine.tick()
-    const lastStateAfterConfig = states[states.length - 1]
-    expect(lastStateAfterConfig).to.deep.equal({ isPlaying: true, currentStep: 1 })
 
-    const newConfig: TransportConfig = {
+    expect(states.at(-1)).to.deep.equal({ isPlaying: true, currentStep: 1 })
+
+    engine.setConfig({
       bpm: 120,
       gridSpec: { bars: 1, division: 8 }
-    }
-    engine.setConfig(newConfig)
+    })
 
-    const stableState = states[states.length - 1]
-    expect(stableState).to.deep.equal({ isPlaying: true, currentStep: 1 })
+    expect(states.at(-1)).to.deep.equal({ isPlaying: true, currentStep: 1 })
 
     setTime(0.76)
     engine.tick()
 
-    const progressedState = states[states.length - 1]
-    expect(progressedState).to.deep.equal({ isPlaying: true, currentStep: 2 })
+    expect(states.at(-1)).to.deep.equal({ isPlaying: true, currentStep: 2 })
     expect(schedulerStub.calls).to.have.lengthOf(3)
     expect(schedulerStub.calls[2]!.at).to.be.closeTo(1.01, 0.0001)
   })
@@ -160,26 +163,33 @@ describe('transportEngine', () => {
   it('applies swing offset to off-beat scheduling and forwards onStep callbacks', () => {
     const { clock } = createTestClock(0)
     const schedulerStub = createStubScheduler()
-    const hookCalls: Array<{ stepIndex: number, audioTime: number }> = []
+    const hookCalls: Array<{ stepIndex: number; audioTime: number }> = []
+
     const audioHooks: TransportAudioHooks = {
-      onStep: (stepIndex, audioTime) => {
+      onStep(stepIndex, audioTime) {
         hookCalls.push({ stepIndex, audioTime })
       }
     }
 
-    const configWithSwing: TransportConfig = {
-      bpm: 120,
-      gridSpec: { bars: 1, division: 4 },
-      swing: 0.5
-    }
+    const engine = createTransportEngine(
+      clock,
+      schedulerStub.scheduler,
+      {
+        bpm: 120,
+        gridSpec: { bars: 1, division: 4 },
+        swing: 0.5
+      },
+      audioHooks
+    )
 
-    const engine = createTransportEngine(clock, schedulerStub.scheduler, configWithSwing, audioHooks)
     engine.subscribe((state) => states.push(state))
     engine.start()
 
     expect(schedulerStub.calls[0]!.at).to.be.closeTo(0.625, 0.0001)
 
     schedulerStub.calls[0]!.fn(schedulerStub.calls[0]!.at)
-    expect(hookCalls).to.deep.equal([{ stepIndex: 1, audioTime: schedulerStub.calls[0]!.at }])
+    expect(hookCalls).to.deep.equal([
+      { stepIndex: 1, audioTime: schedulerStub.calls[0]!.at }
+    ])
   })
 })

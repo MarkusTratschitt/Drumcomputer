@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import type { MidiDeviceInfo } from '~/types/midi'
+import type { MidiDeviceInfo } from '@/types/midi'
 
 export const useSessionStore = defineStore('session', {
   state: () => ({

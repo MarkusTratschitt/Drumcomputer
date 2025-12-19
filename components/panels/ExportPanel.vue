@@ -57,8 +57,8 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue'
-import type { DrumPadId } from '~/types/drums'
-import type { RenderMetadata } from '~/types/render'
+import type { DrumPadId } from '@/types/drums'
+import type { RenderMetadata } from '@/types/render'
 
 type StemEntry = {
   padId: DrumPadId

@@ -6,7 +6,7 @@ import vueParser from 'vue-eslint-parser'
 import globals from 'globals'
 
 export default [{
-    ignores: ['node_modules', '.nuxt', '.output', 'dist']
+    ignores: ['node_modules', '.nuxt', '.output', 'dist', 'coverage']
   },
   {
     files: ['**/*.{ts,tsx,js,jsx,vue}'],
@@ -35,7 +35,7 @@ export default [{
       ...vue.configs['vue3-recommended'].rules,
       '@typescript-eslint/no-explicit-any': 'error',
       '@typescript-eslint/no-empty-object-type': 'off'
-    }
+    },
   },
 
   // 🔹 ✅ Tests (Mocha)
