@@ -1,29 +1,27 @@
 <template>
   <DrumMachine>
-    <DrumMachineSlots
-      v-slot:main="{ props }"
-      v-slot:transport="{ props }"
-      v-slot:pads="{ props }"
-      v-slot:drawer="{ props }"
-    >
-      <template #main>
-        <StepGrid v-bind="props.stepGridProps" />
-      </template>
+    <template #default="{ ctx }">
+      <DrumMachineSlots>
+        <template #main>
+          <StepGrid v-bind="ctx.main.stepGridProps" />
+        </template>
 
-      <template #transport>
-        <TransportBar v-bind="props.transportProps" />
-      </template>
+        <template #transport>
+          <TransportBar v-bind="ctx.transport.transportProps" />
+        </template>
 
-      <template #pads>
-        <PadGrid v-bind="props.padGridProps" />
-      </template>
+        <template #pads>
+          <PadGrid v-bind="ctx.pads.padGridProps" />
+        </template>
 
-      <template #drawer>
-        <FxPanel v-bind="props.fxProps" />
-      </template>
-    </DrumMachineSlots>
+        <template #drawer>
+          <FxPanel v-bind="ctx.drawer.fxProps" />
+        </template>
+      </DrumMachineSlots>
+    </template>
   </DrumMachine>
 </template>
+
 
 
 
