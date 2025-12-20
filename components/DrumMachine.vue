@@ -1,56 +1,10 @@
-<template lang="pug">
-  client-only(tag="div")
-    NuxtLayout(name="default")
-      template(#main)
-        .drumshell
-          .main-shell
-            StepGrid(
-              ref="stepGrid"
-              :grid-spec="gridSpec"
-              :steps="pattern.steps"
-              :selected-pad="selectedPadId"
-              :current-step="currentStep"
-              :is-playing="isPlaying"
-              @step:toggle="toggleStep"
-              @playhead:scrub="scrubPlayhead"
-              @step:velocity="updateStepVelocity"
-            )
-
-      template(#transport)
-        TransportBar(
-          :bpm="bpm"
-          :is-playing="isPlaying"
-          :loop="transport.loop"
-          :division="gridSpec.division"
-          :divisions="divisions"
-          :is-midi-learning="midiLearn.isLearning"
-          @play="start"
-          @stop="stop"
-          @bpm:update="updateBpm"
-          @bpm:increment="incrementBpm"
-          @bpm:decrement="decrementBpm"
-          @division:update="setDivision"
-          @loop:update="setLoop"
-          @midi-learn:toggle="toggleMidiLearn"
-        )
-        .midi-learn-status(v-if="midiLearn.isLearning")
-          span {{ midiLearnLabel }}
-
-      template(#pads)
-        PadGrid(
-          :pads="pads"
-          :pad-states="padStates"
-          :selected-pad="selectedPadId"
-          @pad:down="handlePad"
-          @pad:select="selectPad"
-        )
-
-      template(#drawer)
-        FxPanel(
-          :fx-settings="sequencer.fxSettings"
-          @fx:update="updateFx"
-        )
+<template>
+  <slot name="main" v-bind="mainSlotProps" />
+  <slot name="transport" v-bind="transportSlotProps" />
+  <slot name="pads" v-bind="padsSlotProps" />
+  <slot name="drawer" v-bind="drawerSlotProps" />
 </template>
+
 
 <script lang="ts">
 import { defineComponent } from 'vue'
@@ -242,6 +196,7 @@ export default defineComponent({
       divisions,
       defaultBank,
       unwatchers: [] as Array<() => void>,
+      stepGridRef: null as (InstanceType<typeof StepGridComponent> & { focusGrid?: () => void }) | null,
       exportMetadata: null as RenderMetadata | null,
       exportAudioBlob: null as Blob | null,
       exportTimeline: undefined as RenderEvent[] | undefined,
@@ -360,6 +315,56 @@ computed: {
     })
 
     return result
+  },
+
+  stepGridSlotProps(): Record<string, unknown> {
+    return {
+      gridSpec: this.gridSpec,
+      steps: this.pattern.steps,
+      selectedPad: this.selectedPadId,
+      currentStep: this.currentStep,
+      isPlaying: this.isPlaying,
+      onToggleStep: this.toggleStep,
+      onScrubPlayhead: this.scrubPlayhead,
+      onUpdateStepVelocity: this.updateStepVelocity,
+      setRef: this.setStepGridRef
+    }
+  },
+
+  transportSlotProps(): Record<string, unknown> {
+    return {
+      bpm: this.bpm,
+      isPlaying: this.isPlaying,
+      loop: this.transport.loop,
+      division: this.gridSpec.division,
+      divisions: this.divisions,
+      isMidiLearning: this.midiLearn.isLearning,
+      onPlay: this.start,
+      onStop: this.stop,
+      onUpdateBpm: this.updateBpm,
+      onIncrementBpm: this.incrementBpm,
+      onDecrementBpm: this.decrementBpm,
+      onUpdateDivision: this.setDivision,
+      onUpdateLoop: this.setLoop,
+      onToggleMidiLearn: this.toggleMidiLearn
+    }
+  },
+
+  padGridSlotProps(): Record<string, unknown> {
+    return {
+      pads: this.pads,
+      padStates: this.padStates,
+      selectedPad: this.selectedPadId,
+      onPadDown: this.handlePad,
+      onPadSelect: this.selectPad
+    }
+  },
+
+  fxSlotProps(): Record<string, unknown> {
+    return {
+      fxSettings: this.sequencer.fxSettings,
+      onUpdateFx: this.updateFx
+    }
   }
 },
 
@@ -539,11 +544,11 @@ computed: {
     scrubPlayhead(payload: { stepIndex: number }) {
       this.transport.setCurrentStep(payload.stepIndex)
     },
+    setStepGridRef(ref: (InstanceType<typeof StepGridComponent> & { focusGrid?: () => void }) | null) {
+      this.stepGridRef = ref ?? null
+    },
     focusStepGrid() {
-      const grid = this.$refs.stepGrid as
-        | (InstanceType<typeof StepGridComponent> & { focusGrid?: () => void })
-        | undefined
-      grid?.focusGrid?.()
+      this.stepGridRef?.focusGrid?.()
     },
     async requestMidi() {
       await this.midi.requestAccess()
