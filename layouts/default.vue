@@ -1,9 +1,11 @@
 <template>
   <v-app>
-    <slot name="main" />
-    <slot name="transport" />
-    <slot name="pads" />
-    <slot name="drawer" />
+    <NuxtPage>
+      <slot name="main" />
+      <slot name="transport" />
+      <slot name="pads" />
+      <slot name="drawer" />
+    </NuxtPage>
   </v-app>
 </template>
 
