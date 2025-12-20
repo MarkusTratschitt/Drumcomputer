@@ -1,24 +1,20 @@
 <template>
-<slot
-  name="main"
-  v-bind="mainSlotProps"
-/>
-
-<slot
-  name="transport"
-  v-bind="transportSlotProps"
-/>
-
-<slot
-  name="pads"
-  v-bind="padsSlotProps"
-/>
-
-<slot
-  name="drawer"
-  v-bind="drawerSlotProps"
-/>
-
+  <slot
+    name="main"
+    :props="mainSlotProps"
+  />
+  <slot
+    name="transport"
+    :props="transportSlotProps"
+  />
+  <slot
+    name="pads"
+    :props="padsSlotProps"
+  />
+  <slot
+    name="drawer"
+    :props="drawerSlotProps"
+  />
 </template>
 
 

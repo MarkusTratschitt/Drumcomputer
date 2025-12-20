@@ -1,61 +1,30 @@
 <template>
-  <NuxtLayout name="default">
-    <DrumMachine v-slot:main="main" v-slot:transport="transport" v-slot:pads="pads" v-slot:drawer="drawer">
+  <DrumMachine>
+    <DrumMachineSlots
+      v-slot:main="{ props }"
+      v-slot:transport="{ props }"
+      v-slot:pads="{ props }"
+      v-slot:drawer="{ props }"
+    >
       <template #main>
-        <StepGrid
-          :ref="main.stepGridProps.setRef"
-          :grid-spec="main.stepGridProps.gridSpec"
-          :steps="main.stepGridProps.steps"
-          :selected-pad="main.stepGridProps.selectedPad"
-          :current-step="main.stepGridProps.currentStep"
-          :is-playing="main.stepGridProps.isPlaying"
-          @step:toggle="main.stepGridProps.onToggleStep"
-          @playhead:scrub="main.stepGridProps.onScrubPlayhead"
-          @step:velocity="main.stepGridProps.onUpdateStepVelocity"
-        />
+        <StepGrid v-bind="props.stepGridProps" />
       </template>
 
       <template #transport>
-        <TransportBar
-          :bpm="transport.transportProps.bpm"
-          :is-playing="transport.transportProps.isPlaying"
-          :loop="transport.transportProps.loop"
-          :division="transport.transportProps.division"
-          :divisions="transport.transportProps.divisions"
-          :is-midi-learning="transport.transportProps.isMidiLearning"
-          @play="transport.transportProps.onPlay"
-          @stop="transport.transportProps.onStop"
-          @bpm:update="transport.transportProps.onUpdateBpm"
-          @bpm:increment="transport.transportProps.onIncrementBpm"
-          @bpm:decrement="transport.transportProps.onDecrementBpm"
-          @division:update="transport.transportProps.onUpdateDivision"
-          @loop:update="transport.transportProps.onUpdateLoop"
-          @midi-learn:toggle="transport.transportProps.onToggleMidiLearn"
-        />
-        <div class="midi-learn-status">
-          {{ transport.midiLearnLabel }}
-        </div>
+        <TransportBar v-bind="props.transportProps" />
       </template>
 
       <template #pads>
-        <PadGrid
-          :pads="pads.padGridProps.pads"
-          :pad-states="pads.padGridProps.padStates"
-          :selected-pad="pads.padGridProps.selectedPad"
-          @pad:down="pads.padGridProps.onPadDown"
-          @pad:select="pads.padGridProps.onPadSelect"
-        />
+        <PadGrid v-bind="props.padGridProps" />
       </template>
 
       <template #drawer>
-        <FxPanel
-          :fx-settings="drawer.fxProps.fxSettings"
-          @fx:update="drawer.fxProps.onUpdateFx"
-        />
+        <FxPanel v-bind="props.fxProps" />
       </template>
-    </DrumMachine>
-  </NuxtLayout>
+    </DrumMachineSlots>
+  </DrumMachine>
 </template>
+
 
 
 
