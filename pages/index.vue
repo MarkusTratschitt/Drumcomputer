@@ -1,26 +1,31 @@
 <template>
-  <DrumMachine>
-    <template #default="{ ctx }">
-      <DrumMachineSlots>
-        <template #main>
-          <StepGrid v-bind="ctx.main.stepGridProps" />
-        </template>
+  <v-app>
+    <div class="device-root">
+      <div class="device-stage">
+        <div class="device-main">
+          <slot name="main" />
+        </div>
 
-        <template #transport>
-          <TransportBar v-bind="ctx.transport.transportProps" />
-        </template>
+        <div class="device-hardware">
+          <div class="device-transport">
+            <slot name="transport" />
+          </div>
 
-        <template #pads>
-          <PadGrid v-bind="ctx.pads.padGridProps" />
-        </template>
+          <div class="device-pads">
+            <div class="pads-square">
+              <slot name="pads" />
+            </div>
+          </div>
+        </div>
+      </div>
 
-        <template #drawer>
-          <FxPanel v-bind="ctx.drawer.fxProps" />
-        </template>
-      </DrumMachineSlots>
-    </template>
-  </DrumMachine>
+      <div class="device-drawer">
+        <slot name="drawer" />
+      </div>
+    </div>
+  </v-app>
 </template>
+
 
 
 

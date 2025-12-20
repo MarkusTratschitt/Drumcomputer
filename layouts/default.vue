@@ -1,25 +1,12 @@
-<template lang="pug">
-  v-app
-    .device-root
-      .device-stage
-        // Main working area
-        .device-main
-          slot
-          slot(name="main")
-
-        // Bottom-right hardware corner
-        .device-hardware
-          .device-transport
-            slot(name="transport")
-
-        .device-pads
-          .pads-square
-            slot(name="pads")
-
-      // Bottom drawer
-      .device-drawer
-        slot(name="drawer")
+<template>
+  <v-app>
+    <slot name="main" />
+    <slot name="transport" />
+    <slot name="pads" />
+    <slot name="drawer" />
+  </v-app>
 </template>
+
 
 
 <style scoped lang="less">

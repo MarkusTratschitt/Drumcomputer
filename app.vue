@@ -1,7 +1,8 @@
 <template>
-  <NuxtPage />
+  <NuxtLayout>
+    <NuxtPage />
+  </NuxtLayout>
 </template>
-
 
 <style lang="less">
 @import '@/styles/variables.less';
