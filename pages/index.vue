@@ -1,48 +1,62 @@
 <template>
   <NuxtLayout name="default">
-    <DrumMachine>
-      <template #main="mainSlot">
+    <DrumMachine v-slot:main="main" v-slot:transport="transport" v-slot:pads="pads" v-slot:drawer="drawer">
+      <template #main>
         <StepGrid
-          v-bind="mainSlot.stepGridProps"
-          @step:toggle="mainSlot.stepGridProps.onToggleStep"
-          @playhead:scrub="mainSlot.stepGridProps.onScrubPlayhead"
-          @step:velocity="mainSlot.stepGridProps.onUpdateStepVelocity"
+          :ref="main.stepGridProps.setRef"
+          :grid-spec="main.stepGridProps.gridSpec"
+          :steps="main.stepGridProps.steps"
+          :selected-pad="main.stepGridProps.selectedPad"
+          :current-step="main.stepGridProps.currentStep"
+          :is-playing="main.stepGridProps.isPlaying"
+          @step:toggle="main.stepGridProps.onToggleStep"
+          @playhead:scrub="main.stepGridProps.onScrubPlayhead"
+          @step:velocity="main.stepGridProps.onUpdateStepVelocity"
         />
       </template>
 
-      <template #transport="transportSlot">
+      <template #transport>
         <TransportBar
-          v-bind="transportSlot.transportProps"
-          @play="transportSlot.transportProps.onPlay"
-          @stop="transportSlot.transportProps.onStop"
-          @bpm:update="transportSlot.transportProps.onUpdateBpm"
-          @division:update="transportSlot.transportProps.onUpdateDivision"
-          @loop:update="transportSlot.transportProps.onUpdateLoop"
-          @midi-learn:toggle="transportSlot.transportProps.onToggleMidiLearn"
+          :bpm="transport.transportProps.bpm"
+          :is-playing="transport.transportProps.isPlaying"
+          :loop="transport.transportProps.loop"
+          :division="transport.transportProps.division"
+          :divisions="transport.transportProps.divisions"
+          :is-midi-learning="transport.transportProps.isMidiLearning"
+          @play="transport.transportProps.onPlay"
+          @stop="transport.transportProps.onStop"
+          @bpm:update="transport.transportProps.onUpdateBpm"
+          @bpm:increment="transport.transportProps.onIncrementBpm"
+          @bpm:decrement="transport.transportProps.onDecrementBpm"
+          @division:update="transport.transportProps.onUpdateDivision"
+          @loop:update="transport.transportProps.onUpdateLoop"
+          @midi-learn:toggle="transport.transportProps.onToggleMidiLearn"
         />
-
-        <div v-if="transportSlot.isMidiLearning">
-          {{ transportSlot.midiLearnLabel }}
+        <div class="midi-learn-status">
+          {{ transport.midiLearnLabel }}
         </div>
       </template>
 
-      <template #pads="padsSlot">
+      <template #pads>
         <PadGrid
-          v-bind="padsSlot.padGridProps"
-          @pad:down="padsSlot.padGridProps.onPadDown"
-          @pad:select="padsSlot.padGridProps.onPadSelect"
+          :pads="pads.padGridProps.pads"
+          :pad-states="pads.padGridProps.padStates"
+          :selected-pad="pads.padGridProps.selectedPad"
+          @pad:down="pads.padGridProps.onPadDown"
+          @pad:select="pads.padGridProps.onPadSelect"
         />
       </template>
 
-      <template #drawer="drawerSlot">
+      <template #drawer>
         <FxPanel
-          v-bind="drawerSlot.fxProps"
-          @fx:update="drawerSlot.fxProps.onUpdateFx"
+          :fx-settings="drawer.fxProps.fxSettings"
+          @fx:update="drawer.fxProps.onUpdateFx"
         />
       </template>
     </DrumMachine>
   </NuxtLayout>
 </template>
+
 
 
 <script setup lang="ts">

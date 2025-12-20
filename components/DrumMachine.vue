@@ -1,8 +1,24 @@
 <template>
-  <slot name="main" v-bind="mainSlotProps" />
-  <slot name="transport" v-bind="transportSlotProps" />
-  <slot name="pads" v-bind="padsSlotProps" />
-  <slot name="drawer" v-bind="drawerSlotProps" />
+<slot
+  name="main"
+  v-bind="mainSlotProps"
+/>
+
+<slot
+  name="transport"
+  v-bind="transportSlotProps"
+/>
+
+<slot
+  name="pads"
+  v-bind="padsSlotProps"
+/>
+
+<slot
+  name="drawer"
+  v-bind="drawerSlotProps"
+/>
+
 </template>
 
 
@@ -32,7 +48,7 @@ import PatternsPanel from './panels/PatternsPanel.vue'
 import ExportPanel from './panels/ExportPanel.vue'
 import { createZip, type ZipEntry } from '@/utils/zip'
 import type { DrumPadId, Scene } from '@/types/drums'
-import type { TimeDivision } from '@/types/time'
+import type { TimeDivision, GridSpec } from '@/types/time'
 import type { FxSettings, SampleRef, Soundbank } from '@/types/audio'
 import type { RenderEvent, RenderMetadata } from '@/types/render'
 import type { StepGrid } from '@/types/drums'
@@ -317,53 +333,70 @@ computed: {
     return result
   },
 
-  stepGridSlotProps(): Record<string, unknown> {
+  mainSlotProps() {
     return {
-      gridSpec: this.gridSpec,
-      steps: this.pattern.steps,
-      selectedPad: this.selectedPadId,
-      currentStep: this.currentStep,
-      isPlaying: this.isPlaying,
-      onToggleStep: this.toggleStep,
-      onScrubPlayhead: this.scrubPlayhead,
-      onUpdateStepVelocity: this.updateStepVelocity,
-      setRef: this.setStepGridRef
+      stepGridProps: {
+        gridSpec: this.gridSpec as GridSpec,
+        steps: this.pattern.steps as StepGrid,
+        selectedPad: this.selectedPadId as DrumPadId | null,
+        currentStep: this.currentStep,
+        isPlaying: this.isPlaying,
+        setRef: this.setStepGridRef,
+        onToggleStep: this.toggleStep,
+        onScrubPlayhead: (payload: { stepIndex: number } | number) => {
+          const stepIndex = typeof payload === 'number' ? payload : payload.stepIndex
+          this.scrubPlayhead({ stepIndex })
+        },
+        onUpdateStepVelocity: (payload: {
+          barIndex: number
+          stepInBar: number
+          padId: DrumPadId
+          velocity: number
+        }) => this.updateStepVelocity(payload)
+      }
     }
   },
 
-  transportSlotProps(): Record<string, unknown> {
+  transportSlotProps() {
     return {
-      bpm: this.bpm,
-      isPlaying: this.isPlaying,
-      loop: this.transport.loop,
-      division: this.gridSpec.division,
-      divisions: this.divisions,
-      isMidiLearning: this.midiLearn.isLearning,
-      onPlay: this.start,
-      onStop: this.stop,
-      onUpdateBpm: this.updateBpm,
-      onIncrementBpm: this.incrementBpm,
-      onDecrementBpm: this.decrementBpm,
-      onUpdateDivision: this.setDivision,
-      onUpdateLoop: this.setLoop,
-      onToggleMidiLearn: this.toggleMidiLearn
+      transportProps: {
+        bpm: this.bpm,
+        isPlaying: this.isPlaying,
+        loop: this.transport.loop,
+        division: this.gridSpec.division,
+        divisions: this.divisions,
+        isMidiLearning: this.midiLearn.isLearning,
+        onPlay: this.start,
+        onStop: this.stop,
+        onUpdateBpm: this.updateBpm,
+        onIncrementBpm: this.incrementBpm,
+        onDecrementBpm: this.decrementBpm,
+        onUpdateDivision: this.setDivision,
+        onUpdateLoop: this.setLoop,
+        onToggleMidiLearn: this.toggleMidiLearn
+      },
+      midiLearnLabel: this.midiLearnLabel
     }
   },
 
-  padGridSlotProps(): Record<string, unknown> {
+  padsSlotProps() {
     return {
-      pads: this.pads,
-      padStates: this.padStates,
-      selectedPad: this.selectedPadId,
-      onPadDown: this.handlePad,
-      onPadSelect: this.selectPad
+      padGridProps: {
+        pads: this.pads,
+        padStates: this.padStates,
+        selectedPad: this.selectedPadId as DrumPadId | null,
+        onPadDown: this.handlePad,
+        onPadSelect: this.selectPad
+      }
     }
   },
 
-  fxSlotProps(): Record<string, unknown> {
+  drawerSlotProps() {
     return {
-      fxSettings: this.sequencer.fxSettings,
-      onUpdateFx: this.updateFx
+      fxProps: {
+        fxSettings: (this.sequencer.fxSettings ?? {}) as FxSettings,
+        onUpdateFx: this.updateFx
+      }
     }
   }
 },
