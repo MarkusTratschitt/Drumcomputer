@@ -1,5 +1,6 @@
 # UI Sequencer Flow
 
+```mermaid
 flowchart LR
     TransportBar["TransportBar.vue"]
     TransportStore["Transport / Session Stores"]
