@@ -10,9 +10,12 @@ html,
 body,
 #__nuxt {
   height: 100%;
-  overflow: hidden;
+  margin:0;
 }
 
+body {
+  overflow: hidden;
+}
 .v-application {
   height: 100%;
   background: @color-bg-root;

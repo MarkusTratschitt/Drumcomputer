@@ -1,9 +1,9 @@
 <template>
   <DrumMachine>
-    <template #main="{ props }">
-      <StepGrid v-bind="props.stepGridProps" />
+    <!-- main Slot erstmal leer lassen oder Platzhalter -->
+    <template #main>
+      <div class="main-placeholder" />
     </template>
-
 
     <template #pads="{ props }">
       <PadGrid v-bind="props.padGridProps" />
@@ -12,6 +12,7 @@
     <template #transport="{ props }">
       <TransportBar v-bind="props.transportProps" />
     </template>
+
     <template #drawer="{ props }">
       <FxPanel v-bind="props.fxProps" />
     </template>
@@ -22,7 +23,6 @@
 import DrumMachine from '@/components/DrumMachine.vue'
 import TransportBar from '@/components/TransportBar.vue'
 import PadGrid from '@/components/PadGrid.vue'
-import StepGrid from '@/components/StepGrid.vue'
 import FxPanel from '@/components/panels/FxPanel.vue'
 
 export default {
@@ -30,9 +30,14 @@ export default {
     DrumMachine,
     TransportBar,
     PadGrid,
-    StepGrid,
     FxPanel
   }
 }
 </script>
 
+<style scoped>
+.main-placeholder {
+  width: 100%;
+  height: 100%;
+}
+</style>

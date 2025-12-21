@@ -1,16 +1,13 @@
 <template lang="pug">
-  client-only(tag="div")
-    button.pad-cell(
-      type="button"
-      :class="padClasses"
-      @pointerdown.prevent="handleActivate"
-      @click.prevent="handleActivate"
-      @keydown.enter.prevent="handleActivate"
-      @keydown.space.prevent="handleActivate"
-      :aria-pressed="isSelected"
-    )
-    span.pad-label {{ label }}
-    span.pad-key {{ keyLabel }}
+  button.pad-cell(
+    type="button"
+    :class="padClasses"
+    @pointerdown.prevent="handleActivate"
+    @click.prevent="handleActivate"
+    @keydown.enter.prevent="handleActivate"
+    @keydown.space.prevent="handleActivate"
+    :aria-pressed="isSelected"
+  )
 </template>
 
 <script lang="ts">
@@ -50,26 +47,12 @@ export default defineComponent({
 @import '@/styles/variables.less';
 
 .pad-cell {
-  aspect-ratio: 1 / 1;
-
-  background: @bg-cell;
-  border-radius: @radius-xm;
-  border: 1px solid @color-border-1;
-
-  box-shadow: @shadow-box;
-
-  transition:
-    background 80ms linear,
-    box-shadow 80ms linear,
-    transform 40ms linear;
-}
-
-
-.pad-label {
-  font-size: @font-size-xs;
-  letter-spacing: @letter-spacing-wide;
-  color: @color-text-secondary;
-  user-select: none;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 

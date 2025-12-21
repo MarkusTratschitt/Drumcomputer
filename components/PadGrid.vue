@@ -185,11 +185,11 @@ export default defineComponent({
   display: grid;
   grid-template-rows: repeat(4, minmax(0, 1fr));
   grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: @space-s;
   width:100%;
   height:100%;
   background: @color-surface-2;
   padding: @space-m;
-  gap: @space-s;
   box-sizing: border-box;
   border-radius: @radius-l;
   border: 1px solid @color-border-2;

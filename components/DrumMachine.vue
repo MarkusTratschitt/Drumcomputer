@@ -1,36 +1,35 @@
 <template>
-  <div class="device-root">
-    <div class="device-stage">
-      <div class="device-main">
-        <slot name="main" :props="mainSlotProps" />
+  <div class="device-hardware">
+    <!-- CONTROL STACK (links) -->
+    <div class="device-control">
+      <div class="device-transport">
+        <slot name="transport" :props="transportSlotProps" />
       </div>
-
-      <div class="device-hardware">
-        <div class="device-transport">
-          <slot name="transport" :props="transportSlotProps" />
-        </div>
-
-        <div class="device-fx">
-          <slot name="drawer" :props="drawerSlotProps" />
-        </div>
-
-        <div class="device-pads">
-          <div class="pads-square">
-            <slot name="pads" :props="padsSlotProps" />
-          </div>
-          <div class="pad-grid-indicator">
-            <span
-              v-for="i in gridCount"
-              :key="i"
-              :class="['indicator-dot', { active: currentGridIndex === i - 1 }]"
-              :aria-label="`Pad Bank ${i}`"
-            />
-          </div>
-        </div>
+  
+      <div class="device-fx">
+        <slot name="drawer" :props="drawerSlotProps" />
+      </div>
+    </div>
+  
+    <!-- PADS (rechts) -->
+    <div class="device-pads">
+      <div class="pads-square">
+        <slot name="pads" :props="padsSlotProps" />
+      </div>
+  
+      <div class="pad-grid-indicator">
+        <span
+          v-for="i in gridCount"
+          :key="i"
+          :class="['indicator-dot', { active: currentGridIndex === i - 1 }]"
+          :aria-label="`Pad Bank ${i}`"
+        />
       </div>
     </div>
   </div>
+
 </template>
+
 
 
 
@@ -52,7 +51,6 @@ import { useCapabilities } from '@/composables/useCapabilities.client'
 import { useMidiLearn } from '@/composables/useMidiLearn'
 import TransportBar from './TransportBar.vue'
 import PadGrid from './PadGrid.vue'
-import StepGridComponent from './StepGrid.vue'
 import TabPanel from './TabPanel.vue'
 import SoundPanel from './panels/SoundPanel.vue'
 import FxPanel from './panels/FxPanel.vue'
@@ -60,7 +58,7 @@ import PatternsPanel from './panels/PatternsPanel.vue'
 import ExportPanel from './panels/ExportPanel.vue'
 import { createZip, type ZipEntry } from '@/utils/zip'
 import type { DrumPadId, Scene } from '@/types/drums'
-import type { TimeDivision, GridSpec } from '@/types/time'
+import type { TimeDivision } from '@/types/time'
 import type { FxSettings, SampleRef, Soundbank } from '@/types/audio'
 import type { RenderEvent, RenderMetadata } from '@/types/render'
 import type { StepGrid } from '@/types/drums'
@@ -117,7 +115,6 @@ export default defineComponent({
   components: {
     TransportBar,
     PadGrid,
-    StepGrid: StepGridComponent,
     TabPanel,
     SoundPanel,
     FxPanel,
@@ -224,7 +221,6 @@ export default defineComponent({
       divisions,
       defaultBank,
       unwatchers: [] as Array<() => void>,
-      stepGridRef: null as (InstanceType<typeof StepGridComponent> & { focusGrid?: () => void }) | null,
       exportMetadata: null as RenderMetadata | null,
       exportAudioBlob: null as Blob | null,
       exportTimeline: undefined as RenderEvent[] | undefined,
@@ -357,28 +353,9 @@ computed: {
   },
 
   mainSlotProps() {
-    return {
-      stepGridProps: {
-        gridSpec: this.gridSpec as GridSpec,
-        steps: this.pattern.steps as StepGrid,
-        selectedPad: this.selectedPadId as DrumPadId | null,
-        currentStep: this.currentStep,
-        isPlaying: this.isPlaying,
-        setRef: this.setStepGridRef,
-        onToggleStep: this.toggleStep,
-        onScrubPlayhead: (payload: { stepIndex: number } | number) => {
-          const stepIndex = typeof payload === 'number' ? payload : payload.stepIndex
-          this.scrubPlayhead({ stepIndex })
-        },
-        onUpdateStepVelocity: (payload: {
-          barIndex: number
-          stepInBar: number
-          padId: DrumPadId
-          velocity: number
-        }) => this.updateStepVelocity(payload)
-      }
-    }
+    return {}
   },
+  
 
   transportSlotProps() {
     return {
@@ -586,7 +563,6 @@ computed: {
     },
     selectPad(pad: DrumPadId) {
       this.selectedPadId = pad
-      this.focusStepGrid()
       if (this.midiLearn.isLearning) {
         this.midiLearn.setTarget({ type: 'pad', padId: pad })
       }
@@ -618,12 +594,7 @@ computed: {
     scrubPlayhead(payload: { stepIndex: number }) {
       this.transport.setCurrentStep(payload.stepIndex)
     },
-    setStepGridRef(ref: (InstanceType<typeof StepGridComponent> & { focusGrid?: () => void }) | null) {
-      this.stepGridRef = ref ?? null
-    },
-    focusStepGrid() {
-      this.stepGridRef?.focusGrid?.()
-    },
+
     async requestMidi() {
       await this.midi.requestAccess()
       this.session.setCapabilities({
@@ -849,71 +820,110 @@ computed: {
 <style scoped lang="less">
 @import '@/styles/variables.less';
 
-.drumshell {
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
-  overflow-x: hidden;
-
-  .hardware-top {
-    flex: 0 0 56px;
-  }
+.device-root {
+  height: 100%;      /* stabiler als 100% */
+  width: 100%;
+  overflow: hidden;
+  background: @color-bg-root;
 }
-.main-shell {
-  flex: 1 1 auto;
+
+.device-stage {
+  height: 100%;
   min-height: 0;
-  display: flex;
-  gap: 16px;
+
+  display: grid;
+  grid-template-columns: 1fr clamp(520px, 36vw, 760px); /* <- Hardware-Spalte */
+  gap: @space-m;
+  padding: @space-m;
+}
+
+/* MAIN (links) */
+.device-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: @color-surface-1;
+  border: 1px solid @color-border-1;
+  border-radius: @radius-l;
+}
+
+/* HARDWARE (rechts) — MK3 Feeling */
+.device-hardware {
+  /* 27" Ziel: Pads groß & dominant */
+  --control-w: clamp(260px, 16vw, 340px);
+  --pads-w: clamp(620px, 30vw, 820px);
+
+  flex: 0 0 auto;
+  width: calc(var(--control-w) + var(--pads-w) + @space-m);
+  min-height: 0;
+
+  display: grid;
+  grid-template-columns: var(--control-w) var(--pads-w);
+  grid-template-rows: auto 1fr; /* oben transport, unten fx */
+  gap: @space-m;
+  align-items: stretch;
+}
+
+/* CONTROL STACK links */
+.device-control {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  min-height: 0;
+
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: @space-m;
+}
+
+.device-transport {
+  background: @color-surface-1;
+  border: 1px solid @color-border-1;
+  border-radius: @radius-m;
+  padding: @space-s;
   overflow: hidden;
 }
 
-.device-hardware {
-  flex: 0 0 auto;
+.device-fx {
+  background: @color-surface-3;
+  border: 1px solid @color-border-1;
+  border-radius: @radius-m;
+  padding: @space-s;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* PADS rechts (dominant) */
+.device-pads {
   min-height: 0;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  gap: @space-m;
+  align-items: stretch;
+  gap: @space-s;
 }
 
-.hardware-top {
-  display: flex;
-  flex-direction: row;
-  align-items: flex-end;     /* 🔥 Transport sitzt unten bündig wie Gerät */
-  gap: @space-m;
-  min-height: 0;
-}
-
-.device-fx {
-  flex: 1 1 auto;     /* nimmt den mittleren Platz */
-  min-height: 0;
-  overflow: hidden;   /* kein Scroll im Gerät */
-}
-
-.device-pads {
-  flex: 0 0 auto;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
+/* Das Quadrat bekommt echte Größe */
 
 .pads-square {
-  width: clamp(420px, 34vw, 620px);  /* größer + responsiv */
+  width: clamp(460px, 28vw, 640px); /* <- groß auf iMac */
   aspect-ratio: 1 / 1;
+  margin-left: auto;               /* rechts “anlehnen” */
+  min-height: 0;
   display: flex;
 }
 
 .pads-square > * {
   flex: 1 1 auto;
   min-width: 0;
-  min-height: 0;     
+  min-height: 0;
 }
 
+/* Indicator */
 .pad-grid-indicator {
   display: flex;
   justify-content: center;
   gap: @space-xs;
-  margin-top: @space-s;
 }
 
 .indicator-dot {
@@ -931,62 +941,28 @@ computed: {
     0 0 12px fade(@color-accent-primary, 35%);
 }
 
-.drawer-wrapper {
-  flex: 0 0 auto;
-  height: clamp(220px, 28vh, 320px);
-  overflow: hidden;
-}
-
-.pads-panel {
-  flex: 1 1 65%;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.sequencer-panel {
-  flex: 0 0 auto;
-  height: clamp(72px, 8vh, 96px);
-  width: clamp(220px, 30vw, 360px);
-  min-width: 220px;
-}
-
-.drawer-scroll {
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  overflow-y: auto;
-  padding: 16px;
-
-  :deep(.v-card) {
-    @radius-xl: 12px;
+/* Mobile optional */
+@media (max-width: 960px) {
+  .device-stage {
+    flex-direction: column;
   }
-}
-  
 
+  .device-hardware {
+    width: 100%;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+  }
 
-/* ───────────── MOBILE ───────────── */
+  .device-control {
+    grid-column: 1;
+    grid-row: 1;
+    grid-template-rows: auto;
+  }
 
-@media (max-width: 768px) {
-  .drumshell {
-    .main-shell {
-      flex-direction: column;
-
-      .sequencer-panel {
-        width: 100%;
-        min-width: 0;
-      }
-    }
-
-    .drawer-wrapper {
-      height: 34vh;
-    }
+  .device-pads {
+    grid-column: 1;
+    grid-row: 2;
   }
 }
 
-.midi-learn-status {
-  margin-top: 8px;
-  color: @color-text-secondary;
-  font-size: @font-size-xs;
-}
 </style>

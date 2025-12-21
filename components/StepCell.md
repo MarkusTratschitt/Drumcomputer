@@ -1,3 +1,4 @@
+```vue
 <template lang="pug">
   client-only(tag="div")
     button.step-cell(
@@ -167,3 +168,4 @@ export default defineComponent({
   }
 }
 </style>
+```

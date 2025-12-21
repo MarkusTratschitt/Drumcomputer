@@ -1,3 +1,4 @@
+```vue
 <template lang="pug">
   client-only(tag="div")
     .step-grid-shell(
@@ -370,3 +371,4 @@ export default defineComponent({
   }
 }
 </style>
+```

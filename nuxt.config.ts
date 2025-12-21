@@ -23,7 +23,7 @@ export default defineNuxtConfig({
   ],
 
 
-  css: ['vuetify/styles', '@/styles/variables.less'],
+  css: ['vuetify/styles', '@/styles/globals.less'],
   typescript: {
     strict: true,
     typeCheck: false
@@ -51,7 +51,8 @@ export default defineNuxtConfig({
     css: {
       preprocessorOptions: {
         less: {
-          javascriptEnabled: true
+          javascriptEnabled: true,
+          additionalData: `@import '@/styles/variables.less';`
         }
       }
     }
