@@ -1,13 +1,21 @@
 # UI Sequencer Flow
 
-```mermaid
 flowchart LR
-    TransportBar[TransportBar.vue] -->|play/stop/bpm/division| TransportStore[Transport/SessionStores]
-    TransportStore -->|isPlaying,currentStep,gridSpec| StepGrid[StepGrid.vue]
-    PadGrid[PadGrid.vue] -->|pad:select / pad:down| SequencerStore[Patterns/ScenesStore]
-    SequencerStore -->|steps for selected pad| StepGrid
-    StepGrid -->|step:toggle| SequencerStore
-    TransportStore -->|tick/schedule| TransportEngine
-    TransportEngine -->|onStep hook| AudioEngine[AudioEngine+FX]
-    AudioEngine -->|pad state (trigger/playing)| PadGrid
-```
+    TransportBar["TransportBar.vue"]
+    TransportStore["Transport / Session Stores"]
+    StepGrid["StepGrid.vue"]
+    PadGrid["PadGrid.vue"]
+    SequencerStore["Patterns / Scenes Store"]
+    TransportEngine["Transport Engine"]
+    AudioEngine["Audio Engine<br/>+ FX"]
+
+    TransportBar -->|"play · stop · bpm · division"| TransportStore
+    TransportStore -->|"isPlaying · currentStep · gridSpec"| StepGrid
+
+    PadGrid -->|"pad select / pad down"| SequencerStore
+    SequencerStore -->|"steps for selected pad"| StepGrid
+    StepGrid -->|"step toggle"| SequencerStore
+
+    TransportStore -->|"tick / schedule"| TransportEngine
+    TransportEngine -->|"onStep hook"| AudioEngine
+    AudioEngine -->|"pad state (trigger / playing)"| PadGrid
