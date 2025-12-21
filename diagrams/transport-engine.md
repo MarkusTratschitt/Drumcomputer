@@ -26,7 +26,7 @@ sequenceDiagram
     UI->>Transport: setConfig(bpm/division/swing)
     Transport->>Clock: audioTime()
     Transport->>Transport: recompute startTimeSec for phase
-    Note over Transport,Scheduler: Pending queue not cleared; old timings may still fire
+    Note over Transport,Scheduler: Clear/reseed scheduler to avoid firing stale queued steps
     UI->>Transport: stop()
     Transport->>Scheduler: stop(); clear()
     Transport-->>Subs: emit stopped state
