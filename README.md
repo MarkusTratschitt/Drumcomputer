@@ -2,6 +2,8 @@
 
 Nuxt 4 drum machine using Vue 3 Options API + TypeScript strict, Vuetify 3 (Pug + Less), Web Audio lookahead scheduling, Web MIDI capability checks, and IndexedDB stubs for soundbanks.
 
+![UI screenshot](assets/screenshots/Video%20Screen1766291171020.png)
+
 ## Setup
 
 ```bash
@@ -78,12 +80,20 @@ Copy the exported seed from the metadata panel (or the JSON blob) and supply it 
 - TransportEngine: Scheduler wird bei Config-Changes gecleart/neu befüllt; Step-Boundaries nutzen absolute Schritte mit Wrap-Guards, sodass Tempo/Division-Wechsel keine doppelten oder fehlenden Triggers erzeugen.
 - Docs: Mermaid-Diagramme korrigiert (gültige IDs/Arrows, GitHub-kompatibel).
 
-## Current Status (2025-12-19)
+## Feature Branch Changes (fix/padgrid-transport-scheduler-and-diagrams)
 
-- Local QA not re-run in this review session; last documented commands: `npm run lint`, `npm run typecheck`.
-- Transport engine covered by unit tests in `tests/unitTests/transportEngine.spec.ts`; UI surface relies on manual checks.
-- Audio/export stack described above remains feature-complete; persistence uses LocalStorage (patterns/scenes) and IndexedDB (soundbanks/samples/pattern copies).
-- UI uses Vue 3 Options API + Vuetify; pad/step grids handle keyboard navigation and playhead overlay for live feedback.
+- Slot-basierte DrumMachine-Hardware mit separaten Slots für Transport, Pads und Drawer; Index-Layout schlank auf `v-app` + Slots reduziert.
+- PadGrid refaktoriert: Pad-Refs pro Zelle, neue Keyboard-Navigation und Key-Labels eingeführt (werden aktuell aber nicht gerendert).
+- Drawer/Panel-Stack neu sortiert (Sound/FX/Patterns/Export), TransportBar gestylt mit BPM/Division/Loop-Controls, globale Farb-/Spacing-Variablen und Nuxt-Globalstyles eingebunden.
+- MIDI-Layer gestrafft: Mapping/Learn persistiert, vereinfachter Zugriff auf MIDI-Status, Layout-Metadaten aufgeräumt.
+- Sequencer-Komponenten (`StepGrid.vue`, `StepCell.vue`) aus dem Build entfernt; es existieren nur noch Markdown-Stubs, die UI rendert aktuell nur Pads/Transport/FX.
+
+## Current Status (2025-12-21)
+
+- QA in dieser Review nicht erneut ausgeführt; letzte dokumentierte Befehle bleiben `npm run lint` und `npm run typecheck`.
+- Laufzeit-UI zeigt derzeit nur Transport, FX-Drawer und 16er-Pad-Grid; Pattern-/Scene-Verwaltung, Step-Sequencer, Export und MIDI/Sync-Panels sind im Code, aber auf `pages/index.vue` nicht montiert.
+- Sequencer-Komponenten (`StepGrid.vue`, `StepCell.vue`) fehlen aktuell im Build; nur MD-Dokumentation liegt bei.
+- Nuxt-Output-Artefakte liegen im Repo, wurden in dieser Runde nicht neu generiert.
 
 ## Diagrams
 
@@ -91,7 +101,13 @@ Copy the exported seed from the metadata panel (or the JSON blob) and supply it 
 - UI sequencer flow: `diagrams/ui-sequencer.md`
 - Persistence + audio pipeline: `diagrams/persistence-and-audio.md`
 
-## Code Review Findings (2025-12-19)
+## Code Review Findings (2025-12-21)
+
+- `components/PadCell.vue`: Das Template rendert nur einen leeren Button; Label/Key-Labels werden nicht angezeigt und `is-empty` wird ignoriert, wodurch Pads ohne Text/A11y-Hinweise erscheinen. Label und "leer"-Zustand sollten gerendert/klassifiziert werden.
+- `pages/index.vue` + `components/DrumMachine.vue`: Nur Pads/Transport/FX werden montiert; PatternsPanel, ExportPanel, TabPanel und ein Step-/Playhead-Grid fehlen, sodass Pattern-Editing, Scene-Chains, Export und MIDI/Sync-UI aktuell unerreichbar sind.
+- `components/StepGrid.md`/`StepCell.md`: Nur Markdown-Stubs vorhanden, die eigentlichen Vue-Komponenten wurden entfernt. README beschreibt weiterhin Sequencer-UI, die im Build fehlt; entweder Komponenten reaktivieren oder README/UX anpassen.
+
+### Previous Findings (2025-12-19)
 
 - `components/PadGrid.vue`: Template contains a standalone `button.pad-cell` wired to undefined bindings (`padClasses`, `isFocusable`, `handleActivate`, `isSelected`, `velocityStyle`). Any interaction will throw and the element does not map to the pad model—likely leftover code that should be removed or folded into `PadCell`.
 - `components/PadGrid.vue`: The watcher tries to focus the selected pad via `$refs[newPad]`, but no `ref` is attached to `PadCell` instances. Focus restoration currently never works; add a `ref` per pad or alternative focus management.
