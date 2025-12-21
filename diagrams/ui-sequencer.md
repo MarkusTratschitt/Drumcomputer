@@ -19,3 +19,4 @@ flowchart LR
     TransportStore -->|"tick / schedule"| TransportEngine
     TransportEngine -->|"onStep hook"| AudioEngine
     AudioEngine -->|"pad state (trigger / playing)"| PadGrid
+```
