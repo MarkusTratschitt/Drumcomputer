@@ -1,0 +1,49 @@
+{
+  "branch": "featureImplementation",
+  "merge_policy": "Merge in master nur nach expliziter Freigabe durch den Inhaber.",
+  "phasen": [
+    {
+      "id": 1,
+      "titel": "Analyse & Planung",
+      "prompt": "Analysiere uiList.json, functionsList.json, nimamk3.json und die aktuelle Codebasis. Liste alle fehlenden UI-Elemente, Funktionen und Hardware-Workflows auf. Erstelle eine vollständige, priorisierte Feature- und Task-Liste. Dokumentiere alle Erkenntnisse in der README.md (Abschnitt 'Analyse & Planung')."
+    },
+    {
+      "id": 2,
+      "titel": "Architektur & Clean Code",
+      "prompt": "Definiere und dokumentiere die Architektur, Clean Code-Prinzipien, Performance-Standards und Nuxt 4 Patterns (Options API, Pug, Less). Ergänze/aktualisiere alle relevanten Diagramme im diagrams-Ordner. Dokumentiere die Architektur und Prinzipien in der README.md (Abschnitt 'Architektur & Clean Code')."
+    },
+    {
+      "id": 3,
+      "titel": "UI/UX & Interaktion",
+      "prompt": "Implementiere alle fehlenden UI-Elemente und Interaktionsmodelle gemäß uiList.json und Hardware-Workflows. Achte auf Performance, Accessibility und Options API. Verwende Pug/Less für alle Komponenten. Dokumentiere alle neuen UI-Elemente und Interaktionsmodelle in der README.md (Abschnitt 'UI/UX & Interaktion')."
+    },
+    {
+      "id": 4,
+      "titel": "Funktionale Logik & Audio/MIDI",
+      "prompt": "Implementiere alle fehlenden Funktionen aus functionsList.json und nimamk3.json (Transport, Pattern, Erase, Undo/Redo, MIDI, LED-Feedback etc.). Optimiere Performance, sichere deterministische Exporte, erweitere Stores/Composables. Dokumentiere alle neuen Funktionen und deren Tests in der README.md (Abschnitt 'Funktionale Logik & Audio/MIDI')."
+    },
+    {
+      "id": 5,
+      "titel": "Testing, QA & Use Cases",
+      "prompt": "Schreibe Komponententests, Unittests und End-to-End-Tests für alle neuen Features. Ergänze die README.md um alle relevanten Use Cases. Dokumentiere Testabdeckung und Performance (Abschnitt 'Testing, QA & Use Cases')."
+    },
+    {
+      "id": 6,
+      "titel": "Finalisierung & Review",
+      "prompt": "Stelle sicher, dass alle Tasks im Feature-Branch abgeschlossen und dokumentiert sind. Bereite einen Review mit dem Inhaber vor. Merge erst nach expliziter Freigabe. Dokumentiere den Abschluss in der README.md (Abschnitt 'Finalisierung & Review')."
+    }
+  ],
+  "dokumentation": {
+    "readme": "Jede Phase und alle neuen Use Cases werden in der README.md dokumentiert.",
+    "diagrams": "Alle relevanten Diagramme im diagrams-Ordner werden ergänzt/aktualisiert."
+  },
+  "qualitaet": {
+    "performance": "Alle Komponenten und Funktionen werden auf Performance optimiert.",
+    "clean_code": "Strikte Einhaltung von Clean Code und Architekturprinzipien."
+  },
+  "hinweise": [
+    "Es darf ausschließlich im Branch 'featureImplementation' gearbeitet werden.",
+    "Der Merge in den master-Branch erfolgt nur nach expliziter Freigabe durch den Inhaber.",
+    "Alle Aufgaben sind so zu dokumentieren, dass ein Eingreifen des Inhabers erst zum Merge erforderlich ist."
+  ]
+}
