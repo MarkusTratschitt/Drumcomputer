@@ -76,24 +76,24 @@ Copy the exported seed from the metadata panel (or the JSON blob) and supply it 
 
 ## Recent Fixes / Stability & Diagrams
 
-- PadGrid: Stray `button.pad-cell` entfernt; Fokus-Restore nutzt stabile PadCell-Refs und vermeidet Runtime-Errors.
-- TransportEngine: Scheduler wird bei Config-Changes gecleart/neu befüllt; Step-Boundaries nutzen absolute Schritte mit Wrap-Guards, sodass Tempo/Division-Wechsel keine doppelten oder fehlenden Triggers erzeugen.
-- Docs: Mermaid-Diagramme korrigiert (gültige IDs/Arrows, GitHub-kompatibel).
+- PadGrid: Removed stray `button.pad-cell`; focus restore now uses stable PadCell refs to avoid runtime errors.
+- TransportEngine: Scheduler is cleared/reseeded on config changes; step boundaries use absolute steps with wrap guards so tempo/division changes do not produce double/missed triggers.
+- Docs: Mermaid diagrams fixed (valid IDs/arrows, GitHub-compatible).
 
 ## Feature Branch Changes (fix/padgrid-transport-scheduler-and-diagrams)
 
-- Slot-basierte DrumMachine-Hardware mit separaten Slots für Transport, Pads und Drawer; Index-Layout schlank auf `v-app` + Slots reduziert.
-- PadGrid refaktoriert: Pad-Refs pro Zelle, neue Keyboard-Navigation und Key-Labels eingeführt (werden aktuell aber nicht gerendert).
-- Drawer/Panel-Stack neu sortiert (Sound/FX/Patterns/Export), TransportBar gestylt mit BPM/Division/Loop-Controls, globale Farb-/Spacing-Variablen und Nuxt-Globalstyles eingebunden.
-- MIDI-Layer gestrafft: Mapping/Learn persistiert, vereinfachter Zugriff auf MIDI-Status, Layout-Metadaten aufgeräumt.
-- Sequencer-Komponenten (`StepGrid.vue`, `StepCell.vue`) aus dem Build entfernt; es existieren nur noch Markdown-Stubs, die UI rendert aktuell nur Pads/Transport/FX.
+- Slot-based DrumMachine hardware with separate slots for transport, pads, and drawer; index layout slimmed down to `v-app` + slots.
+- PadGrid refactor: per-cell pad refs, new keyboard navigation, and key labels introduced (currently not rendered).
+- Drawer/panel stack re-ordered (Sound/FX/Patterns/Export), TransportBar styled with BPM/Division/Loop controls, global color/spacing variables and Nuxt global styles added.
+- MIDI layer streamlined: mapping/learn persisted, simpler MIDI status access, layout metadata cleaned up.
+- Sequencer components (`StepGrid.vue`, `StepCell.vue`) removed from the build; only Markdown stubs remain, so the UI currently renders pads/transport/FX only.
 
 ## Current Status (2025-12-21)
 
-- QA in dieser Review nicht erneut ausgeführt; letzte dokumentierte Befehle bleiben `npm run lint` und `npm run typecheck`.
-- Laufzeit-UI zeigt derzeit nur Transport, FX-Drawer und 16er-Pad-Grid; Pattern-/Scene-Verwaltung, Step-Sequencer, Export und MIDI/Sync-Panels sind im Code, aber auf `pages/index.vue` nicht montiert.
-- Sequencer-Komponenten (`StepGrid.vue`, `StepCell.vue`) fehlen aktuell im Build; nur MD-Dokumentation liegt bei.
-- Nuxt-Output-Artefakte liegen im Repo, wurden in dieser Runde nicht neu generiert.
+- QA not re-run in this review; last documented commands remain `npm run lint` and `npm run typecheck`.
+- Runtime UI currently shows only Transport, FX drawer, and 16-pad grid; pattern/scene management, step sequencer, export, and MIDI/Sync panels exist in code but are not mounted on `pages/index.vue`.
+- Sequencer components (`StepGrid.vue`, `StepCell.vue`) are missing from the build; only MD documentation exists.
+- Nuxt output artifacts are present in the repo and were not regenerated in this pass.
 
 ## Diagrams
 
@@ -103,9 +103,9 @@ Copy the exported seed from the metadata panel (or the JSON blob) and supply it 
 
 ## Code Review Findings (2025-12-21)
 
-- `components/PadCell.vue`: Das Template rendert nur einen leeren Button; Label/Key-Labels werden nicht angezeigt und `is-empty` wird ignoriert, wodurch Pads ohne Text/A11y-Hinweise erscheinen. Label und "leer"-Zustand sollten gerendert/klassifiziert werden.
-- `pages/index.vue` + `components/DrumMachine.vue`: Nur Pads/Transport/FX werden montiert; PatternsPanel, ExportPanel, TabPanel und ein Step-/Playhead-Grid fehlen, sodass Pattern-Editing, Scene-Chains, Export und MIDI/Sync-UI aktuell unerreichbar sind.
-- `components/StepGrid.md`/`StepCell.md`: Nur Markdown-Stubs vorhanden, die eigentlichen Vue-Komponenten wurden entfernt. README beschreibt weiterhin Sequencer-UI, die im Build fehlt; entweder Komponenten reaktivieren oder README/UX anpassen.
+- `components/PadCell.vue`: Template renders only a bare button; labels/key labels are not displayed and `is-empty` is ignored, so pads appear label-less with weak accessibility. Render/flag label and empty state.
+- `pages/index.vue` + `components/DrumMachine.vue`: Only Pads/Transport/FX are mounted; PatternsPanel, ExportPanel, TabPanel, and any step/playhead grid are absent, so pattern editing, scene chains, export, and MIDI/Sync UI are currently unreachable.
+- `components/StepGrid.md`/`StepCell.md`: Only Markdown stubs remain; the actual Vue components were removed. README still describes Sequencer UI that is missing in the build; either restore the components or align README/UX.
 
 ### Previous Findings (2025-12-19)
 
