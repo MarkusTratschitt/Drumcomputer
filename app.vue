@@ -1,17 +1,23 @@
-<template lang="pug">
-v-app
-  NuxtLayout
-    NuxtPage
+<template>
+  <NuxtLayout>
+  </NuxtLayout>
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue'
-
-export default defineComponent({
-  name: 'App'
-})
-</script>
-
 <style lang="less">
-@import '~/styles/variables.less';
+@import '@/styles/variables.less';
+
+html,
+body,
+#__nuxt {
+  height: 100%;
+  margin:0;
+}
+
+body {
+  overflow: hidden;
+}
+.v-application {
+  height: 100%;
+  background: @color-bg-root;
+}
 </style>

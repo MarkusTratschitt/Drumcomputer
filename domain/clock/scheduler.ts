@@ -28,6 +28,7 @@ export function createScheduler(clock: RenderClock, options: Partial<SchedulerOp
   const cfg: SchedulerOptions = { ...DEFAULT_OPTIONS, ...options }
 
   let timerId: ReturnType<typeof setInterval> | null = null
+  let wasRunningOnHide = false
   let queue: ScheduledItem[] = []
 
   const flush = (): void => {
@@ -56,24 +57,53 @@ export function createScheduler(clock: RenderClock, options: Partial<SchedulerOp
     }
   }
 
+  const startTimer = (): void => {
+    if (clock.isOffline) {
+      // Offline rendering should call flush manually from the renderer/engine
+      return
+    }
+    if (timerId) {
+      return
+    }
+    timerId = setInterval(flush, cfg.intervalMs)
+  }
+
+  const stopTimer = (): void => {
+    if (!timerId) {
+      return
+    }
+    clearInterval(timerId)
+    timerId = null
+  }
+
+  if (typeof window !== 'undefined') {
+    const handlePageHide = () => {
+      if (timerId) {
+        wasRunningOnHide = true
+        stopTimer()
+      } else {
+        wasRunningOnHide = false
+      }
+    }
+
+    const handlePageShow = () => {
+      if (wasRunningOnHide) {
+        startTimer()
+        flush()
+      }
+    }
+
+    window.addEventListener('pagehide', handlePageHide)
+    window.addEventListener('pageshow', handlePageShow)
+  }
+
   return {
     start(): void {
-      if (clock.isOffline) {
-        // Offline rendering should call flush manually from the renderer/engine
-        return
-      }
-      if (timerId) {
-        return
-      }
-      timerId = setInterval(flush, cfg.intervalMs)
+      startTimer()
     },
 
     stop(): void {
-      if (!timerId) {
-        return
-      }
-      clearInterval(timerId)
-      timerId = null
+      stopTimer()
     },
 
     schedule(atTimeSec: number, fn: ScheduledFn): void {

@@ -1,93 +1,34 @@
-<template lang="pug">
-client-only(tag="div")
-  div(style="color:white; padding:20px;")
-  .drumshell
-    // ───────────── TOP ─────────────
-    .hardware-top
-      TransportBar(
-        :bpm="bpm"
-        :isPlaying="isPlaying"
-        :loop="transport.loop"
-        :division="gridSpec.division"
-        :divisions="divisions"
-        @play="start"
-        @stop="stop"
-        @bpm:update="updateBpm"
-        @loop:update="setLoop"
-        @division:update="setDivision"
-      )
+<template>
+  <div class="device-hardware">
+    <!-- CONTROL STACK (links) -->
+    <div class="device-control">
+      <div class="device-transport">
+        <slot name="transport" :props="transportSlotProps" />
+      </div>
+  
+      <div class="device-fx">
+        <slot name="drawer" :props="drawerSlotProps" />
+      </div>
+    </div>
+  
+    <!-- PADS (rechts) -->
+    <div class="device-pads">
+      <div class="pads-square">
+        <slot name="pads" :props="padsSlotProps" />
+      </div>
+  
+      <div class="pad-grid-indicator">
+        <span
+          v-for="i in gridCount"
+          :key="i"
+          :class="['indicator-dot', { active: currentGridIndex === i - 1 }]"
+          :aria-label="`Pad Bank ${i}`"
+        />
+      </div>
+    </div>
+  </div>
 
-    // ───────────── MAIN ─────────────
-    .main-shell
-      .pads-panel
-        PadGrid(
-          :pads="pads"
-          :selected-pad="selectedPadId"
-          :pad-states="padStates"
-          @pad:down="handlePad"
-          @pad:select="selectPad"
-        )
-
-      .sequencer-panel
-        StepGrid(
-          :grid-spec="gridSpec"
-          :steps="pattern.steps"
-          :selected-pad="selectedPadId"
-          :current-step="currentStep"
-          :is-playing="isPlaying"
-          @step:toggle="toggleStep"
-        )
-
-    // ───────────── DRAWER ─────────────
-    .drawer-wrapper
-      .drawer-scroll
-        TabPanel(v-model="drawerTab")
-          template(#sound)
-            SoundPanel(
-              :banks="banks"
-              :selected-bank-id="soundbanks.selectedBankId"
-              @bank:select="selectBank"
-              @pad:replace="replacePadSample"
-            )
-
-          template(#fx)
-            FxPanel(
-              :fxSettings="sequencer.fxSettings"
-              @fx:update="updateFx"
-            )
-
-          template(#patterns)
-            PatternsPanel(
-              :patterns="patterns.patterns"
-              :selected-pattern-id="patterns.selectedPatternId"
-              :scenes="patterns.scenes"
-              :active-scene-id="patterns.activeSceneId"
-              @pattern:add="addPattern"
-              @pattern:select="selectPattern"
-              @pattern:rename="renamePattern"
-              @pattern:undo="undoPattern"
-              @pattern:redo="redoPattern"
-              @scene:add="addScene"
-              @scene:update="updateScene"
-              @scene:select="selectScene"
-            )
-
-          template(#export)
-            ExportPanel(
-              :isExporting="isExporting"
-              :exportError="exportError"
-              :exportMetadata="exportMetadata"
-              :audioBlob="exportAudioBlob"
-              :hasZipArtifacts="hasZipArtifacts"
-              :stemEntries="stemEntries"
-              @export="exportBounce"
-              @download:mixdown="downloadMixdown"
-              @download:zip="downloadZip"
-              @download:stem="downloadStem"
-              @download:stems="downloadAllStems"
-            )
 </template>
-
 
 
 
@@ -107,9 +48,9 @@ import { usePatternStorage } from '@/composables/usePatternStorage.client'
 import { useSoundbankStorage } from '@/composables/useSoundbankStorage.client'
 import { useImportExport } from '@/composables/useImportExport.client'
 import { useCapabilities } from '@/composables/useCapabilities.client'
+import { useMidiLearn } from '@/composables/useMidiLearn'
 import TransportBar from './TransportBar.vue'
 import PadGrid from './PadGrid.vue'
-import StepGridComponent from './StepGrid.vue'
 import TabPanel from './TabPanel.vue'
 import SoundPanel from './panels/SoundPanel.vue'
 import FxPanel from './panels/FxPanel.vue'
@@ -174,7 +115,6 @@ export default defineComponent({
   components: {
     TransportBar,
     PadGrid,
-    StepGrid: StepGridComponent,
     TabPanel,
     SoundPanel,
     FxPanel,
@@ -190,11 +130,12 @@ export default defineComponent({
     session.setCapabilities(capabilitiesProbe.capabilities.value)
 
     const importExport = useImportExport()
+    const midi = useMidi()
+    const midiLearn = useMidiLearn(midi)
     const sequencer = useSequencer({
       getPattern: () => patterns.currentPattern,
       onPatternBoundary: () => patterns.advanceScenePlayback()
     })
-    const midi = useMidi()
     const handleExternalStart = () => {
       if (!transport.isPlaying) {
         patterns.prepareScenePlayback()
@@ -273,6 +214,7 @@ export default defineComponent({
       sequencer,
       sync,
       midi,
+      midiLearn,
       patternStorage,
       soundbankStorage,
       pads,
@@ -287,6 +229,8 @@ export default defineComponent({
       exportError: null as string | null,
       exportAudioFn: importExport.exportAudio,
       selectedPadId: 'pad1' as DrumPadId,
+      currentGridIndex: 0,
+      padsPerGrid: 16,
       drawerTab: 'sound'
     }
   },
@@ -295,6 +239,15 @@ export default defineComponent({
 computed: {
   gridSpec() {
     return this.patterns.currentPattern?.gridSpec ?? { ...DEFAULT_GRID_SPEC }
+  },
+
+  gridCount(): number {
+    return Math.ceil(this.pads.length / this.padsPerGrid)
+  },
+
+  activePadGrid(): DrumPadId[] {
+    const start = this.currentGridIndex * this.padsPerGrid
+    return this.pads.slice(start, start + this.padsPerGrid)
   },
 
   pattern() {
@@ -355,6 +308,14 @@ computed: {
     return Boolean(this.exportMetadata && this.exportAudioBlob)
   },
   
+  midiLearnLabel(): string {
+    return (
+      this.midiLearn.learningLabel ??
+      this.midiLearn.status ??
+      'Listening for MIDI...'
+    )
+  },
+  
   padStates() {
     const bankPads = this.soundbanks.currentBank?.pads ?? {}
     const result = {} as Record<DrumPadId, PadState>
@@ -379,8 +340,8 @@ computed: {
     )
 
     const playingPads = collectPlayingPads(this.pattern.steps)
-
-    this.pads.forEach((pad) => {
+    const visiblePads = this.activePadGrid
+    visiblePads.forEach((pad) => {
       result[pad] = {
         label: bankPads[pad]?.name ?? pad.toUpperCase(),
         isTriggered: triggered.has(pad),
@@ -389,11 +350,60 @@ computed: {
     })
 
     return result
+  },
+
+  mainSlotProps() {
+    return {}
+  },
+  
+
+  transportSlotProps() {
+    return {
+      transportProps: {
+        bpm: this.bpm,
+        isPlaying: this.isPlaying,
+        loop: this.transport.loop,
+        division: this.gridSpec.division,
+        divisions: this.divisions,
+        isMidiLearning: this.midiLearn.isLearning,
+        onPlay: this.start,
+        onStop: this.stop,
+        onUpdateBpm: this.updateBpm,
+        onIncrementBpm: this.incrementBpm,
+        onDecrementBpm: this.decrementBpm,
+        onUpdateDivision: this.setDivision,
+        onUpdateLoop: this.setLoop,
+        onToggleMidiLearn: this.toggleMidiLearn
+      },
+      midiLearnLabel: this.midiLearnLabel
+    }
+  },
+
+  padsSlotProps() {
+    return {
+      padGridProps: {
+        pads: this.activePadGrid,
+        padStates: this.padStates,
+        selectedPad: this.selectedPadId as DrumPadId | null,
+        'onPad:down': this.handlePad,
+        'onPad:select': this.selectPad
+      }
+    }
+  },
+
+  drawerSlotProps() {
+    return {
+      fxProps: {
+        fxSettings: (this.sequencer.fxSettings ?? {}) as FxSettings,
+        onUpdateFx: this.updateFx
+      }
+    }
   }
 },
 
 
   mounted() {
+    window.addEventListener('keydown', this.handleGridKeys)
     const storedPatterns = this.patternStorage.load()
     if (storedPatterns.patterns.length > 0) {
       this.patterns.setPatterns(storedPatterns.patterns)
@@ -429,7 +439,39 @@ computed: {
       { deep: true }
     )
     const stopMidiListener = this.midi.listen((message) => {
+      if (this.midiLearn.handleMessage(message)) {
+        return
+      }
+
       if (message.type === 'noteon' && typeof message.note === 'number') {
+        const transportMap = this.midi.mapping?.transportMap
+        const transportNote = transportMap?.play === message.note
+          ? 'play'
+          : transportMap?.stop === message.note
+            ? 'stop'
+            : transportMap?.bpmUp === message.note
+              ? 'bpmUp'
+              : transportMap?.bpmDown === message.note
+                ? 'bpmDown'
+                : null
+
+        if (transportNote === 'play') {
+          void this.start()
+          return
+        }
+        if (transportNote === 'stop') {
+          this.stop()
+          return
+        }
+        if (transportNote === 'bpmUp') {
+          this.updateBpm(this.bpm + 1)
+          return
+        }
+        if (transportNote === 'bpmDown') {
+          this.updateBpm(this.bpm - 1)
+          return
+        }
+
         const pad = this.midi.mapNoteToPad(message.note)
         if (pad) {
           this.handlePad(pad, message.velocity ?? 1)
@@ -441,6 +483,7 @@ computed: {
     this.unwatchers.push(() => stopMidiListener?.())
   },
   beforeUnmount() {
+    window.removeEventListener('keydown', this.handleGridKeys)
     this.unwatchers.forEach((stop) => stop())
   },
 
@@ -488,13 +531,27 @@ computed: {
     },
     async start() {
       if (this.transport.isPlaying) return
+      if (this.midiLearn.isLearning) {
+        this.midiLearn.setTarget({ type: 'transport', action: 'play' })
+      }
       this.patterns.prepareScenePlayback()
       await this.sequencer.start()
       this.sync.startTransport(this.transport.bpm)
     },
     stop() {
+      if (this.midiLearn.isLearning) {
+        this.midiLearn.setTarget({ type: 'transport', action: 'stop' })
+      }
       this.sequencer.stop()
       this.sync.stopTransport()
+    },
+    handleGridKeys(e: KeyboardEvent) {
+      if (!e.ctrlKey) return
+      const index = Number(e.key) - 1
+      if (index >= 0 && index < this.gridCount) {
+        e.preventDefault()
+        this.selectPadGrid(index)
+      }
     },
     async handlePad(pad: DrumPadId, velocity = 1) {
       try {
@@ -506,10 +563,38 @@ computed: {
     },
     selectPad(pad: DrumPadId) {
       this.selectedPadId = pad
+      if (this.midiLearn.isLearning) {
+        this.midiLearn.setTarget({ type: 'pad', padId: pad })
+      }
+    },
+    selectPadGrid(index: number) {
+      if (index < 0 || index >= this.gridCount) return
+      this.currentGridIndex = index
+      const firstPad = this.activePadGrid[0]
+      if (firstPad) {
+        this.selectedPadId = firstPad
+      }
     },
     toggleStep(payload: { barIndex: number; stepInBar: number; padId: DrumPadId }) {
       this.patterns.toggleStep(payload.barIndex, payload.stepInBar, payload.padId)
     },
+    updateStepVelocity(payload: {
+      barIndex: number
+      stepInBar: number
+      padId: DrumPadId
+      velocity: number
+    }) {
+      this.patterns.setStepVelocity(
+        payload.barIndex,
+        payload.stepInBar,
+        payload.padId,
+        payload.velocity
+      )
+    },
+    scrubPlayhead(payload: { stepIndex: number }) {
+      this.transport.setCurrentStep(payload.stepIndex)
+    },
+
     async requestMidi() {
       await this.midi.requestAccess()
       this.session.setCapabilities({
@@ -546,6 +631,25 @@ computed: {
     },
     setLoop(loop: boolean) {
       this.transport.setLoop(loop)
+    },
+    incrementBpm() {
+      if (this.midiLearn.isLearning) {
+        this.midiLearn.setTarget({ type: 'transport', action: 'bpmUp' })
+      }
+      this.updateBpm(this.bpm + 1)
+    },
+    decrementBpm() {
+      if (this.midiLearn.isLearning) {
+        this.midiLearn.setTarget({ type: 'transport', action: 'bpmDown' })
+      }
+      this.updateBpm(this.bpm - 1)
+    },
+    toggleMidiLearn() {
+      if (this.midiLearn.isLearning) {
+        this.midiLearn.disable()
+      } else {
+        this.midiLearn.enable()
+      }
     },
     setDivision(division: TimeDivision) {
       const gridSpec = normalizeGridSpec({ ...this.gridSpec, division })
@@ -714,74 +818,151 @@ computed: {
 </script>
 
 <style scoped lang="less">
-.drumshell {
-  min-height: 100svh;
+@import '@/styles/variables.less';
+
+.device-root {
+  height: 100%;      /* stabiler als 100% */
+  width: 100%;
+  overflow: hidden;
+  background: @color-bg-root;
+}
+
+.device-stage {
+  height: 100%;
+  min-height: 0;
+
+  display: grid;
+  grid-template-columns: 1fr clamp(520px, 36vw, 760px); /* <- Hardware-Spalte */
+  gap: @space-m;
+  padding: @space-m;
+}
+
+/* MAIN (links) */
+.device-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: @color-surface-1;
+  border: 1px solid @color-border-1;
+  border-radius: @radius-l;
+}
+
+/* HARDWARE (rechts) — MK3 Feeling */
+.device-hardware {
+  /* 27" Ziel: Pads groß & dominant */
+  --control-w: clamp(260px, 16vw, 340px);
+  --pads-w: clamp(620px, 30vw, 820px);
+
+  flex: 0 0 auto;
+  width: calc(var(--control-w) + var(--pads-w) + @space-m);
+  min-height: 0;
+
+  display: grid;
+  grid-template-columns: var(--control-w) var(--pads-w);
+  grid-template-rows: auto 1fr; /* oben transport, unten fx */
+  gap: @space-m;
+  align-items: stretch;
+}
+
+/* CONTROL STACK links */
+.device-control {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  min-height: 0;
+
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: @space-m;
+}
+
+.device-transport {
+  background: @color-surface-1;
+  border: 1px solid @color-border-1;
+  border-radius: @radius-m;
+  padding: @space-s;
+  overflow: hidden;
+}
+
+.device-fx {
+  background: @color-surface-3;
+  border: 1px solid @color-border-1;
+  border-radius: @radius-m;
+  padding: @space-s;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* PADS rechts (dominant) */
+.device-pads {
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  overflow-x: hidden;
-  overflow-y: auto;
+  justify-content: flex-end;
+  align-items: stretch;
+  gap: @space-s;
+}
 
-  .hardware-top {
-    flex: 0 0 56px;
+/* Das Quadrat bekommt echte Größe */
+
+.pads-square {
+  width: clamp(460px, 28vw, 640px); /* <- groß auf iMac */
+  aspect-ratio: 1 / 1;
+  margin-left: auto;               /* rechts “anlehnen” */
+  min-height: 0;
+  display: flex;
+}
+
+.pads-square > * {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* Indicator */
+.pad-grid-indicator {
+  display: flex;
+  justify-content: center;
+  gap: @space-xs;
+}
+
+.indicator-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: @color-border-1;
+  box-shadow: inset 0 0 2px rgba(0,0,0,0.8);
+}
+
+.indicator-dot.active {
+  background: @color-accent-primary;
+  box-shadow:
+    0 0 6px fade(@color-accent-primary, 60%),
+    0 0 12px fade(@color-accent-primary, 35%);
+}
+
+/* Mobile optional */
+@media (max-width: 960px) {
+  .device-stage {
+    flex-direction: column;
   }
 
-  .main-shell {
-    flex: 1 1 auto;
-    min-height: 0;
-    display: flex;
-    gap: 16px;
-    overflow: hidden;
-
-    .pads-panel {
-      flex: 1 1 65%;
-      min-height: 0;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .sequencer-panel {
-      flex: 0 0 auto;
-      height: clamp(72px, 8vh, 96px);
-      width: clamp(220px, 30vw, 360px);
-      min-width: 220px;
-    }
+  .device-hardware {
+    width: 100%;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
   }
 
-  .drawer-wrapper {
-    flex: 0 0 auto;
-    height: clamp(220px, 28vh, 320px);
-    overflow: hidden;
+  .device-control {
+    grid-column: 1;
+    grid-row: 1;
+    grid-template-rows: auto;
+  }
 
-    .drawer-scroll {
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      overflow-y: auto;
-      padding: 16px;
-
-      :deep(.v-card) {
-        border-radius: 12px;
-      }
-    }
+  .device-pads {
+    grid-column: 1;
+    grid-row: 2;
   }
 }
 
-/* ───────────── MOBILE ───────────── */
-
-@media (max-width: 768px) {
-  .drumshell {
-    .main-shell {
-      flex-direction: column;
-
-      .sequencer-panel {
-        width: 100%;
-        min-width: 0;
-      }
-    }
-
-    .drawer-wrapper {
-      height: 34vh;
-    }
-  }
-}
 </style>

@@ -1,14 +1,13 @@
 <template lang="pug">
-button.pad-cell(
-  type="button"
-  :class="padClasses"
-  @pointerdown.prevent="handleActivate"
-  @click.prevent="handleActivate"
-  @keydown.enter.prevent="handleActivate"
-  @keydown.space.prevent="handleActivate"
-  :aria-pressed="isSelected"
-)
-  span.pad-label {{ label }}
+  button.pad-cell(
+    type="button"
+    :class="padClasses"
+    @pointerdown.prevent="handleActivate"
+    @click.prevent="handleActivate"
+    @keydown.enter.prevent="handleActivate"
+    @keydown.space.prevent="handleActivate"
+    :aria-pressed="isSelected"
+  )
 </template>
 
 <script lang="ts">
@@ -22,7 +21,8 @@ export default defineComponent({
     label: { type: String, required: true },
     isSelected: { type: Boolean, default: false },
     isTriggered: { type: Boolean, default: false },
-    isPlaying: { type: Boolean, default: false }
+    isPlaying: { type: Boolean, default: false },
+    keyLabel: { type: String, default: null }
   },
   emits: ['pad:down', 'pad:select'],
   computed: {
@@ -44,75 +44,93 @@ export default defineComponent({
 </script>
 
 <style scoped lang="less">
+@import '@/styles/variables.less';
+
 .pad-cell {
-  border-radius: 12px;
-  border: 2px solid transparent;
-  background: linear-gradient(135deg, #12151b, #1c2130);
-  color: #f5f7fb;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  width: 100%;
+  height: 100%;
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.3s ease;
-  position: relative;
-  overflow: visible;
-
-  &:active {
-    transform: scale(0.97);
-    box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.8);
-  }
-
-  &.is-selected {
-    border-color: #00f8ff;
-  }
-
-  &.is-playing {
-    animation: padPulse 2s ease-in-out infinite;
-  }
-
-  &:focus-visible {
-    outline: 2px solid #00f8ff;
-    outline-offset: 2px;
-  }
-
-
-  &.is-triggered {
-    &:after {
-      content: '';
-      position: absolute;
-      inset: 4px;
-      border-radius: 10px;
-      border: 2px solid rgba(0, 255, 255, 0.9);
-      animation: triggerFlash 0.35s ease-out;
-    }
-  }
 }
 
-.pad-label {
+
+/* ───────── Unbelegt ───────── */
+.pad-cell.is-empty {
+  background-color: #f2f1e8; /* weiß mit minimalem Gelbstich */
+  border-color: #d6d4c8;
+}
+
+/* Fokus & Auswahl bleiben wie bei dir definiert */
+.pad-cell.is-selected {
+  border-color: @color-border-3;
+
+  box-shadow:
+    0 0 0 2px fade(@color-border-3, 25%),
+    @shadow-box;
+}
+
+
+/* ───────── Trigger / Velocity ───────── */
+/* Je höher Velocity, desto dunkler */
+.pad-cell.is-triggered {
+  background-color: ~"color-mix(
+    in srgb,
+    @color-surface-1 calc(100% - (var(--pad-velocity) * 60%)),
+    #000000
+  )";
+}
+
+.pad-cell.is-triggered .pad-label {
+  opacity: 0.85;
+}
+
+/* Optional: geladene Pads leicht abdunkeln bei Velocity */
+.pad-cell:not(.is-empty).is-triggered::after {
+  box-shadow: 0 0
+    calc(10px * var(--pad-velocity))
+    fade(@color-accent-primary, 40%);
+}
+
+.pad-cell.is-triggered:not(.is-playing) {
+  background: linear-gradient(
+    180deg,
+    fade(@color-text-primary, 90%),
+    fade(@color-text-primary, 65%)
+  );
+}
+
+.pad-cell:active {
+  transform: translateY(1px);
+  box-shadow:
+    inset 0 3px 6px rgba(0,0,0,0.8);
+}
+
+
+.pad-cell.is-playing {
+  background: linear-gradient(
+    180deg,
+    fade(@color-accent-primary, 90%),
+    fade(@color-accent-primary, 55%)
+  );
+
+  box-shadow:
+    0 0 calc(18px * var(--pad-velocity))
+      fade(@color-accent-primary, 70%),
+    @shadow-box;
+}
+
+.pad-key {
+  position: absolute;
+  bottom: @space-xs;
+  left: @space-xs;
+  font-size: @font-size-xs;
+  opacity: 0;
   pointer-events: none;
 }
 
-@keyframes triggerFlash {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0;
-    transform: scale(1.1);
-  }
-}
-
-@keyframes padPulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(0, 255, 255, 0.15);
-  }
-  50% {
-    box-shadow: 0 0 12px 6px rgba(0, 255, 255, 0.2);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(0, 255, 255, 0);
-  }
+.pad-grid:focus-visible .pad-key {
+  opacity: 0.35;
 }
 </style>

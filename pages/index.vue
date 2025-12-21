@@ -1,15 +1,43 @@
-<template lang="pug">
-  client-only
-    VMain
-      DrumMachine
+<template>
+  <DrumMachine>
+    <!-- main Slot erstmal leer lassen oder Platzhalter -->
+    <template #main>
+      <div class="main-placeholder" />
+    </template>
+
+    <template #pads="{ props }">
+      <PadGrid v-bind="props.padGridProps" />
+    </template>
+
+    <template #transport="{ props }">
+      <TransportBar v-bind="props.transportProps" />
+    </template>
+
+    <template #drawer="{ props }">
+      <FxPanel v-bind="props.fxProps" />
+    </template>
+  </DrumMachine>
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue'
-import DrumMachine from '~/components/DrumMachine.vue'
+<script>
+import DrumMachine from '@/components/DrumMachine.vue'
+import TransportBar from '@/components/TransportBar.vue'
+import PadGrid from '@/components/PadGrid.vue'
+import FxPanel from '@/components/panels/FxPanel.vue'
 
-export default defineComponent({
-  name: 'IndexPage',
-  components: { DrumMachine }
-})
+export default {
+  components: {
+    DrumMachine,
+    TransportBar,
+    PadGrid,
+    FxPanel
+  }
+}
 </script>
+
+<style scoped>
+.main-placeholder {
+  width: 100%;
+  height: 100%;
+}
+</style>

@@ -1,5 +1,5 @@
 import { defineNuxtConfig } from 'nuxt/config'
-import { pwaConfig } from './config/pwa'
+// import { pwaConfig } from './config/pwa'
 
 const DEFAULT_HMR_PORT = 24678
 const hmrPort = Number.isInteger(Number(process.env.HMR_PORT)) && process.env.HMR_PORT
@@ -10,14 +10,20 @@ export default defineNuxtConfig({
   ssr: false,
   debug: true,
   compatibilityDate: '2024-04-03',
-  devtools: { enabled: true },
+  devtools: {
+    enabled: true,
+
+    timeline: {
+      enabled: true
+    }
+  },
   modules: [
     '@pinia/nuxt',
-    ['@vite-pwa/nuxt', pwaConfig],
-    ],
+    // ['@vite-pwa/nuxt', pwaConfig],
+  ],
 
-  
-  css: ['vuetify/styles', '~/styles/drum-machine.less', '~/styles/vuetify-overrides.less'],
+
+  css: ['vuetify/styles', '@/styles/globals.less'],
   typescript: {
     strict: true,
     typeCheck: false
@@ -38,17 +44,20 @@ export default defineNuxtConfig({
         host: '127.0.0.1'
       }
     },
+
     define: {
       'process.env.DEBUG': true
     },
     css: {
       preprocessorOptions: {
         less: {
-          javascriptEnabled: true
+          javascriptEnabled: true,
+          additionalData: `@import '@/styles/variables.less';`
         }
       }
     }
   },
+
   pages: true,
   app: {
     head: {

@@ -1,12 +1,12 @@
-<template lang="pug">
-  div
-    slot
+<template>
+  <v-app>
+    <NuxtPage />
+  </v-app>
 </template>
 
 <script lang="ts">
-
+export default {
+  
+}
 </script>
 
-<style lang="less">
-
-</style>

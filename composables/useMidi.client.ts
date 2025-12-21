@@ -1,4 +1,4 @@
-import { ref } from 'vue'
+import { onBeforeUnmount, ref } from 'vue'
 import type { MidiDeviceInfo, MidiMapping, MidiMessage } from '@/types/midi'
 import { defaultMidiMapping } from '@/domain/midiMapping'
 
@@ -10,6 +10,8 @@ export function useMidi() {
   const selectedInputId = ref<string | null>(null)
   const selectedOutputId = ref<string | null>(null)
   const listeners = ref<Set<(message: MidiMessage) => void>>(new Set())
+  let handlePageHide: (() => void) | null = null
+  let handlePageShow: (() => void) | null = null
 
   const supportsMidi = () => typeof navigator !== 'undefined' && Boolean((navigator as Navigator).requestMIDIAccess)
 
@@ -148,6 +150,40 @@ export function useMidi() {
     }
   }
 
+  if (typeof window !== 'undefined') {
+    handlePageHide = () => {
+      detachInputs()
+      if (access.value) {
+        access.value.onstatechange = null
+      }
+    }
+    handlePageShow = () => {
+      if (access.value) {
+        refreshDevices()
+        attachSelectedInput()
+        access.value.onstatechange = () => {
+          refreshDevices()
+          attachSelectedInput()
+        }
+      }
+    }
+    window.addEventListener('pagehide', handlePageHide)
+    window.addEventListener('pageshow', handlePageShow)
+  }
+
+  onBeforeUnmount(() => {
+    if (handlePageHide) {
+      window.removeEventListener('pagehide', handlePageHide)
+    }
+    if (handlePageShow) {
+      window.removeEventListener('pageshow', handlePageShow)
+    }
+    detachInputs()
+    if (access.value) {
+      access.value.onstatechange = null
+    }
+  })
+
   return {
     access,
     inputs,
@@ -165,6 +201,9 @@ export function useMidi() {
     sendStop,
     mapNoteToPad,
     setPadForNote,
+    setMapping: (next: MidiMapping) => {
+      mapping.value = next
+    },
     setSelectedInput,
     setSelectedOutput
   }

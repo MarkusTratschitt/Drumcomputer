@@ -1,35 +1,36 @@
 <template lang="pug">
-.panel-shell
-  .panel-header Sound
-  .panel-body
-    v-select(
-      label="Bank"
-      dense
-      :items="bankItems"
-      item-title="title"
-      item-value="value"
-      :model-value="selectedBankId"
-      @update:model-value="selectBank"
-      hide-details
-    )
-    v-select(
-      label="Pad"
-      dense
-      :items="padItems"
-      item-title="title"
-      item-value="value"
-      v-model="padTarget"
-      hide-details
-    )
-    p.current-sample Label: {{ currentSampleLabel }}
-    input(
-      ref="fileInput"
-      type="file"
-      accept="audio/*"
-      class="d-none"
-      @change="onFileChange"
-    )
-    v-btn(color="primary" class="mt-3" block @click="triggerFile") Replace sample
+  client-only(tag="div")
+    .panel-shell
+      .panel-header Sound
+      .panel-body
+        v-select(
+          label="Bank"
+          dense
+          :items="bankItems"
+          item-title="title"
+          item-value="value"
+          :model-value="selectedBankId"
+          @update:model-value="selectBank"
+          hide-details
+        )
+        v-select(
+          label="Pad"
+          dense
+          :items="padItems"
+          item-title="title"
+          item-value="value"
+          v-model="padTarget"
+          hide-details
+        )
+        p.current-sample Label: {{ currentSampleLabel }}
+        input(
+          ref="fileInput"
+          type="file"
+          accept="audio/*"
+          class="d-none"
+          @change="onFileChange"
+        )
+        v-btn(color="primary" class="mt-3" block @click="triggerFile") Replace sample
 </template>
 
 <script lang="ts">
@@ -88,10 +89,12 @@ export default defineComponent({
 </script>
 
 <style scoped lang="less">
+@import '@/styles/variables.less';
+
 .panel-shell {
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
-  background: #080b10;
+  border: 1px solid @color-border-2;
+  border-radius: @radius-l;
+  background: @color-surface-2;
   padding: 16px;
   color: #f5f7fb;
 

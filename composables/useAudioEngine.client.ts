@@ -28,6 +28,9 @@ const createAudioEngineInstance = () => {
   const fxSnapshot = ref<FxSettings>(cloneFxSettings(fxSettings.value))
   const fxGraph = ref<FxGraphNodes | null>(null)
   let randomSource: RandomSource = createSeededRandom(0)
+  let wasRunningOnHide = false
+  let handlePageHide: (() => void) | null = null
+  let handlePageShow: (() => void) | null = null
 
   const syncFxSnapshot = () => {
     fxSnapshot.value = cloneFxSettings(fxSettings.value)
@@ -143,7 +146,32 @@ const createAudioEngineInstance = () => {
     source.start(when)
   }
 
+  if (typeof window !== 'undefined') {
+    handlePageHide = () => {
+      if (audioContext.value) {
+        wasRunningOnHide = audioContext.value.state === 'running'
+        void audioContext.value.suspend().catch(() => undefined)
+      }
+    }
+
+    handlePageShow = () => {
+      if (wasRunningOnHide && audioContext.value) {
+        void audioContext.value.resume().catch(() => undefined)
+      }
+      wasRunningOnHide = false
+    }
+
+    window.addEventListener('pagehide', handlePageHide)
+    window.addEventListener('pageshow', handlePageShow)
+  }
+
   onBeforeUnmount(() => {
+    if (handlePageHide) {
+      window.removeEventListener('pagehide', handlePageHide)
+    }
+    if (handlePageShow) {
+      window.removeEventListener('pageshow', handlePageShow)
+    }
     audioContext.value?.close()
     sampleCache.value.clear()
   })

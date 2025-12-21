@@ -6,3 +6,6 @@ node_modules
 npm-debug.log*
 pnpm-lock.yaml
 yarn.lock
+Components.md
+Composables.md
+Domain.md

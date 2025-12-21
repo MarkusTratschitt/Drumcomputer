@@ -1,36 +1,53 @@
 <template lang="pug">
-.pad-grid(
-  role="grid"
-  tabindex="0"
-  @keydown.arrow-up.prevent="moveSelection(-4)"
-  @keydown.arrow-down.prevent="moveSelection(4)"
-  @keydown.arrow-left.prevent="moveSelection(-1)"
-  @keydown.arrow-right.prevent="moveSelection(1)"
-  @keydown.home.prevent="selectIndex(0)"
-  @keydown.end.prevent="selectIndex(pads.length - 1)"
-  @keydown.page-up.prevent="selectRow(0)"
-  @keydown.page-down.prevent="selectRow(3)"
-)
-  PadCell(
-    v-for="pad in pads"
-    :key="pad"
-    :ref="setPadRef(pad)"
-    :pad-id="pad"
-    :label="padLabel(pad)"
-    :is-selected="selectedPad === pad"
-    :is-focusable="selectedPad === pad"
-    :is-triggered="padStates[pad]?.isTriggered ?? false"
-    :is-playing="padStates[pad]?.isPlaying ?? false"
-    @pad:down="$emit('pad:down', $event)"
-    @pad:select="$emit('pad:select', $event)"
-  )
-
+  client-only(tag="div")
+    .pad-grid(
+      role="grid"
+      tabindex="0"
+      aria-label="Pad grid"
+      :aria-rowcount="4"
+      :aria-colcount="4"
+      @keydown.arrow-up.prevent="moveSelection(-4)"
+      @keydown.arrow-down.prevent="moveSelection(4)"
+      @keydown.arrow-left.prevent="moveSelection(-1)"
+      @keydown.arrow-right.prevent="moveSelection(1)"
+      @keydown.home.prevent="selectIndex(0)"
+      @keydown.end.prevent="selectIndex(pads.length - 1)"
+      @keydown.page-up.prevent="selectRow(0)"
+      @keydown.page-down.prevent="selectRow(3)"
+      :style="velocityStyle"
+    )
+      PadCell(
+        v-for="(pad, index) in pads"
+        :key="pad"
+        :ref="setPadRef(pad)"
+        :pad-id="pad"
+        :label="padLabel(pad)"
+        :is-selected="selectedPad === pad"
+        :is-focusable="selectedPad === pad"
+        :is-triggered="padStates[pad]?.isTriggered ?? false"
+        :is-playing="padStates[pad]?.isPlaying ?? false"
+        :is-empty="!padStates[pad]"
+        :key-label="keyLabels[index]"
+        role="gridcell"
+        :aria-label="padAriaLabel(pad)"
+        :aria-rowindex="Math.floor(index / 4) + 1"
+        :aria-colindex="(index % 4) + 1"
+        @pad:down="$emit('pad:down', $event)"
+        @pad:select="$emit('pad:select', $event)"
+      )
 </template>
 
 <script lang="ts">
 import { defineComponent } from 'vue'
 import PadCell from './PadCell.vue'
 import type { DrumPadId } from '@/types/drums'
+
+const KEY_LABELS = [
+  'Q','W','E','R',
+  'A','S','D','F',
+  'Z','X','C','V',
+  '1','2','3','4'
+]
 
 type PadState = {
   label: string
@@ -40,7 +57,10 @@ type PadState = {
 
 export default defineComponent({
   name: 'PadGrid',
-  components: { PadCell },
+  components: { 
+    PadCell,
+    
+    },
 
   props: {
     pads: { type: Array as () => DrumPadId[], required: true },
@@ -66,6 +86,10 @@ export default defineComponent({
       return { '--pad-velocity': clamped.toString() }
     },
 
+    keyLabels(): string[] {
+      return KEY_LABELS
+    },
+    
     padRefs(): Record<DrumPadId, InstanceType<typeof PadCell> | undefined> {
       return this.internalPadRefs
     }
@@ -82,8 +106,10 @@ export default defineComponent({
   },
 
   mounted() {
-    if (!this.selectedPad && this.pads.length > 0) {
-      this.$emit('pad:select', this.pads[0])
+    if (this.pads.length !== this.keyLabels.length) {
+      console.warn(
+        `[PadGrid] pads (${this.pads.length}) ≠ keyLabels (${this.keyLabels.length})`
+      )
     }
   },
 
@@ -100,6 +126,11 @@ export default defineComponent({
 
     padLabel(pad: DrumPadId): string {
       return this.padStates[pad]?.label ?? pad.toUpperCase()
+    },
+
+    padAriaLabel(pad: DrumPadId): string {
+      const label = this.padLabel(pad)
+      return `${label} pad`
     },
 
     handlePadDown(pad: DrumPadId, velocity: number) {
@@ -148,34 +179,40 @@ export default defineComponent({
 </script>
 
 <style scoped lang="less">
+@import '@/styles/variables.less';
+
 .pad-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
   grid-template-rows: repeat(4, minmax(0, 1fr));
-  gap: 10px;
-  padding: 12px;
-  background: #0a0d12;
-  border-radius: 16px;
-  border: 1px solid #1f2838;
-  height: 100%;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: @space-s;
+  width:100%;
+  height:100%;
+  background: @color-surface-2;
+  padding: @space-m;
+  box-sizing: border-box;
+  border-radius: @radius-l;
+  border: 1px solid @color-border-2;
+
 }
 
+  // Fokus-Outline nach variables.less
 .pad-grid:focus-visible {
-  outline: 2px solid #00f8ff;
-  outline-offset: 4px;
-}
-
-.pad-cell.is-selected {
+  outline: @outline-focus;
+  outline-offset: @outline-focus-offset;
   border-color: #00f8ff;
 }
-
-.pad-cell:focus-visible:not(.is-selected) {
+  // Selektierte Pad-Farbe nach variables.less
+.pad-cell.is-selected {
+  border-color: @color-accent-primary;
   outline: 2px dashed #00f8ff;
   outline-offset: 3px;
 }
-
-.pad-cell.is-triggered::after {
-  box-shadow: 0 0 calc(12px * var(--pad-velocity))
-    rgba(0, 255, 255, calc(0.2 + 0.6 * var(--pad-velocity)));
+.pad-cell:focus-visible:not(.is-selected) {
+  outline: @outline-focus;
+  outline-offset: @outline-focus-offset;
+  box-shadow: 0 0 calc(12px * var(--pad-velocity)) ~"rgba(0, 255, 255, calc(0.2 + 0.6 * var(--pad-velocity)))";
+  box-shadow: 0 0 calc(12px * var(--pad-velocity)) fade(@color-accent-primary, 60%);
 }
+
 </style>
