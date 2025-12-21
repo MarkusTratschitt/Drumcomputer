@@ -1,3 +1,4 @@
+// Plays an AudioBuffer at a scheduled AudioContext time with a fixed gain stage.
 export function playStepAt(
   ctx: AudioContext,
   buffer: AudioBuffer,
@@ -12,6 +13,5 @@ export function playStepAt(
   source.buffer = buffer
   source.connect(gain).connect(ctx.destination)
 
-  // sample-accurate
   source.start(atTime)
 }

@@ -31,6 +31,7 @@ const tabs = [
 
 export default defineComponent({
   name: 'TabPanel',
+  // Drawer tab container that switches between sound, FX, patterns, and export slots.
   props: {
     modelValue: { type: String, default: 'sound' }
   },

@@ -13,6 +13,7 @@
 <script lang="ts">
 import { defineComponent } from 'vue'
 import type { DrumPadId } from '@/types/drums'
+// Represents a single drum pad cell, emitting pad hits and selection while reflecting trigger/play states.
 
 export default defineComponent({
   name: 'PadCell',
@@ -55,14 +56,11 @@ export default defineComponent({
   justify-content: center;
 }
 
-
-/* ───────── Unbelegt ───────── */
 .pad-cell.is-empty {
-  background-color: #f2f1e8; /* weiß mit minimalem Gelbstich */
+  background-color: #f2f1e8;
   border-color: #d6d4c8;
 }
 
-/* Fokus & Auswahl bleiben wie bei dir definiert */
 .pad-cell.is-selected {
   border-color: @color-border-3;
 
@@ -71,9 +69,6 @@ export default defineComponent({
     @shadow-box;
 }
 
-
-/* ───────── Trigger / Velocity ───────── */
-/* Je höher Velocity, desto dunkler */
 .pad-cell.is-triggered {
   background-color: ~"color-mix(
     in srgb,
@@ -86,7 +81,6 @@ export default defineComponent({
   opacity: 0.85;
 }
 
-/* Optional: geladene Pads leicht abdunkeln bei Velocity */
 .pad-cell:not(.is-empty).is-triggered::after {
   box-shadow: 0 0
     calc(10px * var(--pad-velocity))
@@ -106,7 +100,6 @@ export default defineComponent({
   box-shadow:
     inset 0 3px 6px rgba(0,0,0,0.8);
 }
-
 
 .pad-cell.is-playing {
   background: linear-gradient(

@@ -1,6 +1,5 @@
 <template>
   <DrumMachine>
-    <!-- main Slot erstmal leer lassen oder Platzhalter -->
     <template #main>
       <div class="main-placeholder" />
     </template>
@@ -26,6 +25,7 @@ import PadGrid from '@/components/PadGrid.vue'
 import FxPanel from '@/components/panels/FxPanel.vue'
 
 export default {
+  // Composes the DrumMachine with transport, pads, and FX panels for the main page.
   components: {
     DrumMachine,
     TransportBar,

@@ -12,6 +12,7 @@ import type { CSSProperties } from 'vue'
 
 export default defineComponent({
   name: 'PlayheadOverlay',
+  // Visual overlay that positions a playhead indicator across a step grid based on current playback state.
   props: {
     currentStep: { type: Number, required: true },
     totalSteps: { type: Number, required: true },
@@ -23,7 +24,6 @@ export default defineComponent({
     },
     clampedStep(): number {
       const maxIndex = this.safeTotalSteps - 1
-      // clamp defensively in case parent passes out-of-range indices
       return Math.min(Math.max(0, this.currentStep), maxIndex)
     },
     stepWidthPercent(): number {

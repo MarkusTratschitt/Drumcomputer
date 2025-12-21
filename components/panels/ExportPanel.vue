@@ -69,6 +69,7 @@ type StemEntry = {
 
 export default defineComponent({
   name: 'ExportPanel',
+  // Panel that triggers audio export and lists metadata plus downloadable mixdown and stems.
   props: {
     isExporting: { type: Boolean, required: true },
     exportError: { type: String, default: null },

@@ -19,6 +19,7 @@ interface ScheduledItem {
   fn: ScheduledFn
 }
 
+// Lookahead scheduler that batches callbacks scheduled within a horizon relative to the audio clock.
 const DEFAULT_OPTIONS: SchedulerOptions = {
   lookaheadSec: 0.1,
   intervalMs: 25
@@ -35,7 +36,6 @@ export function createScheduler(clock: RenderClock, options: Partial<SchedulerOp
     const now = clock.audioTime()
     const horizon = now + cfg.lookaheadSec
 
-    // Keep queue sorted to guarantee deterministic execution order
     queue.sort((a, b) => a.at - b.at)
 
     const due: ScheduledItem[] = []
@@ -51,7 +51,6 @@ export function createScheduler(clock: RenderClock, options: Partial<SchedulerOp
 
     queue = pending
 
-    // Execute all due items in order
     for (const item of due) {
       item.fn(item.at)
     }
@@ -59,7 +58,6 @@ export function createScheduler(clock: RenderClock, options: Partial<SchedulerOp
 
   const startTimer = (): void => {
     if (clock.isOffline) {
-      // Offline rendering should call flush manually from the renderer/engine
       return
     }
     if (timerId) {

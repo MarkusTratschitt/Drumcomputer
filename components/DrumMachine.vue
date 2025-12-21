@@ -1,6 +1,5 @@
 <template>
   <div class="device-hardware">
-    <!-- CONTROL STACK (links) -->
     <div class="device-control">
       <div class="device-transport">
         <slot name="transport" :props="transportSlotProps" />
@@ -37,6 +36,7 @@
 import { defineComponent } from 'vue'
 import { saveAs } from 'file-saver'
 import { DEFAULT_GRID_SPEC, GRID_DIVISIONS, normalizeGridSpec } from '@/domain/timing'
+// Hosts the drum machine hardware layout and wires transport, pads, drawer panels, persistence, MIDI, sync, and export flows.
 import { useTransportStore } from '@/stores/transport'
 import { usePatternsStore } from '@/stores/patterns'
 import { useSoundbanksStore } from '@/stores/soundbanks'
@@ -821,7 +821,7 @@ computed: {
 @import '@/styles/variables.less';
 
 .device-root {
-  height: 100%;      /* stabiler als 100% */
+  height: 100%;
   width: 100%;
   overflow: hidden;
   background: @color-bg-root;
@@ -832,12 +832,11 @@ computed: {
   min-height: 0;
 
   display: grid;
-  grid-template-columns: 1fr clamp(520px, 36vw, 760px); /* <- Hardware-Spalte */
+  grid-template-columns: 1fr clamp(520px, 36vw, 760px);
   gap: @space-m;
   padding: @space-m;
 }
 
-/* MAIN (links) */
 .device-main {
   flex: 1 1 auto;
   min-width: 0;
@@ -848,9 +847,7 @@ computed: {
   border-radius: @radius-l;
 }
 
-/* HARDWARE (rechts) — MK3 Feeling */
 .device-hardware {
-  /* 27" Ziel: Pads groß & dominant */
   --control-w: clamp(260px, 16vw, 340px);
   --pads-w: clamp(620px, 30vw, 820px);
 
@@ -860,12 +857,11 @@ computed: {
 
   display: grid;
   grid-template-columns: var(--control-w) var(--pads-w);
-  grid-template-rows: auto 1fr; /* oben transport, unten fx */
+  grid-template-rows: auto 1fr;
   gap: @space-m;
   align-items: stretch;
 }
 
-/* CONTROL STACK links */
 .device-control {
   grid-column: 1;
   grid-row: 1 / span 2;
@@ -893,7 +889,6 @@ computed: {
   min-height: 0;
 }
 
-/* PADS rechts (dominant) */
 .device-pads {
   min-height: 0;
   display: flex;
@@ -903,12 +898,10 @@ computed: {
   gap: @space-s;
 }
 
-/* Das Quadrat bekommt echte Größe */
-
 .pads-square {
-  width: clamp(460px, 28vw, 640px); /* <- groß auf iMac */
+  width: clamp(460px, 28vw, 640px);
   aspect-ratio: 1 / 1;
-  margin-left: auto;               /* rechts “anlehnen” */
+  margin-left: auto;
   min-height: 0;
   display: flex;
 }
@@ -919,7 +912,6 @@ computed: {
   min-height: 0;
 }
 
-/* Indicator */
 .pad-grid-indicator {
   display: flex;
   justify-content: center;
@@ -941,7 +933,6 @@ computed: {
     0 0 12px fade(@color-accent-primary, 35%);
 }
 
-/* Mobile optional */
 @media (max-width: 960px) {
   .device-stage {
     flex-direction: column;

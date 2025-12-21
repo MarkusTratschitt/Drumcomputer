@@ -1,5 +1,4 @@
 import { defineNuxtConfig } from 'nuxt/config'
-// import { pwaConfig } from './config/pwa'
 
 const DEFAULT_HMR_PORT = 24678
 const hmrPort = Number.isInteger(Number(process.env.HMR_PORT)) && process.env.HMR_PORT
@@ -7,6 +6,7 @@ const hmrPort = Number.isInteger(Number(process.env.HMR_PORT)) && process.env.HM
   : DEFAULT_HMR_PORT
 
 export default defineNuxtConfig({
+  // Nuxt configuration for the client-only drum machine, wiring modules, styles, and Vite options.
   ssr: false,
   debug: true,
   compatibilityDate: '2024-04-03',
@@ -19,7 +19,6 @@ export default defineNuxtConfig({
   },
   modules: [
     '@pinia/nuxt',
-    // ['@vite-pwa/nuxt', pwaConfig],
   ],
 
 

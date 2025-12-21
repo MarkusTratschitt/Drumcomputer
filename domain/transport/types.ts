@@ -1,7 +1,7 @@
 import type { DrumPadId } from '@/types/drums'
-// Update the import path below to the correct relative path where GridSpec is defined
 import type { GridSpec } from '@/types/time'
-// Or adjust the path as needed based on your project structure
+
+// Shared transport domain types for playback and grid configuration.
 
 export interface TransportState {
   readonly isPlaying: boolean

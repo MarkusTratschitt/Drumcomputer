@@ -41,12 +41,12 @@ export function useMidiLearn(midi: {
   mapNoteToPad: (note: number) => DrumPadId | undefined
   listen: (cb: (message: MidiMessage) => void) => () => void
 }) {
+  // Manages MIDI learn flow for pads and transport actions with persistence to localStorage.
   const isLearning = ref(false)
   const target = ref<LearnTarget | null>(null)
   const status = ref<string | null>(null)
   let unsubscribe: (() => void) | null = null
 
-  // hydrate mapping once
   midi.mapping.value = loadMapping()
 
   const learningLabel = computed(() => {
@@ -96,7 +96,6 @@ export function useMidiLearn(midi: {
   }
 
   const handlePadMapping = (note: number, padId: DrumPadId) => {
-    // clear previous reverse mapping to avoid conflicts
     if (midi.mapping.value.noteMapInverse?.[padId] !== undefined) {
       const prevNote = midi.mapping.value.noteMapInverse?.[padId]
       if (typeof prevNote === 'number') {

@@ -98,6 +98,7 @@ import type { Pattern, Scene } from '@/types/drums'
 
 export default defineComponent({
   name: 'PatternsPanel',
+  // Panel for selecting, naming, undoing, and organizing patterns and scenes.
   props: {
     patterns: { type: Array as () => Pattern[], required: true },
     selectedPatternId: { type: String, required: false },

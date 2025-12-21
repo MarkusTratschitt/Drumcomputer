@@ -41,6 +41,7 @@
 import { defineComponent } from 'vue'
 import PadCell from './PadCell.vue'
 import type { DrumPadId } from '@/types/drums'
+// Renders a 4x4 pad grid with keyboard navigation and selection, delegating interactions to PadCell instances.
 
 const KEY_LABELS = [
   'Q','W','E','R',
@@ -196,13 +197,11 @@ export default defineComponent({
 
 }
 
-  // Fokus-Outline nach variables.less
 .pad-grid:focus-visible {
   outline: @outline-focus;
   outline-offset: @outline-focus-offset;
   border-color: #00f8ff;
 }
-  // Selektierte Pad-Farbe nach variables.less
 .pad-cell.is-selected {
   border-color: @color-accent-primary;
   outline: 2px dashed #00f8ff;

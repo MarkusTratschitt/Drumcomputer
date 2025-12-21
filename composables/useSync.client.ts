@@ -20,6 +20,7 @@ const MIDI_CLOCKS_PER_QUARTER = 24
 const CLOCK_AUTHORITY: ClockAuthority = 'audioContext'
 
 export function useSync(initialMode: SyncMode = 'internal', deps?: SyncDeps) {
+  // Coordinates transport sync between audio clock and MIDI clock roles (master/slave), handling clock ticks and start/stop events.
   const state = ref<SyncState>({
     bpm: 120,
     phase: 0,

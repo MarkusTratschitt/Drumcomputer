@@ -4,6 +4,7 @@ import type { GridSpec } from '@/types/time'
 import { DEFAULT_GRID_SPEC, normalizeGridSpec } from '@/domain/timing'
 import { clampVelocity, cycleVelocity, DEFAULT_STEP_VELOCITY } from '@/domain/velocity'
 
+// Manages patterns and scenes with undo/redo history, grid spec updates, and step velocity editing.
 const createDefaultGrid = (): GridSpec => ({ ...DEFAULT_GRID_SPEC })
 
 const createEmptyPattern = (id: string, name: string): Pattern => ({

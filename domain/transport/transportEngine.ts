@@ -4,6 +4,7 @@ import type { TransportConfig, TransportState } from './types'
 import type { TransportAudioHooks } from './audioHooks'
 export type TransportListener = (state: TransportState) => void
 
+// Transport engine that schedules step boundaries against the audio clock, emitting normalized transport state.
 export interface TransportEngine {
   start(): void
   stop(): void
@@ -59,7 +60,6 @@ export function createTransportEngine(
       return 0
     }
 
-    // apply swing to off-beats only
     const isOffBeat = stepIndex % 2 === 1
     if (!isOffBeat) {
       return 0
@@ -154,9 +154,7 @@ export function createTransportEngine(
 
     setConfig(next: TransportConfig): void {
       cfg = next
-      // Re-normalize immediately
       if (isPlaying) {
-        // Keep phase consistent by resetting start time to "now - currentStep * dur"
         const now = clock.audioTime()
         const dur = stepDurationSec()
         const steps = Math.max(totalSteps(), 1)
@@ -175,7 +173,6 @@ export function createTransportEngine(
 
     subscribe(listener: TransportListener): () => void {
       listeners.add(listener)
-      // emit current snapshot immediately
       listener({
         isPlaying,
         currentStep: Math.max(0, lastStep)

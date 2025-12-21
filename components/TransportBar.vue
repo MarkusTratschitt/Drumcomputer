@@ -67,6 +67,7 @@ import type { TimeDivision } from '@/types/time'
 
 export default defineComponent({
   name: 'TransportBar',
+  // Provides playback controls plus BPM, division, loop, and MIDI learn toggles for the drum machine.
   props: {
     bpm: { type: Number, required: true },
     isPlaying: { type: Boolean, required: true },
@@ -126,8 +127,6 @@ export default defineComponent({
   border: 1px solid @color-border-1;
   border-radius: @radius-m;
   padding: @space-s;
-
-  /* "device panel" feeling */
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), inset 0 -2px 6px rgba(0,0,0,0.65);
 }
 
