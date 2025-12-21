@@ -7,19 +7,19 @@ import {
 } from 'node:url'
 
 /**
- * __dirname für ESM
+ * __dirname for ESM
  */
 const __dirname = path.dirname(fileURLToPath(
   import.meta.url))
 
 /**
- * Projekt-Root (1 Level über /scripts o.ä.)
+ * Project root (one level above /scripts)
  */
 const rootDir = path.resolve(__dirname, '..')
 
 /**
- * Direkter Einstiegspunkt von Nuxt CLI (nuxi)
- * → keine .bin Symlinks, kein Shebang, kein shell:true
+ * Direct entry point for Nuxt CLI (nuxi)
+ * → no .bin symlinks, no shebang, no shell:true
  */
 const nuxtEntry = path.join(
   rootDir,
@@ -31,7 +31,7 @@ const nuxtEntry = path.join(
 )
 
 /**
- * Dev-Parameter
+ * Dev parameters
  */
 const host = '127.0.0.1'
 const port = process.env.PORT ?? '3000'
@@ -48,7 +48,7 @@ const nuxtArgs = [
 ]
 
 /**
- * Spawn über expliziten Node
+ * Spawn via explicit Node binary
  */
 const runner = spawn(
   process.execPath, // garantiert der richtige Node
@@ -62,7 +62,7 @@ const runner = spawn(
 )
 
 /**
- * Exit sauber weiterreichen
+ * Forward exit code cleanly
  */
 runner.on('exit', (code, signal) => {
   if (typeof code === 'number') {

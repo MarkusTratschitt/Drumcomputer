@@ -14,7 +14,7 @@ export interface RenderClock {
   audioTime(): number
 
   /**
-   * Alias für audioTime(), für Kompatibilität.
+   * Alias for audioTime(), for compatibility.
    */
   now(): number
 }
