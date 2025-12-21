@@ -19,6 +19,15 @@ To override the dev or HMR port, prefix the command with the env vars you need:
 PORT=3001 HMR_PORT=24679 npm run dev
 ```
 
+## Use Cases
+
+- Build and rehearse drum patterns live: tap pads, quantized record hits, and loop transport with velocity cycling and pad focus for performance.
+- Arrange song ideas with scenes and pattern chains: switch patterns at bar boundaries and normalize grid specs when divisions change.
+- Customize soundbanks: swap pad samples from local files, persist banks/patterns in IndexedDB/LocalStorage, and rehydrate blobs on load.
+- Connect hardware: map pads and transport to MIDI notes, follow or drive MIDI clock, and probe WebMIDI/Audio input capabilities in the UI.
+- Export mixes or stems: bounce the current scene chain to WAV/ZIP with deterministic FX seeds and optional per-pad stems for downstream DAWs.
+- Normalize/import assets: round-trip patterns via JSON/MIDI, import/export soundbank manifests + blobs, and clamp malformed payloads.
+
 ## Features
 
 - Lookahead Web Audio scheduler with AudioContext time, quantized live recording, and 16-pad grid sequencing.
