@@ -1,17 +1,16 @@
 <template>
   <v-app>
-    <NuxtPage>
-      <slot name="main" />
-      <slot name="transport" />
-      <slot name="pads" />
-      <slot name="drawer" />
-    </NuxtPage>
+    <NuxtPage />
   </v-app>
 </template>
 
+<script lang="ts">
+export default {
+  
+}
+</script>
 
-
-<style scoped lang="less">
+<style lang="less">
 @import '@/styles/variables.less';
 
 :deep(.v-application) {

@@ -50,18 +50,28 @@ export default defineComponent({
 @import '@/styles/variables.less';
 
 .pad-cell {
-  /* Basis */
-  background-color: #1a2230; /* geladen, neutral blau */
-  border: 1px solid @color-border-2;
-  transition: background-color 0.08s linear, box-shadow 0.08s linear;
+  aspect-ratio: 1 / 1;
+
+  background: @bg-cell;
+  border-radius: @radius-xm;
+  border: 1px solid @color-border-1;
+
+  box-shadow: @shadow-box;
+
+  transition:
+    background 80ms linear,
+    box-shadow 80ms linear,
+    transform 40ms linear;
 }
 
+
 .pad-label {
-  font-size: 12px;
-  opacity: 0.75;
-  pointer-events: none;
+  font-size: @font-size-xs;
+  letter-spacing: @letter-spacing-wide;
+  color: @color-text-secondary;
   user-select: none;
 }
+
 
 /* ───────── Unbelegt ───────── */
 .pad-cell.is-empty {
@@ -71,8 +81,13 @@ export default defineComponent({
 
 /* Fokus & Auswahl bleiben wie bei dir definiert */
 .pad-cell.is-selected {
-  border-color: @color-accent-primary;
+  border-color: @color-border-3;
+
+  box-shadow:
+    0 0 0 2px fade(@color-border-3, 25%),
+    @shadow-box;
 }
+
 
 /* ───────── Trigger / Velocity ───────── */
 /* Je höher Velocity, desto dunkler */
@@ -93,6 +108,34 @@ export default defineComponent({
   box-shadow: 0 0
     calc(10px * var(--pad-velocity))
     fade(@color-accent-primary, 40%);
+}
+
+.pad-cell.is-triggered:not(.is-playing) {
+  background: linear-gradient(
+    180deg,
+    fade(@color-text-primary, 90%),
+    fade(@color-text-primary, 65%)
+  );
+}
+
+.pad-cell:active {
+  transform: translateY(1px);
+  box-shadow:
+    inset 0 3px 6px rgba(0,0,0,0.8);
+}
+
+
+.pad-cell.is-playing {
+  background: linear-gradient(
+    180deg,
+    fade(@color-accent-primary, 90%),
+    fade(@color-accent-primary, 55%)
+  );
+
+  box-shadow:
+    0 0 calc(18px * var(--pad-velocity))
+      fade(@color-accent-primary, 70%),
+    @shadow-box;
 }
 
 .pad-key {

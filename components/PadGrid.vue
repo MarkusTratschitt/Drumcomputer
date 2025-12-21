@@ -16,25 +16,25 @@
       @keydown.page-down.prevent="selectRow(3)"
       :style="velocityStyle"
     )
-    PadCell(
-      v-for="(pad, index) in pads"
-      :key="pad"
-      :ref="setPadRef(pad)"
-      :pad-id="pad"
-      :label="padLabel(pad)"
-      :is-selected="selectedPad === pad"
-      :is-focusable="selectedPad === pad"
-      :is-triggered="padStates[pad]?.isTriggered ?? false"
-      :is-playing="padStates[pad]?.isPlaying ?? false"
-      :is-empty="!padStates[pad]"
-      :key-label="keyLabels[index]"
-      role="gridcell"
-      :aria-label="padAriaLabel(pad)"
-      :aria-rowindex="Math.floor(index / 4) + 1"
-      :aria-colindex="(index % 4) + 1"
-      @pad:down="$emit('pad:down', $event)"
-      @pad:select="$emit('pad:select', $event)"
-    )
+      PadCell(
+        v-for="(pad, index) in pads"
+        :key="pad"
+        :ref="setPadRef(pad)"
+        :pad-id="pad"
+        :label="padLabel(pad)"
+        :is-selected="selectedPad === pad"
+        :is-focusable="selectedPad === pad"
+        :is-triggered="padStates[pad]?.isTriggered ?? false"
+        :is-playing="padStates[pad]?.isPlaying ?? false"
+        :is-empty="!padStates[pad]"
+        :key-label="keyLabels[index]"
+        role="gridcell"
+        :aria-label="padAriaLabel(pad)"
+        :aria-rowindex="Math.floor(index / 4) + 1"
+        :aria-colindex="(index % 4) + 1"
+        @pad:down="$emit('pad:down', $event)"
+        @pad:select="$emit('pad:select', $event)"
+      )
 </template>
 
 <script lang="ts">
@@ -57,7 +57,10 @@ type PadState = {
 
 export default defineComponent({
   name: 'PadGrid',
-  components: { PadCell },
+  components: { 
+    PadCell,
+    
+    },
 
   props: {
     pads: { type: Array as () => DrumPadId[], required: true },
@@ -180,17 +183,19 @@ export default defineComponent({
 
 .pad-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
   grid-template-rows: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  width:100%;
+  height:100%;
+  background: @color-surface-2;
+  padding: @space-m;
   gap: @space-s;
-  padding: @space-s;
-  background: red;
+  box-sizing: border-box;
   border-radius: @radius-l;
   border: 1px solid @color-border-2;
-  width: 100%;
-  height: 100%;
-  outline-offset: 6px;
+
 }
+
   // Fokus-Outline nach variables.less
 .pad-grid:focus-visible {
   outline: @outline-focus;
@@ -209,4 +214,5 @@ export default defineComponent({
   box-shadow: 0 0 calc(12px * var(--pad-velocity)) ~"rgba(0, 255, 255, calc(0.2 + 0.6 * var(--pad-velocity)))";
   box-shadow: 0 0 calc(12px * var(--pad-velocity)) fade(@color-accent-primary, 60%);
 }
+
 </style>

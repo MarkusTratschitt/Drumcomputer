@@ -115,7 +115,7 @@ export default defineComponent({
   border-radius: @radius-m;
   padding: 0 @space-s;
   gap: @space-s;
-  height: 100%;
+  height: 10%;
   position: static;
   box-shadow: none;
 

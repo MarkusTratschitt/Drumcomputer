@@ -2,7 +2,7 @@
 
 /* Root / Hintergrund */
 @color-bg-root: #121212;
-
+@bg-cell: linear-gradient(180deg, #1b1c20, #0f1013);
 /* Flächen */
 @color-surface-1: #0f1115;  /* Panels, Transport */
 @color-surface-2: #0a0d12;  /* Pads, tiefere Ebenen */
@@ -11,6 +11,7 @@
 /* Borders / Divider */
 @color-border-1: #1d2430;
 @color-border-2: #1f2838;
+@color-border-3: #f2f1e8;
 
 /* Text */
 @color-text-primary: #f5f7fb;
@@ -21,6 +22,9 @@
 @color-accent-primary: #00f8ff;
 @color-accent-warning: #ffc952;
 
+/* ───────────── Shadows ───────────── */
+@shadow-box: inset 0 1px 0 rgba(255,255,255,0.04), 
+  inset 0 -2px 4px rgba(0,0,0,0.6);
 
 /* ───────────── Spacing ───────────── */
 
@@ -31,11 +35,18 @@
 @space-l: 24px;
 @space-xl: 32px;
 
+/* ───────────── Pad LEDs ───────────── */
+
+@pad-led-active: @color-accent-primary;
+@pad-led-selected: @color-border-3;
+@pad-led-idle: @bg-cell;
+
 
 /* ───────────── Radien ───────────── */
 
 @radius-xs: 4px;
 @radius-s: 6px;
+@radius-xm: 8px;
 @radius-m: 12px;
 @radius-l: 16px;
 @radius-xl: 20px;

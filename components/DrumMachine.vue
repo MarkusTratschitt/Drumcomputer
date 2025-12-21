@@ -1,21 +1,37 @@
 <template>
-  <slot
-    name="main"
-    :props="mainSlotProps"
-  />
-  <slot
-    name="transport"
-    :props="transportSlotProps"
-  />
-  <slot
-    name="pads"
-    :props="padsSlotProps"
-  />
-  <slot
-    name="drawer"
-    :props="drawerSlotProps"
-  />
+  <div class="device-root">
+    <div class="device-stage">
+      <div class="device-main">
+        <slot name="main" :props="mainSlotProps" />
+      </div>
+
+      <div class="device-hardware">
+        <div class="device-transport">
+          <slot name="transport" :props="transportSlotProps" />
+        </div>
+
+        <div class="device-fx">
+          <slot name="drawer" :props="drawerSlotProps" />
+        </div>
+
+        <div class="device-pads">
+          <div class="pads-square">
+            <slot name="pads" :props="padsSlotProps" />
+          </div>
+          <div class="pad-grid-indicator">
+            <span
+              v-for="i in gridCount"
+              :key="i"
+              :class="['indicator-dot', { active: currentGridIndex === i - 1 }]"
+              :aria-label="`Pad Bank ${i}`"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
+
 
 
 <script lang="ts">
@@ -217,6 +233,8 @@ export default defineComponent({
       exportError: null as string | null,
       exportAudioFn: importExport.exportAudio,
       selectedPadId: 'pad1' as DrumPadId,
+      currentGridIndex: 0,
+      padsPerGrid: 16,
       drawerTab: 'sound'
     }
   },
@@ -225,6 +243,15 @@ export default defineComponent({
 computed: {
   gridSpec() {
     return this.patterns.currentPattern?.gridSpec ?? { ...DEFAULT_GRID_SPEC }
+  },
+
+  gridCount(): number {
+    return Math.ceil(this.pads.length / this.padsPerGrid)
+  },
+
+  activePadGrid(): DrumPadId[] {
+    const start = this.currentGridIndex * this.padsPerGrid
+    return this.pads.slice(start, start + this.padsPerGrid)
   },
 
   pattern() {
@@ -317,8 +344,8 @@ computed: {
     )
 
     const playingPads = collectPlayingPads(this.pattern.steps)
-
-    this.pads.forEach((pad) => {
+    const visiblePads = this.activePadGrid
+    visiblePads.forEach((pad) => {
       result[pad] = {
         label: bankPads[pad]?.name ?? pad.toUpperCase(),
         isTriggered: triggered.has(pad),
@@ -378,11 +405,11 @@ computed: {
   padsSlotProps() {
     return {
       padGridProps: {
-        pads: this.pads,
+        pads: this.activePadGrid,
         padStates: this.padStates,
         selectedPad: this.selectedPadId as DrumPadId | null,
-        onPadDown: this.handlePad,
-        onPadSelect: this.selectPad
+        'onPad:down': this.handlePad,
+        'onPad:select': this.selectPad
       }
     }
   },
@@ -399,6 +426,7 @@ computed: {
 
 
   mounted() {
+    window.addEventListener('keydown', this.handleGridKeys)
     const storedPatterns = this.patternStorage.load()
     if (storedPatterns.patterns.length > 0) {
       this.patterns.setPatterns(storedPatterns.patterns)
@@ -478,6 +506,7 @@ computed: {
     this.unwatchers.push(() => stopMidiListener?.())
   },
   beforeUnmount() {
+    window.removeEventListener('keydown', this.handleGridKeys)
     this.unwatchers.forEach((stop) => stop())
   },
 
@@ -539,6 +568,14 @@ computed: {
       this.sequencer.stop()
       this.sync.stopTransport()
     },
+    handleGridKeys(e: KeyboardEvent) {
+      if (!e.ctrlKey) return
+      const index = Number(e.key) - 1
+      if (index >= 0 && index < this.gridCount) {
+        e.preventDefault()
+        this.selectPadGrid(index)
+      }
+    },
     async handlePad(pad: DrumPadId, velocity = 1) {
       try {
         await this.sequencer.recordHit(pad, velocity, true)
@@ -552,6 +589,14 @@ computed: {
       this.focusStepGrid()
       if (this.midiLearn.isLearning) {
         this.midiLearn.setTarget({ type: 'pad', padId: pad })
+      }
+    },
+    selectPadGrid(index: number) {
+      if (index < 0 || index >= this.gridCount) return
+      this.currentGridIndex = index
+      const firstPad = this.activePadGrid[0]
+      if (firstPad) {
+        this.selectedPadId = firstPad
       }
     },
     toggleStep(payload: { barIndex: number; stepInBar: number; padId: DrumPadId }) {
@@ -809,52 +854,116 @@ computed: {
   display: flex;
   flex-direction: column;
   overflow-x: hidden;
-  overflow-y: auto;
 
   .hardware-top {
     flex: 0 0 56px;
   }
+}
+.main-shell {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  gap: 16px;
+  overflow: hidden;
+}
 
-  .main-shell {
-    flex: 1 1 auto;
-    min-height: 0;
-    display: flex;
-    gap: 16px;
-    overflow: hidden;
+.device-hardware {
+  flex: 0 0 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: @space-m;
+}
 
-    .pads-panel {
-      flex: 1 1 65%;
-      min-height: 0;
-      display: flex;
-      flex-direction: column;
-    }
+.hardware-top {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-end;     /* 🔥 Transport sitzt unten bündig wie Gerät */
+  gap: @space-m;
+  min-height: 0;
+}
 
-    .sequencer-panel {
-      flex: 0 0 auto;
-      height: clamp(72px, 8vh, 96px);
-      width: clamp(220px, 30vw, 360px);
-      min-width: 220px;
-    }
-  }
+.device-fx {
+  flex: 1 1 auto;     /* nimmt den mittleren Platz */
+  min-height: 0;
+  overflow: hidden;   /* kein Scroll im Gerät */
+}
 
-  .drawer-wrapper {
-    flex: 0 0 auto;
-    height: clamp(220px, 28vh, 320px);
-    overflow: hidden;
+.device-pads {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
 
-    .drawer-scroll {
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      overflow-y: auto;
-      padding: 16px;
+.pads-square {
+  width: clamp(420px, 34vw, 620px);  /* größer + responsiv */
+  aspect-ratio: 1 / 1;
+  display: flex;
+}
 
-      :deep(.v-card) {
-        @radius-xl: 12px;
-      }
-    }
+.pads-square > * {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;     
+}
+
+.pad-grid-indicator {
+  display: flex;
+  justify-content: center;
+  gap: @space-xs;
+  margin-top: @space-s;
+}
+
+.indicator-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: @color-border-1;
+  box-shadow: inset 0 0 2px rgba(0,0,0,0.8);
+}
+
+.indicator-dot.active {
+  background: @color-accent-primary;
+  box-shadow:
+    0 0 6px fade(@color-accent-primary, 60%),
+    0 0 12px fade(@color-accent-primary, 35%);
+}
+
+.drawer-wrapper {
+  flex: 0 0 auto;
+  height: clamp(220px, 28vh, 320px);
+  overflow: hidden;
+}
+
+.pads-panel {
+  flex: 1 1 65%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.sequencer-panel {
+  flex: 0 0 auto;
+  height: clamp(72px, 8vh, 96px);
+  width: clamp(220px, 30vw, 360px);
+  min-width: 220px;
+}
+
+.drawer-scroll {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: 16px;
+
+  :deep(.v-card) {
+    @radius-xl: 12px;
   }
 }
+  
+
 
 /* ───────────── MOBILE ───────────── */
 

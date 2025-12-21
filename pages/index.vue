@@ -1,31 +1,38 @@
 <template>
-  <div class="device-root">
-    <div class="device-stage">
-      <div class="device-main">
-        <slot name="main" />
-      </div>
+  <DrumMachine>
+    <template #main="{ props }">
+      <StepGrid v-bind="props.stepGridProps" />
+    </template>
 
-      <div class="device-hardware">
-        <div class="device-transport">
-          <slot name="transport" />
-        </div>
 
-        <div class="device-pads">
-          <div class="pads-square">
-            <slot name="pads" />
-          </div>
-        </div>
-      </div>
-    </div>
+    <template #pads="{ props }">
+      <PadGrid v-bind="props.padGridProps" />
+    </template>
 
-    <div class="device-drawer">
-      <slot name="drawer" />
-    </div>
-  </div>
+    <template #transport="{ props }">
+      <TransportBar v-bind="props.transportProps" />
+    </template>
+    <template #drawer="{ props }">
+      <FxPanel v-bind="props.fxProps" />
+    </template>
+  </DrumMachine>
 </template>
 
+<script>
+import DrumMachine from '@/components/DrumMachine.vue'
+import TransportBar from '@/components/TransportBar.vue'
+import PadGrid from '@/components/PadGrid.vue'
+import StepGrid from '@/components/StepGrid.vue'
+import FxPanel from '@/components/panels/FxPanel.vue'
 
-
-
-
+export default {
+  components: {
+    DrumMachine,
+    TransportBar,
+    PadGrid,
+    StepGrid,
+    FxPanel
+  }
+}
+</script>
 

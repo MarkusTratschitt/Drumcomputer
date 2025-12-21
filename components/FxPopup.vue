@@ -13,7 +13,9 @@
 </template>
 
 <script lang="ts">
-
+export default {
+  name: 'FxPopup'
+}
 </script>
 
 <style lang="less" scoped>

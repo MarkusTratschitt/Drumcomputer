@@ -10,7 +10,7 @@ html,
 body,
 #__nuxt {
   height: 100%;
-  margin: 0;
+  overflow: hidden;
 }
 
 .v-application {
