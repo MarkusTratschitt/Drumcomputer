@@ -1,4 +1,4 @@
-# Use Case Sequence Diagrams
+# Sequence Diagrams for the documented Use Cases
 
 ## Live pattern building
 ```mermaid
