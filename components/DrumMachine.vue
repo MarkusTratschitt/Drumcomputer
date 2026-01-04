@@ -2,109 +2,115 @@
     <div class="hardware-stage">
       <div class="device-hardware" aria-label="Maschine MK3 layout placeholder">
         <div class="top-row">
-          <div class="control-area">
-            <div class="control-fixed" aria-label="Fixed control buttons">
-              <div class="control-btn-grid" aria-label="Control buttons">
-                <button class="control-btn r1 c1" type="button">
-                  <span class="control-btn__main">CHANNEL</span>
-                  <span class="control-btn__sub">MIDI</span>
-                </button>
+          <div class="control-stack">
+            <div class="control-area">
+              <div class="control-fixed" aria-label="Fixed control buttons">
+                <div class="control-btn-grid" aria-label="Control buttons">
+                  <button class="control-btn r1 c1" type="button">
+                    <span class="control-btn__main">CHANNEL</span>
+                    <span class="control-btn__sub">MIDI</span>
+                  </button>
 
-                <button class="control-btn r1 c2" type="button">
-                  <span class="control-btn__main">PLUG-IN</span>
-                  <span class="control-btn__sub">Instance</span>
-                </button>
+                  <button class="control-btn r1 c2" type="button">
+                    <span class="control-btn__main">PLUG-IN</span>
+                    <span class="control-btn__sub">Instance</span>
+                  </button>
 
-                <button class="control-btn r2 c1" type="button">
-                  <span class="control-btn__main">ARRANGER</span>
-                </button>
+                  <button class="control-btn r2 c1" type="button">
+                    <span class="control-btn__main">ARRANGER</span>
+                  </button>
 
-                <button class="control-btn r2 c2" type="button">
-                  <span class="control-btn__main">MIXER</span>
-                </button>
+                  <button class="control-btn r2 c2" type="button">
+                    <span class="control-btn__main">MIXER</span>
+                  </button>
 
-                <button class="control-btn r3 c1" type="button">
-                  <span class="control-btn__main">BROWSER</span>
-                  <span class="control-btn__sub">+Plug-In</span>
-                </button>
+                  <button class="control-btn r3 c1" type="button">
+                    <span class="control-btn__main">BROWSER</span>
+                    <span class="control-btn__sub">+Plug-In</span>
+                  </button>
 
-                <button class="control-btn r3 c2" type="button">
-                  <span class="control-btn__main">SAMPLING</span>
-                </button>
+                  <button class="control-btn r3 c2" type="button">
+                    <span class="control-btn__main">SAMPLING</span>
+                  </button>
 
-                <button class="control-btn control-btn--icon r4 c1" type="button" aria-label="Page backwards">
-                  <span class="control-btn__main">◀</span>
-                </button>
+                  <button class="control-btn control-btn--icon r4 c1" type="button" aria-label="Page backwards">
+                    <span class="control-btn__main">◀</span>
+                  </button>
 
-                <button class="control-btn control-btn--icon r4 c2" type="button" aria-label="Page forwards">
-                  <span class="control-btn__main">▶</span>
-                </button>
+                  <button class="control-btn control-btn--icon r4 c2" type="button" aria-label="Page forwards">
+                    <span class="control-btn__main">▶</span>
+                  </button>
 
-                <button class="control-btn r5 c1" type="button">
-                  <span class="control-btn__main">FILE</span>
-                  <span class="control-btn__sub">Save</span>
-                </button>
+                  <button class="control-btn r5 c1" type="button">
+                    <span class="control-btn__main">FILE</span>
+                    <span class="control-btn__sub">Save</span>
+                  </button>
 
-                <button class="control-btn r5 c2" type="button">
-                  <span class="control-btn__main">SETTINGS</span>
-                </button>
+                  <button class="control-btn r5 c2" type="button">
+                    <span class="control-btn__main">SETTINGS</span>
+                  </button>
 
-                <button class="control-btn r6 c1" type="button">
-                  <span class="control-btn__main">AUTO</span>
-                </button>
+                  <button class="control-btn r6 c1" type="button">
+                    <span class="control-btn__main">AUTO</span>
+                  </button>
 
-                <button class="control-btn r6 c2" type="button">
-                  <span class="control-btn__main">MACRO</span>
-                  <span class="control-btn__sub">Set</span>
-                </button>
-              </div>
-            </div>
-            <div class="control-core">
-              <div class="soft-row">
-                <SoftButtonStripPlaceholder />
-              </div>
-              <div class="display-block">
-                <DualDisplayPlaceholder />
-                <div class="display-param-labels" aria-hidden="true">
-                  <span class="param-label"></span>
-                  <span class="param-label"></span>
-                  <span class="param-label"></span>
-                  <span class="param-label"></span>
-                  <span class="param-label"></span>
-                  <span class="param-label"></span>
-                  <span class="param-label"></span>
-                  <span class="param-label"></span>
+                  <button class="control-btn r6 c2" type="button">
+                    <span class="control-btn__main">MACRO</span>
+                    <span class="control-btn__sub">Set</span>
+                  </button>
                 </div>
               </div>
-              <div class="knob-row" aria-label="8 encoders">
-                <div class="knob" role="presentation"></div>
-                <div class="knob" role="presentation"></div>
-                <div class="knob" role="presentation"></div>
-                <div class="knob" role="presentation"></div>
-                <div class="knob" role="presentation"></div>
-                <div class="knob" role="presentation"></div>
-                <div class="knob" role="presentation"></div>
-                <div class="knob" role="presentation"></div>
+              <div class="control-core">
+                <div class="soft-row">
+                  <div class="soft-row-grid">
+                    <SoftButtonStripPlaceholder />
+                  </div>
+                </div>
+                <div class="display-block">
+                  <div class="display-grid">
+                    <DualDisplayPlaceholder />
+                  </div>
+                  <div class="display-param-labels" aria-hidden="true">
+                    <span class="param-label"></span>
+                    <span class="param-label"></span>
+                    <span class="param-label"></span>
+                    <span class="param-label"></span>
+                    <span class="param-label"></span>
+                    <span class="param-label"></span>
+                    <span class="param-label"></span>
+                    <span class="param-label"></span>
+                  </div>
+                </div>
+                <div class="knob-row" aria-label="8 encoders">
+                  <div class="knob" role="presentation"></div>
+                  <div class="knob" role="presentation"></div>
+                  <div class="knob" role="presentation"></div>
+                  <div class="knob" role="presentation"></div>
+                  <div class="knob" role="presentation"></div>
+                  <div class="knob" role="presentation"></div>
+                  <div class="knob" role="presentation"></div>
+                  <div class="knob" role="presentation"></div>
+                </div>
               </div>
             </div>
-          </div>
-          <div class="edit-area">
-            <div class="encoder-slot">
-              <FourDEncoderPlaceholder class="four-d-encoder" />
-            </div>
-            <div class="quick-edit-buttons" aria-label="Quick edit controls">
-              <button class="quick-edit-btn control-btn" type="button">
-                <span class="control-btn__main">VOLUME</span>
-                <span class="control-btn__sub">Velocity</span>
-              </button>
-              <button class="quick-edit-btn control-btn" type="button">
-                <span class="control-btn__main">SWING</span>
-                <span class="control-btn__sub">Position</span>
-              </button>
-              <button class="quick-edit-btn control-btn" type="button">
-                <span class="control-btn__main">TEMPO</span>
-                <span class="control-btn__sub">Tune</span>
-              </button>
+            <div class="edit-area">
+              <div class="encoder-slot">
+                <FourDEncoderPlaceholder class="four-d-encoder" />
+              </div>
+              <div class="quick-edit-buttons" aria-label="Quick edit controls">
+                <button class="quick-edit-btn control-btn" type="button">
+                  <span class="control-btn__main">VOLUME</span>
+                  <span class="control-btn__sub">Velocity</span>
+                </button>
+                <button class="quick-edit-btn control-btn" type="button">
+                  <span class="control-btn__main">SWING</span>
+                  <span class="control-btn__sub">Position</span>
+                </button>
+                <button class="quick-edit-btn control-btn" type="button">
+                  <span class="control-btn__main">TEMPO</span>
+                  <span class="control-btn__sub">Tune</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -113,39 +119,39 @@
           <div class="left-column">
             <ModeColumnPlaceholder />
 
-          <div class="transport-cluster" title="Transport cluster (MK3-style)">
-            <slot name="transport" :props="transportSlotProps" />
-          </div>
-
-          <div class="drawer-shell" title="Drawer panels (Sound / FX / Patterns / Export)">
-            <slot name="drawer" :props="drawerSlotProps" />
-          </div>
-        </div>
-
-        <div class="right-column">
-          <div class="pads-and-strip">
-            <div class="strip-column">
-              <TouchStripPlaceholder />
+            <div class="transport-cluster" title="Transport cluster (MK3-style)">
+              <slot name="transport" :props="transportSlotProps" />
             </div>
-            <div class="pads-column">
-              <div class="pads-stack" title="Pad grid with bank indicators">
-                <div class="pads-square">
-                  <slot name="pads" :props="padsSlotProps" />
-                </div>
-                <div class="pad-grid-indicator">
-                  <span
-                    v-for="i in gridCount"
-                    :key="i"
-                    :class="['indicator-dot', { active: currentGridIndex === i - 1 }]"
-                    :aria-label="`Pad Bank ${i}`"
-                    :title="`Pad Bank ${i}`"
-                  />
+
+            <div class="drawer-shell" title="Drawer panels (Sound / FX / Patterns / Export)">
+              <slot name="drawer" :props="drawerSlotProps" />
+            </div>
+          </div>
+
+          <div class="right-column">
+            <div class="pads-and-strip">
+              <div class="strip-column">
+                <TouchStripPlaceholder />
+              </div>
+              <div class="pads-column">
+                <div class="pads-stack" title="Pad grid with bank indicators">
+                  <div class="pads-square">
+                    <slot name="pads" :props="padsSlotProps" />
+                  </div>
+                  <div class="pad-grid-indicator">
+                    <span
+                      v-for="i in gridCount"
+                      :key="i"
+                      :class="['indicator-dot', { active: currentGridIndex === i - 1 }]"
+                      :aria-label="`Pad Bank ${i}`"
+                      :title="`Pad Bank ${i}`"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
     </div>
   </div>
 </template>
@@ -1317,10 +1323,7 @@ computed: {
   aspect-ratio: 1080 / 760;
   max-width: calc(100vw - (2 * var(--stage-pad)));
   max-height: calc(100svh - (2 * var(--stage-pad)));
-  width: min(
-    calc(100vw - (2 * var(--stage-pad))),
-    calc((100svh - (2 * var(--stage-pad))) * (1080 / 760))
-  );
+
   height: auto;
   margin: 0 auto;
   display: grid;
@@ -1337,6 +1340,9 @@ computed: {
     0 2px 12px rgba(0, 0, 0, 0.55),
     inset 0 1px 0 rgba(255, 255, 255, 0.08),
     inset 0 -1px 0 rgba(0, 0, 0, 0.8);
+  width: min(
+    calc((100svh - (2 * var(--stage-pad))) * (1080 / 760))
+  );
 }
 
 .top-row {
@@ -1348,8 +1354,21 @@ computed: {
   min-height: 0;
 }
 
+.control-stack {
+  display: grid;
+  grid-template-columns: var(--control-cols, repeat(8, 1fr));
+  grid-template-rows: auto auto;
+  column-gap: var(--control-col-gap, @space-xs);
+  row-gap: var(--device-gap);
+  width: 100%;
+}
+
 .control-area {
   --control-row-h: clamp(44px, 4.2vh, 56px);
+  --control-cols: repeat(8, 1fr);
+  --control-col-gap: @space-xs;
+  grid-column: 1 / -1;
+  grid-row: 1;
   display: grid;
   grid-template-columns: clamp(210px, 18%, 280px) 1fr;
   gap: var(--device-gap);
@@ -1432,6 +1451,8 @@ computed: {
   grid-template-rows: repeat(6, var(--control-row-h));
   gap: 0;
   min-width: 0;
+  --control-cols: repeat(8, 1fr);
+  --control-col-gap: @space-xs;
 }
 
 .soft-row {
@@ -1440,6 +1461,26 @@ computed: {
   min-width: 0;
   display: flex;
   align-items: center;
+}
+
+.soft-row-grid {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template-columns: var(--control-cols);
+  column-gap: var(--control-col-gap);
+}
+
+.soft-row :deep(.soft-strip) {
+  display: grid;
+  grid-template-columns: var(--control-cols);
+  column-gap: var(--control-col-gap);
+  height: 100%;
+  grid-column: 1 / -1;
+}
+
+.soft-row :deep(.soft-btn) {
+  min-height: 100%;
 }
 
 .soft-row :deep(*) {
@@ -1454,15 +1495,40 @@ computed: {
   min-width: 0;
   min-height: 0;
   height: calc(var(--control-row-h) * 4);
-  display: flex;
+  display: grid;
   align-items: stretch;
 }
 
-.display-block :deep(.dual-display-root),
-.display-block :deep(.dual-display),
-.display-block :deep(.dual-display-placeholder) {
+.display-grid {
+  display: grid;
+  grid-template-columns: var(--control-cols);
+  column-gap: var(--device-gap);
+  height: 100%;
+}
+
+.display-grid :deep(.dual-display-root),
+.display-grid :deep(.dual-display),
+.display-grid :deep(.dual-display-placeholder) {
   height: 100%;
   min-height: 0;
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: var(--control-cols);
+  column-gap: var(--control-col-gap);
+  row-gap: 0;
+}
+
+.display-grid :deep(.dual-display .display) {
+  grid-column: span 4;
+  min-width: 0;
+}
+
+.display-grid :deep(.dual-display .display:nth-child(1)) {
+  grid-column: 1 / span 4;
+}
+
+.display-grid :deep(.dual-display .display:nth-child(2)) {
+  grid-column: 5 / span 4;
 }
 
 .display-param-labels {
@@ -1472,8 +1538,8 @@ computed: {
   bottom: 0;
   padding: 0 8px 6px 8px;
   display: grid;
-  grid-template-columns: repeat(8, 1fr);
-  gap: 8px;
+  grid-template-columns: var(--control-cols);
+  column-gap: var(--control-col-gap);
   pointer-events: none;
 }
 
@@ -1492,17 +1558,19 @@ computed: {
   grid-row: 6;
   height: var(--control-row-h);
   display: grid;
-  grid-template-columns: repeat(8, 1fr);
+  grid-template-columns: var(--control-cols);
   align-items: center;
-  gap: 8px;
-  padding: 0 8px;
+  gap: var(--device-gap);
+  padding: 12px 8px;
   min-width: 0;
+  --knob-y: 0px;
 }
 
 .knob {
   justify-self: center;
   width: var(--control-row-h);
   height: var(--control-row-h);
+  transform: translateY(var(--knob-y));
   border-radius: 999px;
   background: radial-gradient(circle at 30% 30%, #3a4150, #151a24 70%);
   border: 1px solid rgba(255,255,255,0.1);
@@ -1526,50 +1594,63 @@ computed: {
 }
 
 .edit-area {
-  width: 100%;
+  --edit-btn-h: clamp(34px, 4.2vh, 44px);
+  --edit-row-gap: @space-xxs;
+  --edit-stack-d: calc((3 * var(--edit-btn-h)) + (2 * var(--edit-row-gap)));
+
+  /* statt grid-column: 1 / span 3; */
+  grid-column: 1 / 3;     
+  grid-row: 7;             
+  justify-self: center-start;
+
+  --core-w: calc(100% - var(--fixed-col-w) - var(--device-gap));
+
+  margin-left: calc(var(--fixed-col-w) - var(--device-gap));
+  width: calc(var(--core-w) * 0.375); /* 3/8 = 0.375 */
+
   display: grid;
   grid-template-columns: 1fr auto;
-  grid-template-rows: repeat(3, var(--control-row-h));
-  column-gap: calc(var(--device-gap) * 1.2);
-  align-items: center;
-  justify-content: start;
+  grid-template-rows: repeat(3, var(--edit-btn-h));
+  column-gap: var(--control-col-gap);
+  row-gap: var(--edit-row-gap);
+  flex-direction: column;
+  align-items: start;
+  justify-items: center;
   align-self: start;
-  margin-top: calc(var(--device-gap) * 0.75);
+  margin-top: calc(var(--device-gap) * 0.5);
   min-height: 0;
   min-width: 0;
-  --qe-row-h: var(--control-row-h);
-  --qe-gap: @space-xxs;
-  --encoder-radius: calc(var(--qe-row-h) + var(--qe-gap));
-  --encoder-d: calc(var(--encoder-radius) * 2);
 }
 
 .encoder-slot {
-  grid-row: 2;
-  grid-column: 1;
-  display: flex;
-  align-items: center;
+  grid-column: 1 / span 3;
+  grid-row: 1 / -1;
+  display: grid;
+  padding-left: 30%;
+  align-items: start;
   justify-content: center;
-  justify-self: center;
-  min-height: 0;
-  min-width: 0;
+  justify-self: start;
+  align-self: start;
+  width: var(--edit-stack-d);
+  height: var(--edit-stack-d);
 }
 
-.four-d-encoder {
-  width: var(--encoder-d);
-  height: var(--encoder-d);
-}
+
 
 .quick-edit-buttons {
-  grid-column: 2;
-  grid-row: 1 / span 3;
+  grid-column: 3;
+  grid-row: 1 / -1;
   display: grid;
-  grid-template-rows: repeat(3, var(--qe-row-h));
-  gap: var(--qe-gap);
-  align-content: center;
+  grid-template-rows: repeat(3, var(--edit-btn-h));
+  row-gap: var(--device-gap);
+  align-content: start;
+  width: 100%;
 }
 
 .quick-edit-btn {
-  min-height: var(--qe-row-h);
+  min-height: var(--edit-btn-h);
+  height: var(--edit-btn-h);
+  width: 100%;
 }
 
 .four-d-encoder {
@@ -1666,9 +1747,9 @@ computed: {
   display: flex;
   flex-direction: column;
   gap: @space-xs;
-  align-items: center;
+  align-items: end;
   justify-content: flex-end;
-  width: 100%;
+  width: 50%;
   min-width: 0;
   min-height: 0;
   align-self: end;
@@ -1682,7 +1763,7 @@ computed: {
 
 .pads-square {
   width: 100%;
-  max-width: clamp(420px, 62%, 780px);
+  //max-width: clamp(420px, 62%, 780px);
   aspect-ratio: 1 / 1;
   min-height: 0;
   display: flex;
