@@ -90,6 +90,21 @@
               class="mt-1"
               @click="addScene"
             ) Add Scene
+        v-row(class="mt-2" dense)
+          v-col(cols="6")
+            v-btn(
+              color="error"
+              block
+              variant="tonal"
+              @click="$emit('erase:pad')"
+            ) Erase selected pad
+          v-col(cols="6")
+            v-btn(
+              color="error"
+              block
+              variant="outlined"
+              @click="$emit('erase:step')"
+            ) Erase selected pad @ step
 </template>
 
 <script lang="ts">
@@ -105,7 +120,7 @@ export default defineComponent({
     scenes: { type: Array as () => Scene[], required: true },
     activeSceneId: { type: String as () => string | null, default: null }
   },
-  emits: ['pattern:add', 'pattern:select', 'pattern:rename', 'pattern:undo', 'pattern:redo', 'scene:add', 'scene:update', 'scene:select'],
+  emits: ['pattern:add', 'pattern:select', 'pattern:rename', 'pattern:undo', 'pattern:redo', 'scene:add', 'scene:update', 'scene:select', 'erase:pad', 'erase:step'],
   data() {
     return {
       newPatternName: '',

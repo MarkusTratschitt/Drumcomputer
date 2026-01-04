@@ -3,34 +3,73 @@
   "merge_policy": "Merge in master nur nach expliziter Freigabe durch den Inhaber.",
   "phasen": [
     {
-      "id": 1,
-      "titel": "Analyse & Planung",
-      "prompt": "Analysiere uiList.json, functionsList.json, nimamk3.json und die aktuelle Codebasis. Liste alle fehlenden UI-Elemente, Funktionen und Hardware-Workflows auf. Erstelle eine vollständige, priorisierte Feature- und Task-Liste. Dokumentiere alle Erkenntnisse in der README.md (Abschnitt 'Analyse & Planung')."
-    },
-    {
-      "id": 2,
-      "titel": "Architektur & Clean Code",
-      "prompt": "Definiere und dokumentiere die Architektur, Clean Code-Prinzipien, Performance-Standards und Nuxt 4 Patterns (Options API, Pug, Less). Ergänze/aktualisiere alle relevanten Diagramme im diagrams-Ordner. Dokumentiere die Architektur und Prinzipien in der README.md (Abschnitt 'Architektur & Clean Code')."
-    },
-    {
-      "id": 3,
-      "titel": "UI/UX & Interaktion",
-      "prompt": "Implementiere alle fehlenden UI-Elemente und Interaktionsmodelle gemäß uiList.json und Hardware-Workflows. Achte auf Performance, Accessibility und Options API. Verwende Pug/Less für alle Komponenten. Dokumentiere alle neuen UI-Elemente und Interaktionsmodelle in der README.md (Abschnitt 'UI/UX & Interaktion')."
-    },
-    {
-      "id": 4,
-      "titel": "Funktionale Logik & Audio/MIDI",
-      "prompt": "Implementiere alle fehlenden Funktionen aus functionsList.json und nimamk3.json (Transport, Pattern, Erase, Undo/Redo, MIDI, LED-Feedback etc.). Optimiere Performance, sichere deterministische Exporte, erweitere Stores/Composables. Dokumentiere alle neuen Funktionen und deren Tests in der README.md (Abschnitt 'Funktionale Logik & Audio/MIDI')."
-    },
-    {
-      "id": 5,
-      "titel": "Testing, QA & Use Cases",
-      "prompt": "Schreibe Komponententests, Unittests und End-to-End-Tests für alle neuen Features. Ergänze die README.md um alle relevanten Use Cases. Dokumentiere Testabdeckung und Performance (Abschnitt 'Testing, QA & Use Cases')."
-    },
-    {
-      "id": 6,
-      "titel": "Finalisierung & Review",
-      "prompt": "Stelle sicher, dass alle Tasks im Feature-Branch abgeschlossen und dokumentiert sind. Bereite einen Review mit dem Inhaber vor. Merge erst nach expliziter Freigabe. Dokumentiere den Abschluss in der README.md (Abschnitt 'Finalisierung & Review')."
+      "missing_functions": [
+        "Play/Stop Toggle (Transport)",
+        "Stop + Reset Playhead (Transport)",
+        "Record Toggle und Count-In (Transport)",
+        "Pattern Preset Mode (Pattern-Länge vor Aufnahme)",
+        "Restart Loop Range (Transport)",
+        "Loop On/Off und Loop-Range-Verschiebung/Endpunkt-Anpassung",
+        "Tap Tempo (Transport)",
+        "Metronom Toggle",
+        "Follow Toggle (Display folgt Playhead)",
+        "Grid Mode (Perform/Arrange/Step/Nudge Grid)",
+        "Live-Erase (Events während Playback löschen)",
+        "Erase All Events for Pad (Shortcut)",
+        "Erase Automation for Parameter",
+        "Remove Sound/Group Slot (Reset)",
+        "Channel Properties (Control Mode)",
+        "MIDI Mode Umschaltung (SHIFT + CHANNEL)",
+        "Pad/Group-LED-Feedback (Farben, Choke, Create)",
+        "Soft Button/Knob Kontextsteuerung (Overlays, Selector-Listen)",
+        "Mode-Pinning und Shift-Layer-Handling (UI/Logik)",
+        "Undo/Redo-Logik für Pattern/Scene-Edits (History)"
+      ],
+      "hardware_functions": [
+        "Pad Input: Note On/Off, Velocity, Aftertouch, RGB-Feedback je nach Modus (Mute/Solo/Pattern/Slot)",
+        "Pad Mode: Umschalten zwischen SCENE, PATTERN, PAD MODE, KEYBOARD, CHORD, STEP, ARRANGE, DUPLICATE",
+        "Group Select: 2x4 Buttons, Farbkodiert, Create-Button (dim white)",
+        "Transport: RESTART, ERASE, TAP, FOLLOW, PLAY, REC, STOP, SHIFT, mit Status-Feedback",
+        "Performance: Note Repeat, Lock, Strip Mode, Smart Strip (Touch/Slide, LED-Bar, Strip Mode)",
+        "Edit Zone: 4D-Encoder (tilt, push, turn), Quick Edit (VOLUME, SWING, TEMPO)",
+        "Screen Buttons: Soft Buttons 1–8, kontextabhängige Funktion",
+        "Screen Knobs: 8 Touch-Knobs, Touch blendet Werteliste ein, Push für Reset",
+        "Displays: 2x, dynamische Overlays, Kontext-Feedback, Selector-Listen",
+        "Control Zone: CHANNEL, PLUG-IN, ARRANGER, MIXER, BROWSER, SAMPLING, PATTERN, SCENE, PAD MODE, EVENTS, VARIATION, DUPLICATE",
+        "Pad Input Mode: FIXED VEL, PAD MODE, KEYBOARD, CHORD, STEP",
+        "Global: Shift-Layer, Mode-Pinning, Undo/Redo, Kontext-Feedback, LED-Feedback, Overlay-Icons"
+      ],
+      "interaction_models": [
+        "press: Kurzer Tastendruck (z.B. Pad, Button)",
+        "press_twice: Doppelklick (z.B. Stop)",
+        "hold: Gedrückt halten (Momentary)",
+        "hold_combo: Gedrückt halten + weiteres Element",
+        "shift_combo: SHIFT + Element",
+        "turn: Drehen (Knob, Encoder)",
+        "touch: Berühren (Touch-Knob, Strip)",
+        "slide: Fingerbewegung über Touch-Strip",
+        "push_turn: Encoder drücken + drehen",
+        "tilt: 4D-Encoder Richtung",
+        "confirm: Auswahl bestätigen (Encoder drücken)"
+      ],
+      "feedback_mechanisms": [
+        "Pad RGB: Status je nach Modus (Mute/Solo/Pattern/Slot)",
+        "Button LED: off/dim/bright/pinned",
+        "Group Button: Farbkodiert, dim white für Create",
+        "Soft Button/Knob: Overlay/Label im Display",
+        "Selector-Listen: Overlay bei Touch auf Knob",
+        "Touch Strip: LED-Bar, haptisches Feedback",
+        "4D-Encoder: LED-Ring für Richtungen, Push-Feedback"
+      ],
+      "roadmap": [
+        "1. Transport- und Playback-Funktionen vollständig implementieren",
+        "2. Pattern/Scene-Chain- und Preset-Mode-Logik entwickeln",
+        "3. Loop- und Grid-Handling (inkl. Endpunkt/Range) umsetzen",
+        "4. Erase- und Automation-Funktionen ergänzen",
+        "5. Channel-Properties- und MIDI-Mode-Logik bereitstellen",
+        "6. Pad/Group-LED-Feedback und Soft-Button/Knob-Kontextsteuerung integrieren",
+        "7. Mode-Pinning, Shift-Layer-Handling und Undo/Redo-Logik finalisieren"
+      ]
     }
   ],
   "dokumentation": {

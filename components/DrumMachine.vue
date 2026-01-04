@@ -231,7 +231,14 @@ export default defineComponent({
       selectedPadId: 'pad1' as DrumPadId,
       currentGridIndex: 0,
       padsPerGrid: 16,
-      drawerTab: 'sound'
+      drawerTab: 'sound',
+      countInTimer: null as number | null,
+      tapTimestamps: [] as number[],
+      liveEraseEnabled: false,
+      presetBars: patterns.currentPattern?.gridSpec?.bars ?? DEFAULT_GRID_SPEC.bars,
+      presetDivision: patterns.currentPattern?.gridSpec?.division ?? DEFAULT_GRID_SPEC.division,
+      channelTarget: 'sound' as 'sound' | 'group' | 'master',
+      midiMode: false
     }
   },
 
@@ -263,6 +270,24 @@ computed: {
 
   currentStep() {
     return this.transport.currentStep
+  },
+
+  totalSteps(): number {
+    return Math.max(1, this.gridSpec.bars * this.gridSpec.division)
+  },
+
+  patternChainEntries() {
+    const chain = this.patterns.currentScene?.patternIds ?? []
+    if (!Array.isArray(chain) || chain.length === 0) {
+      return null
+    }
+    return chain
+      .map((patternId) => {
+        const entry = this.patterns.patterns.find((pattern) => pattern.id === patternId)
+        if (!entry) return null
+        return { id: patternId, bars: entry.gridSpec?.bars ?? this.gridSpec.bars }
+      })
+      .filter(Boolean) as Array<{ id: string; bars: number }> | null
   },
 
   bpm() {
@@ -353,7 +378,22 @@ computed: {
   },
 
   mainSlotProps() {
-    return {}
+    return {
+      stepGridProps: {
+        gridSpec: this.gridSpec,
+        steps: this.pattern.steps,
+        patternChain: this.patternChainEntries,
+        selectedPad: this.selectedPadId as DrumPadId | null,
+        currentStep: this.currentStep,
+        isPlaying: this.isPlaying,
+        followEnabled: this.transport.followEnabled,
+        loopStart: this.transport.loopStart,
+        loopEnd: this.transport.loopEnd,
+        'onStep:toggle': this.toggleStep,
+        'onPlayhead:scrub': this.scrubPlayhead,
+        'onStep:velocity': this.updateStepVelocity
+      }
+    }
   },
   
 
@@ -366,14 +406,49 @@ computed: {
         division: this.gridSpec.division,
         divisions: this.divisions,
         isMidiLearning: this.midiLearn.isLearning,
-        onPlay: this.start,
-        onStop: this.stop,
-        onUpdateBpm: this.updateBpm,
-        onIncrementBpm: this.incrementBpm,
-        onDecrementBpm: this.decrementBpm,
-        onUpdateDivision: this.setDivision,
-        onUpdateLoop: this.setLoop,
-        onToggleMidiLearn: this.toggleMidiLearn
+        isRecording: this.transport.isRecording,
+        countInEnabled: this.transport.countInEnabled,
+        countInBars: this.transport.countInBars,
+        metronomeEnabled: this.transport.metronomeEnabled,
+        followEnabled: this.transport.followEnabled,
+        patternBars: this.gridSpec.bars,
+        loopStart: this.transport.loopStart,
+        loopEnd: this.transport.loopEnd,
+        totalSteps: this.totalSteps,
+        selectedPad: this.selectedPadId,
+        liveEraseEnabled: this.liveEraseEnabled,
+        metronomeVolume: this.transport.metronomeVolume,
+        presetBars: this.presetBars,
+        presetDivision: this.presetDivision
+      },
+      transportListeners: {
+        play: this.start,
+        stop: this.stop,
+        'stop-reset': this.resetPlayhead,
+        restart: this.restartLoop,
+        'toggle-record': this.toggleRecord,
+        'toggle-count-in': this.toggleCountIn,
+        'update-count-in-bars': this.setCountInBars,
+        'tap-tempo': this.tapTempo,
+        'toggle-metronome': this.toggleMetronome,
+        'toggle-follow': this.toggleFollow,
+        'update-pattern-bars': this.setPatternBars,
+        'nudge-loop-range': this.nudgeLoopRange,
+        'update-loop-start': this.updateLoopStart,
+        'update-loop-end': this.updateLoopEnd,
+        'update:metronome-volume': this.setMetronomeVolume,
+        'toggle-live-erase': this.toggleLiveErase,
+        'erase-pad': this.eraseSelectedPad,
+        'erase-current-step': this.eraseSelectedPadAtCurrentStep,
+        'update:preset-bars': this.setPresetBars,
+        'update:preset-division': this.setPresetDivision,
+        'apply-pattern-preset': this.applyPatternPreset,
+        'update-bpm': this.updateBpm,
+        'increment-bpm': this.incrementBpm,
+        'decrement-bpm': this.decrementBpm,
+        'update-division': this.setDivision,
+        'update-loop': this.setLoop,
+        'toggle-midi-learn': this.toggleMidiLearn
       },
       midiLearnLabel: this.midiLearnLabel
     }
@@ -393,9 +468,58 @@ computed: {
 
   drawerSlotProps() {
     return {
+      drawerTab: this.drawerTab,
+      onUpdateDrawerTab: (value: string) => {
+        this.drawerTab = value
+      },
+      soundProps: {
+        banks: this.banks,
+        selectedBankId: this.soundbanks.selectedBankId,
+        'onBank:select': this.selectBank,
+        'onPad:replace': this.replacePadSample
+      },
       fxProps: {
         fxSettings: (this.sequencer.fxSettings ?? {}) as FxSettings,
-        onUpdateFx: this.updateFx
+        'onFx:update': this.updateFx
+      },
+      patternsProps: {
+        patterns: this.patterns.patterns,
+        selectedPatternId: this.patterns.selectedPatternId,
+        scenes: this.patterns.scenes,
+        activeSceneId: this.patterns.activeSceneId,
+        'onPattern:add': this.addPattern,
+        'onPattern:select': this.selectPattern,
+        'onPattern:rename': this.renamePattern,
+        'onPattern:undo': this.undoPattern,
+        'onPattern:redo': this.redoPattern,
+        'onScene:add': this.addScene,
+        'onScene:update': this.updateScene,
+        'onScene:select': this.selectScene,
+        'onErase:pad': this.eraseSelectedPad,
+        'onErase:step': this.eraseSelectedPadAtCurrentStep
+      },
+      exportProps: {
+        isExporting: this.isExporting,
+        exportError: this.exportError,
+        exportMetadata: this.exportMetadata,
+        audioBlob: this.exportAudioBlob,
+        hasZipArtifacts: this.hasZipArtifacts,
+        stemEntries: this.stemEntries,
+        onExport: this.exportBounce,
+        'onDownload:mixdown': this.downloadMixdown,
+        'onDownload:zip': this.downloadZip,
+        'onDownload:stem': this.downloadStem,
+        'onDownload:stems': this.downloadAllStems
+      },
+      channelProps: {
+        controlTarget: this.channelTarget,
+        midiMode: this.midiMode,
+        'onUpdate:control-target': (value: string) => {
+          this.channelTarget = value as 'sound' | 'group' | 'master'
+        },
+        'onUpdate:midi-mode': (value: boolean) => {
+          this.midiMode = Boolean(value)
+        }
       }
     }
   }
@@ -484,6 +608,7 @@ computed: {
   },
   beforeUnmount() {
     window.removeEventListener('keydown', this.handleGridKeys)
+    this.clearCountInTimer()
     this.unwatchers.forEach((stop) => stop())
   },
 
@@ -539,21 +664,166 @@ computed: {
       this.sync.startTransport(this.transport.bpm)
     },
     stop() {
+      if (!this.transport.isPlaying) {
+        this.resetPlayhead()
+        this.transport.setRecording(false)
+        return
+      }
       if (this.midiLearn.isLearning) {
         this.midiLearn.setTarget({ type: 'transport', action: 'stop' })
       }
       this.sequencer.stop()
       this.sync.stopTransport()
+      this.transport.setRecording(false)
+    },
+    resetPlayhead() {
+      this.transport.setCurrentStep(0)
+    },
+    restartLoop() {
+      if (this.transport.isPlaying) {
+        this.sequencer.stop()
+        this.transport.setCurrentStep(this.transport.loopStart)
+        this.patterns.prepareScenePlayback()
+        void this.sequencer.start()
+      } else {
+        this.transport.setCurrentStep(this.transport.loopStart)
+      }
+    },
+    toggleRecord() {
+      const next = !this.transport.isRecording
+      this.transport.setRecording(next)
+      if (!next) {
+        this.clearCountInTimer()
+        return
+      }
+      if (!this.transport.isPlaying) {
+        if (this.transport.countInEnabled) {
+          this.startWithCountIn()
+        } else {
+          void this.start()
+        }
+      }
+    },
+    startWithCountIn() {
+      this.clearCountInTimer()
+      const bars = Math.max(1, this.transport.countInBars)
+      const delayMs = (bars * 4 * 60 * 1000) / Math.max(1, this.bpm)
+      this.countInTimer = window.setTimeout(() => {
+        void this.start()
+        this.transport.setRecording(true)
+        this.clearCountInTimer()
+      }, delayMs)
+    },
+    clearCountInTimer() {
+      if (this.countInTimer != null) {
+        window.clearTimeout(this.countInTimer)
+        this.countInTimer = null
+      }
+    },
+    toggleCountIn() {
+      this.transport.setCountInEnabled(!this.transport.countInEnabled)
+      if (!this.transport.countInEnabled) {
+        this.clearCountInTimer()
+      }
+    },
+    setCountInBars(value: number) {
+      this.transport.setCountInBars(value ?? 1)
+    },
+    tapTempo() {
+      const now = Date.now()
+      this.tapTimestamps.push(now)
+      const recent = this.tapTimestamps.slice(-4)
+      this.tapTimestamps = recent
+      if (recent.length < 2) return
+      const intervals = []
+      for (let i = 1; i < recent.length; i += 1) {
+        intervals.push(recent[i] - recent[i - 1])
+      }
+      const avgMs = intervals.reduce((sum, val) => sum + val, 0) / intervals.length
+      const bpm = Math.max(1, Math.round(60000 / avgMs))
+      this.updateBpm(bpm)
+    },
+    toggleMetronome() {
+      this.transport.setMetronomeEnabled(!this.transport.metronomeEnabled)
+    },
+    toggleFollow() {
+      this.transport.setFollowEnabled(!this.transport.followEnabled)
+    },
+    setPatternBars(bars: number) {
+      const normalized = Math.max(1, Math.floor(bars))
+      const gridSpec = normalizeGridSpec({ ...this.gridSpec, bars: normalized })
+      this.transport.setGridSpec(gridSpec)
+      this.patterns.updateGridSpec(gridSpec)
+      const total = gridSpec.bars * gridSpec.division
+      this.transport.setLoopRange(0, total)
+      this.resetPlayhead()
+    },
+    nudgeLoopRange(delta: number) {
+      this.transport.nudgeLoopRange(delta)
+      const clamped = Math.min(Math.max(this.transport.currentStep, this.transport.loopStart), this.transport.loopEnd - 1)
+      this.transport.setCurrentStep(clamped)
+    },
+    updateLoopStart(value: number) {
+      const nextStart = Math.max(0, Math.floor(value))
+      const end = Math.max(nextStart + 1, this.transport.loopEnd)
+      this.transport.setLoopRange(nextStart, end)
+      const clamped = Math.min(Math.max(this.transport.currentStep, nextStart), end - 1)
+      this.transport.setCurrentStep(clamped)
+    },
+    updateLoopEnd(value: number) {
+      const total = this.totalSteps
+      const nextEnd = Math.min(total, Math.max(1, Math.floor(value)))
+      const start = Math.min(this.transport.loopStart, nextEnd - 1)
+      this.transport.setLoopRange(start, nextEnd)
+      const clamped = Math.min(Math.max(this.transport.currentStep, start), nextEnd - 1)
+      this.transport.setCurrentStep(clamped)
+    },
+    setMetronomeVolume(value: number) {
+      this.transport.setMetronomeVolume(value ?? 0.12)
+    },
+    setPresetBars(value: number) {
+      const bars = Math.max(1, Math.floor(value ?? 1))
+      this.presetBars = bars
+    },
+    setPresetDivision(value: TimeDivision | null) {
+      if (value != null) {
+        this.presetDivision = value
+      }
+    },
+    applyPatternPreset() {
+      const gridSpec = normalizeGridSpec({
+        ...this.gridSpec,
+        bars: this.presetBars,
+        division: this.presetDivision
+      })
+      this.transport.setGridSpec(gridSpec)
+      this.patterns.updateGridSpec(gridSpec)
+      this.transport.setLoopRange(0, gridSpec.bars * gridSpec.division)
+      this.resetPlayhead()
     },
     handleGridKeys(e: KeyboardEvent) {
-      if (!e.ctrlKey) return
-      const index = Number(e.key) - 1
-      if (index >= 0 && index < this.gridCount) {
+      if (e.ctrlKey && !e.shiftKey) {
+        const index = Number(e.key) - 1
+        if (index >= 0 && index < this.gridCount) {
+          e.preventDefault()
+          this.selectPadGrid(index)
+          return
+        }
+      }
+      if (e.ctrlKey && e.key.toLowerCase() === 'z') {
         e.preventDefault()
-        this.selectPadGrid(index)
+        if (e.shiftKey) {
+          this.redoPattern()
+        } else {
+          this.undoPattern()
+        }
       }
     },
     async handlePad(pad: DrumPadId, velocity = 1) {
+      if (this.liveEraseEnabled) {
+        this.erasePadAtStep(pad, this.transport.currentStep)
+        return
+      }
       try {
         await this.sequencer.recordHit(pad, velocity, true)
       } catch (error) {
@@ -593,6 +863,22 @@ computed: {
     },
     scrubPlayhead(payload: { stepIndex: number }) {
       this.transport.setCurrentStep(payload.stepIndex)
+    },
+    erasePadAtStep(pad: DrumPadId, stepIndex: number) {
+      const stepsPerPattern = this.totalSteps
+      const normalizedStep =
+        ((stepIndex % stepsPerPattern) + stepsPerPattern) % stepsPerPattern
+      const barIndex = Math.floor(normalizedStep / this.gridSpec.division)
+      const stepInBar = normalizedStep % this.gridSpec.division
+      this.patterns.eraseStepForPad(barIndex, stepInBar, pad)
+    },
+    eraseSelectedPad() {
+      if (!this.selectedPadId) return
+      this.patterns.erasePadEvents(this.selectedPadId)
+    },
+    eraseSelectedPadAtCurrentStep() {
+      if (!this.selectedPadId) return
+      this.erasePadAtStep(this.selectedPadId, this.transport.currentStep)
     },
 
     async requestMidi() {
@@ -650,6 +936,9 @@ computed: {
       } else {
         this.midiLearn.enable()
       }
+    },
+    toggleLiveErase() {
+      this.liveEraseEnabled = !this.liveEraseEnabled
     },
     setDivision(division: TimeDivision) {
       const gridSpec = normalizeGridSpec({ ...this.gridSpec, division })

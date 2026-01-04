@@ -26,7 +26,8 @@ const tabs = [
   { label: 'Sound', value: 'sound' },
   { label: 'FX', value: 'fx' },
   { label: 'Patterns', value: 'patterns' },
-  { label: 'Export', value: 'export' }
+  { label: 'Export', value: 'export' },
+  { label: 'Channel', value: 'channel' }
 ]
 
 export default defineComponent({

@@ -39,6 +39,19 @@ PORT=3001 HMR_PORT=24679 npm run dev
 - Import/Export helpers for patterns, MIDI (@tonejs/midi), soundbank manifests + sample blobs, and WAV bounce via OfflineAudioContext.
 - Scene chains with bar-boundary pattern switching, per-step velocity/accent cycling, and an FX chain (filter/drive/reverb) routed through the WebAudio graph.
 
+## Analyse & Planung
+
+- **Iststand**: Index mounts TransportBar (play/stop/bpm/division/loop + MIDI learn), PadGrid, and FxPanel only; Patterns/Export/TabPanel exist but are not rendered; StepGrid/StepCell components are gone (docs only); transport store has no record/restart/tap/follow/loop-range handling.
+- **Fehlende UI-Elemente**: Pad/group LED and velocity/accent feedback; pad/key labels; soft-button/knob overlays and selector lists on touch; 4D encoder nav affordances; mode pinning + shift layer indicator; full transport panel actions (record, restart, count-in, tap tempo, follow, metronome, pattern preset length, loop range move/end adjust); grid-mode and loop-range UI; erase/live automation UI; channel properties and MIDI-mode panels; pattern/scene chain + preset mode UI; undo/redo controls; BFCache/state-resume and debug timeline surfaces; accessibility/ARIA/keyboard coverage.
+- **Fehlende Funktionen & Hardware-Workflows**: Record/count-in, stop-reset, pattern preset length, loop toggle/range move/end adjust (shift+restart+4D push/turn), tap tempo, follow toggle; grid mode selection; live erase, pad/group erase, automation erase, slot reset; channel properties control mode; MIDI mode (shift+channel) and contextual soft labels; pad/group LED feedback and mode pinning/shift behavior; undo/redo history for pattern/scene edits; 4D encoder navigation + selector-list overlays; quick-edit (volume/swing/tempo/tune) and performance zone (note repeat/strip) mappings; debug timeline and state-restore feedback.
+- **Priorisierte Feature-/Task-Liste**:
+  1) Sequencer-Oberflaeche wiederherstellen: StepGrid/StepCell (Options API, Pug, Less, a11y) und Patterns/Export/TabPanel auf index mounten.
+  2) Transport auf MK3-Paritaet bringen: play/stop toggle, stop-reset, restart, record + count-in + pattern preset mode, loop toggle/range move/end adjust, tap tempo, metronome, follow indicator und Loop-Range-UI.
+  3) Grid-Mode + Loop-Range-UX sowie Erase-Panels fuer Live-/Pad-/Automation-Loeschungen und Slot-Reset implementieren.
+  4) Pattern/Scene-Chain- und Preset-Length-UI mit Mode-Pinning/Shift-Feedback, Undo/Redo-History und sichtbaren Pad/Key-Labels samt Velocity/Accent-State liefern.
+  5) Soft-Button/Knob-Overlays und Selector-Listen (Touch + Overlay) mit 4D-Encoder-Navigation/Confirm und kontextueller Beschriftung verdrahten.
+  6) Hardware-Control-Modes auspraegen: Channel Properties/Plugin/Macro, MIDI-Mode-Toggle, Quick-Edit (Volume/Swing/Tempo/Tune), Performance-Zone (Note Repeat/Strip) inkl. LED-Feedback und Debug/BFCache-State-Surfaces testen.
+
 ## Timing & Sync
 
 - AudioContext is the sole clock authority; the lookahead scheduler, sequencer, and MIDI clock master all derive their timings from `AudioContext.currentTime`.
