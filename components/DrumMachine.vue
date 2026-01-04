@@ -173,8 +173,6 @@
 
         <div class="bottom-row">
           <div class="left-column">
-            <ModeColumnPlaceholder />
-
             <div class="transport-cluster" title="Transport cluster (MK3-style)">
               <slot name="transport" :props="transportSlotProps" />
             </div>
@@ -1798,12 +1796,14 @@ computed: {
 }
 
 .pads-stack {
-  display: flex;
+  display: grid;
+  grid-columns: 4 / -1;
+  grid-rows: 4 / -1;
   flex-direction: column;
   gap: @space-xs;
   align-items: end;
-  justify-content: flex-end;
-  width: 50%;
+  justify-content: end;
+  //width: 80%;
   min-width: 0;
   min-height: 0;
   align-self: end;
@@ -1817,7 +1817,7 @@ computed: {
 
 .pads-square {
   width: 100%;
-  //max-width: clamp(420px, 62%, 960px);
+  // max-width: clamp(420px, 62%, 960px);
   aspect-ratio: 1 / 1;
   min-height: 0;
   display: flex;
