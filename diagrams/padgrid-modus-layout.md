@@ -45,8 +45,9 @@ flowchart TB
       m8["Mode 8"]:::mode
     end
 
-    subgraph pads["PadGrid 4×4 (rechts)\npad1–pad16\nStates: selected / triggered / playing\nPattern Indicator"]:::pads
+    subgraph pads["PadGrid 4×4 (rechts)\npad1–pad16\nStates: selected / triggered / playing\nPattern Indicator"]
       pgrid["4×4 Pads"]:::pads
+      pind["Pattern Indicator"]:::pads
     end
   end
 
