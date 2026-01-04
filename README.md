@@ -181,3 +181,36 @@ Copy the exported seed from the metadata panel (or the JSON blob) and supply it 
 - `components/TransportBar.vue`: Transport buttons rely solely on icons, have no hover hints/tooltips, and miss MK3 semantics (play/stop toggle, stop-reset, shift+rec count-in, restart). The dense vertical stack will not fit once displays/soft buttons are added.
 - `components/PadGrid.vue`: Pads expose neither tooltips nor pad labels/LED hints in the UI. `is-empty` derives from missing pad state rather than sample presence, so freshly loaded banks render as “empty” even when defaults exist.
 - `components/PadGrid.vue`: KEY_LABELS are hard-coded to 16 entries; any future pad bank paging or alternate pad counts will desync labels and navigation unless the labels derive from the pads prop.
+
+## Hardware-Layout & UI-Referenz
+
+### PadGrid (4×4)
+- 16 Pads in 4 Spalten × 4 Reihen (pad1–pad16); jede PadCell ist ein Button mit klaren visuell differenzierten Zuständen für selected, triggered (aktueller Step) und playing (irgendwo im Pattern).
+- Accessibility: Buttons mit `aria-label` pro Pad, rowcount/colcount und `aria-rowindex`/`aria-colindex` für Screenreader; `tabindex`-Reihenfolge folgt pad1–pad16. Fokus-Refs ermöglichen gezielte Fokussteuerung (z. B. beim Padwechsel per Keyboard).
+- Pattern Indicator sitzt am PadGrid und zeigt den aktiven Pattern-Status in unmittelbarer Nähe der Pads.
+
+### Modus-Buttons (links vom PadGrid)
+- Vertikale Spalte mit 8 Modus-Buttons, jeweils eine Spalte breit und in der Höhe exakt 2 Pads groß (8 Buttons ≙ 16 Pad-Höhen).
+- Links neben dem PadGrid angeordnet und an der vertikalen Referenzlinie des Softbuttons 4 über Display 1 ausgerichtet; die Linie muss in Diagrammen/Mockups markiert bleiben.
+- Buttons tragen `aria-label`/`title` für Mode-Beschriftungen (Scene/Pattern/Events/Variation/Duplicate/Select/Mute/Solo o. ä.) und lassen sich per Tastatur fokussieren.
+
+### Fixed Velocity + Pad Mode Buttons (oberhalb)
+- Fixed-Velocity-Button sitzt oberhalb der Modus-Spalte; direkt daneben eine horizontale Reihe der Pad-Mode-Buttons (PAD MODE, KEYBOARD, CHORD, STEP wie im Build umgesetzt).
+- Die komplette Reihe orientiert sich an der Softbutton-Linie über Display 2 als horizontale Referenz, sodass Fixed Velocity und Pad-Mode-Buttons bündig zu Display 2 stehen.
+
+### Softbutton-Referenzen
+- Softbuttons existieren als Platzhalter und liefern die Ausrichtungsachsen: Softbutton 4 über Display 1 definiert die vertikale Linie für die Modus-Buttons.
+- Die Softbutton-Reihe über Display 2 dient als horizontale Referenz für die Fixed-Velocity- und Pad-Mode-Buttons; beide Referenzen sind in `diagrams/padgrid-modus-layout.md` markiert.
+
+### Accessibility
+- PadGrid: ARIA-Labels pro Pad, `tabindex`-Navigation in Grid-Reihenfolge, Fokussteuerung über Refs, und Grid-Metadaten (`aria-rowcount`, `aria-colcount`) für Screenreader.
+- Modus-/Pad-Mode-/Fixed-Velocity-Buttons: native Button-Rolle, `aria-label`/`title` für die Modusnamen, konsistente Tab-Reihenfolge entlang der Spalten/Zeilen.
+- Softbuttons als Referenzobjekte behalten klar beschriftete Slots, damit Screenreader die räumliche Zuordnung nachvollziehen können.
+
+### TransportBar
+- Eigenständige Komponente für Transport-/Pattern-/Step-Logik mit Props wie `bpm`, `division`/`divisions`, `loop`, `patternBars`, `presetBars`/`presetDivision`, Pad-Selektion (`selectedPad`) und Statusflags (`isPlaying`, `isRecording`, `countInEnabled`, `metronomeEnabled`, `followEnabled`, `liveEraseEnabled`).
+- Events decken Transport (play/stop/stop-reset/restart), Tempo (`update-bpm`, `increment-bpm`, `decrement-bpm`, `tap-tempo`), Grid (`update-division`, `update-pattern-bars`, `update:preset-*`), Loop (`update-loop`, `nudge-loop-range`, `update-loop-start`, `update-loop-end`), Metronom/Follow (`toggle-metronome`, `update:metronome-volume`, `toggle-follow`), Count-In (`toggle-count-in`, `update-count-in-bars`), MIDI-Learn und Live-Erase (`toggle-live-erase`, `erase-pad`, `erase-current-step`) ab.
+- Buttons nutzen native `<button>`-Semantik (fokussierbar, Enter/Space aktivierbar); ergänzende `aria-label`/`title`-Attribute sichern konsistente Accessibility für Screenreader und Tooltips.
+
+### Diagramm
+- Layout-Visualisierung mit Referenzlinien, Dual Displays, Softbutton-Reihen, Modus-Spalte, Fixed-Velocity/Pad-Mode-Zeile und PadGrid: siehe `diagrams/padgrid-modus-layout.md` (Mermaid).
