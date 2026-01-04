@@ -112,6 +112,62 @@
                 </button>
               </div>
             </div>
+            <div class="performance-vert">
+              <button class="control-btn" type="button">
+                <span class="control-btn__main">NOTE REPEAT</span>
+                <span class="control-btn__sub">Arp</span>
+              </button>
+              <div class="performance-vert__spacer" aria-hidden="true"></div>
+              <button class="control-btn" type="button">
+                <span class="control-btn__main">LOCK</span>
+                <span class="control-btn__sub">Ext Lock</span>
+              </button>
+            </div>
+
+            <div class="performance-block">
+              <div class="performance-btn-row">
+                <button class="control-btn" type="button">
+                  <span class="control-btn__main">PITCH</span>
+                </button>
+                <button class="control-btn" type="button">
+                  <span class="control-btn__main">MOD</span>
+                </button>
+                <button class="control-btn" type="button">
+                  <span class="control-btn__main">PERFORMANCE</span>
+                  <span class="control-btn__sub">Fx Select</span>
+                </button>
+                <button class="control-btn" type="button">
+                  <span class="control-btn__main">NOTES</span>
+                </button>
+              </div>
+              <div class="smart-strip" aria-hidden="true"></div>
+              <div class="group-area">
+                <button class="control-btn" type="button">
+                  <span class="control-btn__main">A</span>
+                </button>
+                <button class="control-btn" type="button">
+                  <span class="control-btn__main">B</span>
+                </button>
+                <button class="control-btn" type="button">
+                  <span class="control-btn__main">C</span>
+                </button>
+                <button class="control-btn" type="button">
+                  <span class="control-btn__main">D</span>
+                </button>
+                <button class="control-btn" type="button">
+                  <span class="control-btn__main">E</span>
+                </button>
+                <button class="control-btn" type="button">
+                  <span class="control-btn__main">F</span>
+                </button>
+                <button class="control-btn" type="button">
+                  <span class="control-btn__main">G</span>
+                </button>
+                <button class="control-btn" type="button">
+                  <span class="control-btn__main">H</span>
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -130,9 +186,6 @@
 
           <div class="right-column">
             <div class="pads-and-strip">
-              <div class="strip-column">
-                <TouchStripPlaceholder />
-              </div>
               <div class="pads-column">
                 <div class="pads-stack" title="Pad grid with bank indicators">
                   <div class="pads-square">
@@ -1601,7 +1654,7 @@ computed: {
   /* statt grid-column: 1 / span 3; */
   grid-column: 1 / 3;     
   grid-row: 6;             
-  justify-self: center-start;
+  justify-self: normal;
 
   --core-w: calc(100% - var(--fixed-col-w) - var(--device-gap));
 
@@ -1623,7 +1676,7 @@ computed: {
 }
 
 .encoder-slot {
-  grid-column: 1 / span 3;
+  grid-column: 1 / 3;
   grid-row: 1 / -1;
   display: grid;
   padding-left: 30%;
@@ -1724,7 +1777,7 @@ computed: {
 
 .pads-and-strip {
   display: grid;
-  grid-template-columns: clamp(90px, 18%, 140px) minmax(0, 1fr);
+  //grid-template-columns: clamp(90px, 18%, 140px) minmax(0, 1fr);
   grid-template-areas: 'strip pads';
   gap: var(--device-gap);
   align-items: end;
@@ -1764,7 +1817,7 @@ computed: {
 
 .pads-square {
   width: 100%;
-  //max-width: clamp(420px, 62%, 780px);
+  //max-width: clamp(420px, 62%, 960px);
   aspect-ratio: 1 / 1;
   min-height: 0;
   display: flex;
@@ -1868,6 +1921,75 @@ computed: {
   .drawer-shell {
     max-height: 45vh;
   }
+}
+
+.edit-area {
+  grid-column: 1 / 3;
+  grid-row: 2;
+}
+
+.performance-vert {
+  grid-column: 4;
+  grid-row: 2;
+  display: grid;
+  grid-template-rows: repeat(3, var(--edit-btn-h, clamp(34px, 4.2vh, 44px)));
+  row-gap: var(--edit-row-gap, @space-xxs);
+  align-self: end;
+  justify-self: stretch;
+  width: 100%;
+}
+
+.performance-vert .control-btn {
+  width: 100%;
+  min-height: var(--edit-btn-h, clamp(34px, 4.2vh, 44px));
+}
+
+.performance-vert__spacer {
+  width: 100%;
+  height: 100%;
+}
+
+.performance-block {
+  grid-column: 1 / span 4;
+  grid-row: 3;
+  display: grid;
+  grid-template-rows: auto auto auto;
+  row-gap: var(--edit-row-gap, @space-xxs);
+  align-self: start;
+  justify-self: stretch;
+  width: 100%;
+}
+
+.performance-btn-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: @space-xxs;
+}
+
+.performance-btn-row .control-btn {
+  width: 100%;
+  min-height: var(--edit-btn-h, clamp(34px, 4.2vh, 44px));
+}
+
+.smart-strip {
+  width: 100%;
+  height: clamp(46px, 5vh, 64px);
+  border-radius: @radius-m;
+  background: linear-gradient(90deg, #2a2f3a, #141824);
+  border: 1px solid fade(#3b4355, 60%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.group-area {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(2, var(--edit-btn-h, clamp(34px, 4.2vh, 44px)));
+  gap: @space-xxs;
+}
+
+.group-area .control-btn {
+  width: 100%;
+  min-height: var(--edit-btn-h, clamp(34px, 4.2vh, 44px));
 }
 
 </style>
