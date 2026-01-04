@@ -1600,7 +1600,7 @@ computed: {
 
   /* statt grid-column: 1 / span 3; */
   grid-column: 1 / 3;     
-  grid-row: 7;             
+  grid-row: 6;             
   justify-self: center-start;
 
   --core-w: calc(100% - var(--fixed-col-w) - var(--device-gap));
@@ -1638,13 +1638,14 @@ computed: {
 
 
 .quick-edit-buttons {
-  grid-column: 3;
-  grid-row: 1 / -1;
+  grid-column: 3 / -1;
+  grid-row: 1;
   display: grid;
   grid-template-rows: repeat(3, var(--edit-btn-h));
-  row-gap: var(--device-gap);
+  row-gap: var(--edit-row-gap);
   align-content: start;
-  width: 100%;
+  align-items: start;
+
 }
 
 .quick-edit-btn {
