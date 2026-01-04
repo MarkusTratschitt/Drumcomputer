@@ -113,3 +113,26 @@ sequenceDiagram
   ImportExport->>SoundbanksStore: upsertBank + samples
   DrumMachine-->>User: normalized patterns/soundbanks ready to play
 ```
+
+## MK3 hardware-style navigation & hover hints
+```mermaid
+sequenceDiagram
+  participant User
+  participant Displays as DualDisplays+SoftButtons
+  participant ScreenKnobs
+  participant Encoder as 4DEncoder
+  participant Transport as TransportCluster
+  participant Modes as ModeColumn
+  participant Pads
+
+  User->>Displays: hover soft button (see hint + symbol)
+  User->>ScreenKnobs: hover knob (opens selector overlay with values)
+  ScreenKnobs->>Encoder: nudge/confirm selection
+  Modes-->>Pads: change pad mode (mute/solo/select)
+  Transport-->>Pads: play/stop/rec/restart toggles
+  User->>Pads: tap pad (see pad label + hover legend)
+  Displays-->>User: status update (no page scroll)
+```
+
+- Keep all interactions inside the hardware viewport; drawers and selector overlays scroll internally while the page remains locked.
+- Hover hints should list both primary and shift-layer actions to mirror the MK3 printed labels.

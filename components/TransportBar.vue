@@ -2,35 +2,69 @@
 client-only(tag="div")
   .transport-bar
     .row.controls
-      v-btn(icon :disabled="isPlaying" color="primary" @click="$emit('play')" aria-label="Play")
+      v-btn(
+        class="symbol-btn"
+        :disabled="isPlaying"
+        color="primary"
+        @click="$emit('play')"
+        aria-label="Play ▶ (toggle)"
+        title="Play ▶ (toggle playback)"
+      )
+        span.btn-symbol ▶
         v-icon mdi-play
-      v-btn(icon :disabled="!isPlaying" color="error" @click="$emit('stop')" aria-label="Stop")
+      v-btn(
+        class="symbol-btn"
+        :disabled="!isPlaying"
+        color="error"
+        @click="$emit('stop')"
+        aria-label="Stop ■ (press twice to reset)"
+        title="Stop ■ (press twice to reset playhead)"
+      )
+        span.btn-symbol ■
         v-icon mdi-stop
-      v-btn(icon color="primary" variant="tonal" @click="$emit('restart')" aria-label="Restart loop")
+      v-btn(
+        class="symbol-btn"
+        color="primary"
+        variant="tonal"
+        @click="$emit('restart')"
+        aria-label="Restart ↻"
+        title="Restart ↻ (jump to start)"
+      )
+        span.btn-symbol ↻
         v-icon mdi-reload
       v-btn(
-        icon
+        class="symbol-btn"
         :color="isRecording ? 'red' : 'grey'"
         variant="tonal"
         @click="$emit('toggle-record')"
         :aria-pressed="isRecording"
-        aria-label="Record toggle"
+        aria-label="Record ● (toggle)"
+        title="Record ● (toggle). Hold for pattern length preset."
       )
+        span.btn-symbol ●
         v-icon mdi-record
       v-spacer
       v-btn(
-        icon
+        class="symbol-btn"
         :color="isMidiLearning ? 'cyan' : 'grey'"
         variant="tonal"
         @click="$emit('toggle-midi-learn')"
         :aria-pressed="isMidiLearning"
-        aria-label="Toggle MIDI learn"
+        aria-label="MIDI learn"
+        title="MIDI Learn (map pads/transport)"
       )
         v-icon mdi-midi
 
     .section
       .row.param
-        v-btn(icon density="compact" variant="tonal" @click="$emit('decrement-bpm')" aria-label="BPM down")
+        v-btn(
+          class="symbol-btn"
+          density="compact"
+          variant="tonal"
+          @click="$emit('decrement-bpm')"
+          aria-label="BPM down"
+          title="BPM down"
+        )
           v-icon mdi-minus
         v-text-field(
           density="compact"
@@ -43,7 +77,14 @@ client-only(tag="div")
           max="240"
           hide-details
         )
-        v-btn(icon density="compact" variant="tonal" @click="$emit('increment-bpm')" aria-label="BPM up")
+        v-btn(
+          class="symbol-btn"
+          density="compact"
+          variant="tonal"
+          @click="$emit('increment-bpm')"
+          aria-label="BPM up"
+          title="BPM up"
+        )
           v-icon mdi-plus
 
     .section
@@ -67,7 +108,9 @@ client-only(tag="div")
           variant="tonal"
           @click="toggleLoop"
           aria-label="Loop"
+          title="Loop ⟳"
         )
+          span.btn-symbol ⟳
           v-icon(:class="{ 'mdi-spin': loop }") mdi-repeat
           span.loop-text Loop
         v-btn(
@@ -75,12 +118,14 @@ client-only(tag="div")
           variant="outlined"
           @click="$emit('nudge-loop-range', -1)"
           aria-label="Nudge loop left"
+          title="Nudge loop left"
         ) ◀ Loop
         v-btn(
           density="comfortable"
           variant="outlined"
           @click="$emit('nudge-loop-range', 1)"
           aria-label="Nudge loop right"
+          title="Nudge loop right"
         ) Loop ▶
       .row.param
         v-switch(
@@ -89,6 +134,7 @@ client-only(tag="div")
           :model-value="countInEnabled"
           @update:model-value="$emit('toggle-count-in')"
           label="Count-in"
+          :title="`Count-in ♩ (${countInBars} bars)`"
         )
         v-text-field(
           density="compact"
@@ -108,6 +154,7 @@ client-only(tag="div")
           @click="$emit('toggle-metronome')"
           :aria-pressed="metronomeEnabled"
           aria-label="Metronome"
+          title="Metronome ♬"
         )
           v-icon mdi-metronome
         v-slider(
@@ -128,6 +175,7 @@ client-only(tag="div")
           @click="$emit('toggle-follow')"
           :aria-pressed="followEnabled"
           aria-label="Follow playhead"
+          title="Follow ⇥"
         )
           v-icon mdi-crosshairs-gps
         v-btn(
@@ -135,6 +183,7 @@ client-only(tag="div")
           variant="text"
           @click="$emit('tap-tempo')"
           aria-label="Tap tempo"
+          title="Tap tempo ☼"
         ) Tap
       .row.param
         v-select(
@@ -164,6 +213,7 @@ client-only(tag="div")
           variant="outlined"
           @click="$emit('apply-pattern-preset')"
           aria-label="Apply pattern preset"
+          title="Pattern preset (length before record)"
         ) Preset
       .row.param
         v-text-field(
@@ -207,18 +257,21 @@ client-only(tag="div")
           :color="liveEraseEnabled ? 'red' : 'grey'"
           @click="$emit('toggle-live-erase')"
           :aria-pressed="liveEraseEnabled"
+          title="Live erase (momentary)"
         ) Live erase
         v-btn(
           density="comfortable"
           variant="text"
           :disabled="!selectedPad"
           @click="$emit('erase-pad')"
+          title="Erase selected pad steps"
         ) Erase pad
         v-btn(
           density="comfortable"
           variant="text"
           :disabled="!selectedPad"
           @click="$emit('erase-current-step')"
+          title="Erase current step"
         ) Erase step
 </template>
 
@@ -339,6 +392,17 @@ export default defineComponent({
   border-radius: @radius-m;
   padding: @space-s;
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), inset 0 -2px 6px rgba(0,0,0,0.65);
+}
+
+.symbol-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-symbol {
+  font-weight: 700;
+  letter-spacing: 0.04em;
 }
 
 .row {

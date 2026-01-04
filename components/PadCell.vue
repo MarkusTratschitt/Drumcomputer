@@ -2,12 +2,17 @@
   button.pad-cell(
     type="button"
     :class="padClasses"
+    :title="padHint"
+    :aria-label="padHint"
+    :style="padStyle"
     @pointerdown.prevent="handleActivate"
     @click.prevent="handleActivate"
     @keydown.enter.prevent="handleActivate"
     @keydown.space.prevent="handleActivate"
     :aria-pressed="isSelected"
   )
+    span.pad-label {{ label }}
+    span.pad-key(v-if="keyLabel") {{ keyLabel }}
 </template>
 
 <script lang="ts">
@@ -23,7 +28,9 @@ export default defineComponent({
     isSelected: { type: Boolean, default: false },
     isTriggered: { type: Boolean, default: false },
     isPlaying: { type: Boolean, default: false },
-    keyLabel: { type: String, default: null }
+    isEmpty: { type: Boolean, default: false },
+    keyLabel: { type: String, default: null },
+    padColor: { type: String, default: '#12c8ff' }
   },
   emits: ['pad:down', 'pad:select'],
   computed: {
@@ -31,7 +38,19 @@ export default defineComponent({
       return {
         'is-selected': this.isSelected,
         'is-triggered': this.isTriggered,
-        'is-playing': this.isPlaying
+        'is-playing': this.isPlaying,
+        'is-empty': this.isEmpty
+      }
+    },
+
+    padHint(): string {
+      const key = this.keyLabel ? ` (${this.keyLabel})` : ''
+      return `${this.label}${key} – click or press to trigger/select`
+    },
+
+    padStyle(): Record<string, string> {
+      return {
+        '--pad-color-base': this.padColor
       }
     }
   },
@@ -54,6 +73,18 @@ export default defineComponent({
   display: flex;
   align-items: center;
   justify-content: center;
+  text-align: center;
+  color: @color-text-primary;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--pad-color-base, #12c8ff) 80%, #ffffff 20%),
+    color-mix(in srgb, var(--pad-color-base, #12c8ff) 85%, #000000 15%)
+  );
+  border: 1px solid #2c3342;
+  border-radius: @radius-s;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.08),
+    0 6px 14px rgba(0,0,0,0.45);
 }
 
 .pad-cell.is-empty {
@@ -99,6 +130,13 @@ export default defineComponent({
   transform: translateY(1px);
   box-shadow:
     inset 0 3px 6px rgba(0,0,0,0.8);
+}
+
+.pad-label {
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #fefefe;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
 }
 
 .pad-cell.is-playing {

@@ -1,4 +1,5 @@
 <template>
+<ClientOnly>
   <DrumMachine>
     <template #main>
       <div class="main-placeholder" />
@@ -16,6 +17,7 @@
       <FxPanel v-bind="props.fxProps" />
     </template>
   </DrumMachine>
+</ClientOnly>
 </template>
 
 <script>

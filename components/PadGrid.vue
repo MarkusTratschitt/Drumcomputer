@@ -26,8 +26,9 @@
         :is-focusable="selectedPad === pad"
         :is-triggered="padStates[pad]?.isTriggered ?? false"
         :is-playing="padStates[pad]?.isPlaying ?? false"
-        :is-empty="!padStates[pad]"
+        :is-empty="padIsEmpty(pad)"
         :key-label="keyLabels[index]"
+        :pad-color="padColors[index] ?? padColors[0]"
         role="gridcell"
         :aria-label="padAriaLabel(pad)"
         :aria-rowindex="Math.floor(index / 4) + 1"
@@ -70,6 +71,15 @@ export default defineComponent({
     padStates: {
       type: Object as () => Partial<Record<DrumPadId, PadState>>,
       default: () => ({})
+    },
+    padColors: {
+      type: Array as () => string[],
+      default: () => [
+        '#12c8ff','#00d5ff','#00c3ff','#00b4ff',
+        '#ffb840','#ff9f30','#ffb43c','#ff9c2a',
+        '#ff3a3a','#ff4f4f','#ffd13a','#ffbc2a',
+        '#46e3ff','#38d4ff','#2cc5ff','#20baff'
+      ]
     }
   },
 
@@ -132,6 +142,10 @@ export default defineComponent({
     padAriaLabel(pad: DrumPadId): string {
       const label = this.padLabel(pad)
       return `${label} pad`
+    },
+
+    padIsEmpty(pad: DrumPadId): boolean {
+      return !this.padStates[pad]?.label
     },
 
     handlePadDown(pad: DrumPadId, velocity: number) {

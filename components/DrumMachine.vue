@@ -1,32 +1,52 @@
 <template>
-  <div class="device-hardware">
-    <div class="device-control">
-      <div class="device-transport">
-        <slot name="transport" :props="transportSlotProps" />
+  <div class="hardware-stage">
+    <div class="device-hardware" aria-label="Maschine MK3 layout placeholder">
+      <div class="top-row">
+        <div class="top-left">
+          <SoftButtonStripPlaceholder />
+          <DualDisplayPlaceholder />
+          <ScreenKnobRingPlaceholder />
+        </div>
+        <div class="top-right">
+          <FourDEncoderPlaceholder />
+        </div>
       </div>
-  
-      <div class="device-fx">
-        <slot name="drawer" :props="drawerSlotProps" />
-      </div>
-    </div>
-  
-    <!-- PADS (rechts) -->
-    <div class="device-pads">
-      <div class="pads-square">
-        <slot name="pads" :props="padsSlotProps" />
-      </div>
-  
-      <div class="pad-grid-indicator">
-        <span
-          v-for="i in gridCount"
-          :key="i"
-          :class="['indicator-dot', { active: currentGridIndex === i - 1 }]"
-          :aria-label="`Pad Bank ${i}`"
-        />
+
+      <div class="bottom-row">
+        <div class="left-column">
+          <ModeColumnPlaceholder />
+
+          <div class="transport-cluster" title="Transport cluster (MK3-style)">
+            <slot name="transport" :props="transportSlotProps" />
+          </div>
+
+          <div class="drawer-shell" title="Drawer panels (Sound / FX / Patterns / Export)">
+            <slot name="drawer" :props="drawerSlotProps" />
+          </div>
+        </div>
+
+        <div class="right-column">
+          <div class="pads-and-strip">
+            <TouchStripPlaceholder />
+            <div class="pads-stack" title="Pad grid with bank indicators">
+              <div class="pads-square">
+                <slot name="pads" :props="padsSlotProps" />
+              </div>
+              <div class="pad-grid-indicator">
+                <span
+                  v-for="i in gridCount"
+                  :key="i"
+                  :class="['indicator-dot', { active: currentGridIndex === i - 1 }]"
+                  :aria-label="`Pad Bank ${i}`"
+                  :title="`Pad Bank ${i}`"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
-
 </template>
 
 
@@ -62,6 +82,12 @@ import type { TimeDivision } from '@/types/time'
 import type { FxSettings, SampleRef, Soundbank } from '@/types/audio'
 import type { RenderEvent, RenderMetadata } from '@/types/render'
 import type { StepGrid } from '@/types/drums'
+import DualDisplayPlaceholder from './placeholders/DualDisplayPlaceholder.vue'
+import SoftButtonStripPlaceholder from './placeholders/SoftButtonStripPlaceholder.vue'
+import ScreenKnobRingPlaceholder from './placeholders/ScreenKnobRingPlaceholder.vue'
+import FourDEncoderPlaceholder from './placeholders/FourDEncoderPlaceholder.vue'
+import ModeColumnPlaceholder from './placeholders/ModeColumnPlaceholder.vue'
+import TouchStripPlaceholder from './placeholders/TouchStripPlaceholder.vue'
 
 const slugify = (value: string): string => {
   const cleaned = value
@@ -119,7 +145,13 @@ export default defineComponent({
     SoundPanel,
     FxPanel,
     PatternsPanel,
-    ExportPanel
+    ExportPanel,
+    DualDisplayPlaceholder,
+    SoftButtonStripPlaceholder,
+    ScreenKnobRingPlaceholder,
+    FourDEncoderPlaceholder,
+    ModeColumnPlaceholder,
+    TouchStripPlaceholder
   },
   data() {
     const transport = useTransportStore()
@@ -1164,61 +1196,141 @@ computed: {
   border-radius: @radius-l;
 }
 
+.hardware-stage {
+  --stage-pad: clamp(12px, 1.6vw, 24px);
+  height: 100svh;
+  min-height: 100svh;
+  width: 100%;
+  padding: var(--stage-pad);
+  box-sizing: border-box;
+  overflow: hidden;
+  background: radial-gradient(130% 130% at 25% 20%, #2c313c 0%, #1a1e26 50%, #0d0f14 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .device-hardware {
-  --control-w: clamp(260px, 16vw, 340px);
-  --pads-w: clamp(620px, 30vw, 820px);
-
-  flex: 0 0 auto;
-  width: calc(var(--control-w) + var(--pads-w) + @space-m);
-  min-height: 0;
-
+  position: relative;
+  --device-w: 100%;
+  --device-gap: clamp(8px, 1.2vh, 16px);
+  --panel-radius: @radius-l;
+  aspect-ratio: 1080 / 760;
+  max-width: calc(100vw - (2 * var(--stage-pad)));
+  max-height: calc(100svh - (2 * var(--stage-pad)));
+  width: min(
+    calc(100vw - (2 * var(--stage-pad))),
+    calc((100svh - (2 * var(--stage-pad))) * (1080 / 760))
+  );
+  height: auto;
+  margin: 0 auto;
   display: grid;
-  grid-template-columns: var(--control-w) var(--pads-w);
   grid-template-rows: auto 1fr;
-  gap: @space-m;
+  gap: var(--device-gap);
+  background: linear-gradient(180deg, #1f232c, #151821);
+  border: 1px solid fade(#3b4355, 70%);
+  border-radius: var(--panel-radius);
+  padding: @space-m;
+  box-sizing: border-box;
+  overflow: hidden;
+  box-shadow:
+    0 30px 62px rgba(0, 0, 0, 0.6),
+    0 2px 12px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.8);
+}
+
+.top-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) clamp(180px, 20%, 260px);
+  gap: @space-l;
   align-items: stretch;
-}
-
-.device-control {
-  grid-column: 1;
-  grid-row: 1 / span 2;
-  min-height: 0;
-
-  display: grid;
-  grid-template-rows: auto 1fr;
-  gap: @space-m;
-}
-
-.device-transport {
-  background: @color-surface-1;
-  border: 1px solid @color-border-1;
-  border-radius: @radius-m;
-  padding: @space-s;
-  overflow: hidden;
-}
-
-.device-fx {
-  background: @color-surface-3;
-  border: 1px solid @color-border-1;
-  border-radius: @radius-m;
-  padding: @space-s;
-  overflow: hidden;
   min-height: 0;
 }
 
-.device-pads {
-  min-height: 0;
+.top-left {
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
+  gap: @space-xs;
+  min-width: 0;
+}
+
+.top-right {
+  display: flex;
   align-items: stretch;
+  justify-content: flex-end;
+}
+
+.bottom-row {
+  display: grid;
+  grid-template-columns: clamp(220px, 24%, 320px) minmax(0, 1fr);
+  gap: @space-m;
+  min-height: 0;
+}
+
+.left-column {
+  display: flex;
+  flex-direction: column;
   gap: @space-s;
+  min-height: 0;
+}
+
+.transport-cluster {
+  background: linear-gradient(180deg, #1f2531, #141924);
+  border: 1px solid fade(#3b4355, 65%);
+  border-radius: @radius-m;
+  padding: @space-s;
+  min-height: 0;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.drawer-shell {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: clamp(260px, 36vh, 360px);
+  overflow: auto;
+  background: linear-gradient(180deg, #1c202b, #10141d);
+  border: 1px solid fade(#3b4355, 65%);
+  border-radius: @radius-m;
+  padding: @space-s;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.right-column {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: @space-m;
+  min-height: 0;
+}
+
+.pads-and-strip {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: @space-m;
+  align-items: end;
+  min-height: 0;
+}
+
+.pads-stack {
+  display: flex;
+  flex-direction: column;
+  gap: @space-xs;
+  align-items: center;
+  justify-content: flex-end;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  background: linear-gradient(180deg, #191d27, #10141d);
+  border: 1px solid fade(#3b4355, 60%);
+  border-radius: @radius-m;
+  padding: @space-s;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
 .pads-square {
-  width: clamp(460px, 28vw, 640px);
+  width: 100%;
+  max-width: clamp(520px, 62%, 760px);
   aspect-ratio: 1 / 1;
-  margin-left: auto;
   min-height: 0;
   display: flex;
 }
@@ -1229,47 +1341,85 @@ computed: {
   min-height: 0;
 }
 
+.device-hardware.debug-overlay::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: url('/img/maschine-reference.png') center / contain no-repeat;
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.device-hardware.debug-grid::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.15) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.15) 1px, transparent 1px);
+  background-size: 20px 20px;
+  opacity: 0.15;
+  pointer-events: none;
+}
+
 .pad-grid-indicator {
   display: flex;
   justify-content: center;
   gap: @space-xs;
+  padding: @space-xxs;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: @radius-s;
 }
 
 .indicator-dot {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
-  background: @color-border-1;
-  box-shadow: inset 0 0 2px rgba(0,0,0,0.8);
+  background: #1f2734;
+  box-shadow: inset 0 0 4px rgba(0,0,0,0.9);
 }
 
 .indicator-dot.active {
-  background: @color-accent-primary;
+  background: #f68b1e;
   box-shadow:
-    0 0 6px fade(@color-accent-primary, 60%),
-    0 0 12px fade(@color-accent-primary, 35%);
+    0 0 6px fade(#f68b1e, 60%),
+    0 0 12px fade(#f68b1e, 35%);
+}
+
+@media (max-width: 1200px) {
+  .bottom-row {
+    grid-template-columns: 320px 1fr;
+  }
+
+  .pads-square {
+    width: clamp(360px, 48vw, 520px);
+  }
 }
 
 @media (max-width: 960px) {
-  .device-stage {
-    flex-direction: column;
-  }
-
   .device-hardware {
-    width: 100%;
+    grid-template-rows: auto auto 1fr;
+  }
+
+  .top-row {
     grid-template-columns: 1fr;
-    grid-template-rows: auto auto;
   }
 
-  .device-control {
-    grid-column: 1;
-    grid-row: 1;
-    grid-template-rows: auto;
+  .bottom-row {
+    grid-template-columns: 1fr;
   }
 
-  .device-pads {
-    grid-column: 1;
-    grid-row: 2;
+  .right-column {
+    grid-template-columns: 1fr;
+  }
+
+  .pads-and-strip {
+    grid-template-columns: 1fr;
+    justify-items: center;
+  }
+
+  .drawer-shell {
+    max-height: 45vh;
   }
 }
 
