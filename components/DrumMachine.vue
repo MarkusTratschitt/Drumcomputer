@@ -173,17 +173,98 @@
 
         <div class="bottom-row">
           <div class="left-column">
-            <div class="transport-cluster" title="Transport cluster (MK3-style)">
-              <slot name="transport" :props="transportSlotProps" />
+            <div class="transport-area" title="Transport area (MK3-style)" aria-label="Transport area (MK3-style)">
+              <div class="transport-grid">
+                <button class="control-btn" type="button">
+                  <span class="control-btn__main">RESTART</span>
+                  <span class="control-btn__sub">Loop</span>
+                </button>
+                <button class="control-btn" type="button">
+                  <span class="control-btn__main">ERASE</span>
+                  <span class="control-btn__sub">Replace</span>
+                </button>
+                <button class="control-btn" type="button">
+                  <span class="control-btn__main">TAP</span>
+                  <span class="control-btn__sub">Metro</span>
+                </button>
+                <button class="control-btn" type="button">
+                  <span class="control-btn__main">FOLLOW</span>
+                  <span class="control-btn__sub">Grid</span>
+                </button>
+                <button class="control-btn" type="button">
+                  <span class="control-btn__main">PLAY</span>
+                </button>
+                <button class="control-btn" type="button">
+                  <span class="control-btn__main">REC</span>
+                  <span class="control-btn__sub">Count In</span>
+                </button>
+                <button class="control-btn" type="button">
+                  <span class="control-btn__main">STOP</span>
+                </button>
+                <button class="control-btn" type="button">
+                  <div class="shift-label">SHIFT</div>
+                </button>
+              </div>
             </div>
+            <!-- <div class="transport-cluster" title="Transport cluster (MK3-style)">
+              <slot name="transport" :props="transportSlotProps" />
+            </div> 
 
             <div class="drawer-shell" title="Drawer panels (Sound / FX / Patterns / Export)">
               <slot name="drawer" :props="drawerSlotProps" />
-            </div>
+            </div>-->
           </div>
 
           <div class="right-column">
+            <div class="pad-top-buttons" aria-label="Pad top buttons">
+              <button class="control-btn" type="button">
+                <span class="control-btn__main">FIXED VELOCITY</span>
+                <span class="control-btn__sub">16 Vel</span>
+              </button>
+              <button class="control-btn" type="button">
+                <span class="control-btn__main">PAD MODE</span>
+              </button>
+              <button class="control-btn" type="button">
+                <span class="control-btn__main">KEYBOARD</span>
+              </button>
+              <button class="control-btn" type="button">
+                <span class="control-btn__main">CHORDS</span>
+              </button>
+              <button class="control-btn" type="button">
+                <span class="control-btn__main">STEP</span>
+              </button>
+            </div>
             <div class="pads-and-strip">
+              <div class="mode-buttons" aria-label="Mode buttons">
+                <button class="control-btn" type="button">
+                  <span class="control-btn__main">SCENE</span>
+                  <span class="control-btn__sub">Section</span>
+                </button>
+                <button class="control-btn" type="button">
+                  <span class="control-btn__main">PATTERN</span>
+                </button>
+                <button class="control-btn" type="button">
+                  <span class="control-btn__main">EVENTS</span>
+                </button>
+                <button class="control-btn" type="button">
+                  <span class="control-btn__main">VARIATION</span>
+                  <span class="control-btn__sub">Navigate</span>
+                </button>
+                <button class="control-btn" type="button">
+                  <span class="control-btn__main">DUPLICATE</span>
+                  <span class="control-btn__sub">Double</span>
+                </button>
+                <button class="control-btn" type="button">
+                  <span class="control-btn__main">SELECT</span>
+                </button>
+                <button class="control-btn" type="button">
+                  <span class="control-btn__main">SOLO</span>
+                </button>
+                <button class="control-btn" type="button">
+                  <span class="control-btn__main">MUTE</span>
+                  <span class="control-btn__sub">Choke</span>
+                </button>
+              </div>
               <div class="pads-column">
                 <div class="pads-stack" title="Pad grid with bank indicators">
                   <div class="pads-square">
@@ -309,6 +390,7 @@ export default defineComponent({
     ModeColumnPlaceholder,
     TouchStripPlaceholder
   },
+  // ModeColumnPlaceholder currently unused; consider removing or wiring into the layout.
   data() {
     const transport = useTransportStore()
     const patterns = usePatternsStore()
@@ -1990,6 +2072,93 @@ computed: {
 .group-area .control-btn {
   width: 100%;
   min-height: var(--edit-btn-h, clamp(34px, 4.2vh, 44px));
+}
+
+.transport-area {
+  background: linear-gradient(180deg, #1f2531, #141924);
+  border: 1px solid fade(#3b4355, 65%);
+  border-radius: @radius-m;
+  padding: @space-s;
+  min-height: 0;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  width: 100%;
+}
+
+.transport-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(2, var(--edit-btn-h, clamp(34px, 4.2vh, 44px)));
+  gap: @space-xxs;
+}
+
+.shift-label {
+  height: 14px;
+  background: #fff;
+  color: #000;
+  font-weight: 800;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  border-radius: 4px;
+}
+
+.right-column {
+  justify-content: flex-end;
+}
+
+.pads-and-strip {
+  --pads-square-size: clamp(320px, 42vh, 520px);
+  --pad-cell-size: calc(var(--pads-square-size) / 4);
+  align-items: end;
+  grid-template-columns: clamp(90px, 18%, 140px) minmax(0, 1fr);
+}
+
+.pad-top-buttons {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: @space-xxs;
+  width: 100%;
+  margin-bottom: @space-xs;
+}
+
+.pads-column {
+  grid-area: pads;
+  align-self: end;
+}
+
+.mode-buttons {
+  grid-area: strip;
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: repeat(8, 1fr);
+  gap: @space-xxs;
+  align-self: end;
+  height: var(--pads-square-size);
+}
+
+.mode-buttons .control-btn {
+  min-height: calc(var(--pad-cell-size) * 2);
+}
+
+.pads-stack {
+  align-self: end;
+}
+
+.pads-square {
+  max-width: var(--pads-square-size);
+  aspect-ratio: 1 / 1;
+}
+
+.pad-grid-indicator {
+  overflow: visible;
+}
+
+.drawer-shell :deep([data-tab='fx']),
+.drawer-shell :deep(.fx-panel) {
+  display: none !important;
 }
 
 </style>

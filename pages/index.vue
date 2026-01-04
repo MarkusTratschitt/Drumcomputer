@@ -13,9 +13,6 @@
       <TransportBar v-bind="props.transportProps" />
     </template>
 
-    <template #drawer="{ props }">
-      <FxPanel v-bind="props.fxProps" />
-    </template>
   </DrumMachine>
 </ClientOnly>
 </template>
