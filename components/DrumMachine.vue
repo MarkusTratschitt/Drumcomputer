@@ -1,20 +1,117 @@
 <template>
-  <div class="hardware-stage">
-    <div class="device-hardware" aria-label="Maschine MK3 layout placeholder">
-      <div class="top-row">
-        <div class="top-left">
-          <SoftButtonStripPlaceholder />
-          <DualDisplayPlaceholder />
-          <ScreenKnobRingPlaceholder />
-        </div>
-        <div class="top-right">
-          <FourDEncoderPlaceholder />
-        </div>
-      </div>
+    <div class="hardware-stage">
+      <div class="device-hardware" aria-label="Maschine MK3 layout placeholder">
+        <div class="top-row">
+          <div class="control-area">
+            <div class="control-fixed" aria-label="Fixed control buttons">
+              <div class="control-btn-grid" aria-label="Control buttons">
+                <button class="control-btn r1 c1" type="button">
+                  <span class="control-btn__main">CHANNEL</span>
+                  <span class="control-btn__sub">MIDI</span>
+                </button>
 
-      <div class="bottom-row">
-        <div class="left-column">
-          <ModeColumnPlaceholder />
+                <button class="control-btn r1 c2" type="button">
+                  <span class="control-btn__main">PLUG-IN</span>
+                  <span class="control-btn__sub">Instance</span>
+                </button>
+
+                <button class="control-btn r2 c1" type="button">
+                  <span class="control-btn__main">ARRANGER</span>
+                </button>
+
+                <button class="control-btn r2 c2" type="button">
+                  <span class="control-btn__main">MIXER</span>
+                </button>
+
+                <button class="control-btn r3 c1" type="button">
+                  <span class="control-btn__main">BROWSER</span>
+                  <span class="control-btn__sub">+Plug-In</span>
+                </button>
+
+                <button class="control-btn r3 c2" type="button">
+                  <span class="control-btn__main">SAMPLING</span>
+                </button>
+
+                <button class="control-btn control-btn--icon r4 c1" type="button" aria-label="Page backwards">
+                  <span class="control-btn__main">◀</span>
+                </button>
+
+                <button class="control-btn control-btn--icon r4 c2" type="button" aria-label="Page forwards">
+                  <span class="control-btn__main">▶</span>
+                </button>
+
+                <button class="control-btn r5 c1" type="button">
+                  <span class="control-btn__main">FILE</span>
+                  <span class="control-btn__sub">Save</span>
+                </button>
+
+                <button class="control-btn r5 c2" type="button">
+                  <span class="control-btn__main">SETTINGS</span>
+                </button>
+
+                <button class="control-btn r6 c1" type="button">
+                  <span class="control-btn__main">AUTO</span>
+                </button>
+
+                <button class="control-btn r6 c2" type="button">
+                  <span class="control-btn__main">MACRO</span>
+                  <span class="control-btn__sub">Set</span>
+                </button>
+              </div>
+            </div>
+            <div class="control-core">
+              <div class="soft-row">
+                <SoftButtonStripPlaceholder />
+              </div>
+              <div class="display-block">
+                <DualDisplayPlaceholder />
+                <div class="display-param-labels" aria-hidden="true">
+                  <span class="param-label"></span>
+                  <span class="param-label"></span>
+                  <span class="param-label"></span>
+                  <span class="param-label"></span>
+                  <span class="param-label"></span>
+                  <span class="param-label"></span>
+                  <span class="param-label"></span>
+                  <span class="param-label"></span>
+                </div>
+              </div>
+              <div class="knob-row" aria-label="8 encoders">
+                <div class="knob" role="presentation"></div>
+                <div class="knob" role="presentation"></div>
+                <div class="knob" role="presentation"></div>
+                <div class="knob" role="presentation"></div>
+                <div class="knob" role="presentation"></div>
+                <div class="knob" role="presentation"></div>
+                <div class="knob" role="presentation"></div>
+                <div class="knob" role="presentation"></div>
+              </div>
+            </div>
+          </div>
+          <div class="edit-area">
+            <div class="encoder-slot">
+              <FourDEncoderPlaceholder class="four-d-encoder" />
+            </div>
+            <div class="quick-edit-buttons" aria-label="Quick edit controls">
+              <button class="quick-edit-btn control-btn" type="button">
+                <span class="control-btn__main">VOLUME</span>
+                <span class="control-btn__sub">Velocity</span>
+              </button>
+              <button class="quick-edit-btn control-btn" type="button">
+                <span class="control-btn__main">SWING</span>
+                <span class="control-btn__sub">Position</span>
+              </button>
+              <button class="quick-edit-btn control-btn" type="button">
+                <span class="control-btn__main">TEMPO</span>
+                <span class="control-btn__sub">Tune</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="bottom-row">
+          <div class="left-column">
+            <ModeColumnPlaceholder />
 
           <div class="transport-cluster" title="Transport cluster (MK3-style)">
             <slot name="transport" :props="transportSlotProps" />
@@ -27,19 +124,23 @@
 
         <div class="right-column">
           <div class="pads-and-strip">
-            <TouchStripPlaceholder />
-            <div class="pads-stack" title="Pad grid with bank indicators">
-              <div class="pads-square">
-                <slot name="pads" :props="padsSlotProps" />
-              </div>
-              <div class="pad-grid-indicator">
-                <span
-                  v-for="i in gridCount"
-                  :key="i"
-                  :class="['indicator-dot', { active: currentGridIndex === i - 1 }]"
-                  :aria-label="`Pad Bank ${i}`"
-                  :title="`Pad Bank ${i}`"
-                />
+            <div class="strip-column">
+              <TouchStripPlaceholder />
+            </div>
+            <div class="pads-column">
+              <div class="pads-stack" title="Pad grid with bank indicators">
+                <div class="pads-square">
+                  <slot name="pads" :props="padsSlotProps" />
+                </div>
+                <div class="pad-grid-indicator">
+                  <span
+                    v-for="i in gridCount"
+                    :key="i"
+                    :class="['indicator-dot', { active: currentGridIndex === i - 1 }]"
+                    :aria-label="`Pad Bank ${i}`"
+                    :title="`Pad Bank ${i}`"
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -84,7 +185,6 @@ import type { RenderEvent, RenderMetadata } from '@/types/render'
 import type { StepGrid } from '@/types/drums'
 import DualDisplayPlaceholder from './placeholders/DualDisplayPlaceholder.vue'
 import SoftButtonStripPlaceholder from './placeholders/SoftButtonStripPlaceholder.vue'
-import ScreenKnobRingPlaceholder from './placeholders/ScreenKnobRingPlaceholder.vue'
 import FourDEncoderPlaceholder from './placeholders/FourDEncoderPlaceholder.vue'
 import ModeColumnPlaceholder from './placeholders/ModeColumnPlaceholder.vue'
 import TouchStripPlaceholder from './placeholders/TouchStripPlaceholder.vue'
@@ -148,7 +248,6 @@ export default defineComponent({
     ExportPanel,
     DualDisplayPlaceholder,
     SoftButtonStripPlaceholder,
-    ScreenKnobRingPlaceholder,
     FourDEncoderPlaceholder,
     ModeColumnPlaceholder,
     TouchStripPlaceholder
@@ -1242,33 +1341,270 @@ computed: {
 
 .top-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) clamp(180px, 20%, 260px);
-  gap: @space-l;
-  align-items: stretch;
+  grid-template-columns: 1fr;
+  grid-template-rows: auto auto;
+  gap: var(--device-gap);
+  align-items: start;
   min-height: 0;
 }
 
-.top-left {
+.control-area {
+  --control-row-h: clamp(44px, 4.2vh, 56px);
+  display: grid;
+  grid-template-columns: clamp(210px, 18%, 280px) 1fr;
+  gap: var(--device-gap);
+  min-width: 0;
+  min-height: 0;
+  align-items: stretch;
+  width: 100%;
+}
+
+.control-fixed {
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+}
+
+.control-btn-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: repeat(6, var(--control-row-h));
+  gap: @space-xxs;
+  width: 100%;
+  max-width: 100%;
+}
+
+.control-btn.r1 { grid-row: 1; }
+.control-btn.r2 { grid-row: 2; }
+.control-btn.r3 { grid-row: 3; }
+.control-btn.r4 { grid-row: 4; }
+.control-btn.r5 { grid-row: 5; }
+.control-btn.r6 { grid-row: 6; }
+.control-btn.c1 { grid-column: 1; }
+.control-btn.c2 { grid-column: 2; }
+
+.control-btn {
   display: flex;
   flex-direction: column;
-  gap: @space-xs;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid fade(#3b4355, 65%);
+  background: linear-gradient(180deg, #1c2230, #121826);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+  color: rgba(255, 255, 255, 0.88);
+  line-height: 1.05;
+  text-align: left;
+  min-height: 44px;
+  max-width: 100%;
+}
+
+.control-btn__main {
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.control-btn__sub {
+  margin-top: 2px;
+  font-weight: 400;
+  font-style: italic;
+  opacity: 0.75;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
+.control-btn--icon {
+  align-items: center;
+  text-align: center;
+}
+
+.control-btn--icon .control-btn__main {
+  font-size: 16px;
+  letter-spacing: 0;
+}
+
+.control-core {
+  display: grid;
+  grid-template-rows: repeat(6, var(--control-row-h));
+  gap: 0;
   min-width: 0;
 }
 
-.top-right {
+.soft-row {
+  grid-row: 1;
+  height: var(--control-row-h);
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+
+.soft-row :deep(*) {
+  height: 100%;
+  min-height: 0;
+  width: 100%;
+}
+
+.display-block {
+  grid-row: 2 / span 4;
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  height: calc(var(--control-row-h) * 4);
   display: flex;
   align-items: stretch;
-  justify-content: flex-end;
+}
+
+.display-block :deep(.dual-display-root),
+.display-block :deep(.dual-display),
+.display-block :deep(.dual-display-placeholder) {
+  height: 100%;
+  min-height: 0;
+}
+
+.display-param-labels {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 0 8px 6px 8px;
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  gap: 8px;
+  pointer-events: none;
+}
+
+.param-label {
+  justify-self: center;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.75;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.knob-row {
+  grid-row: 6;
+  height: var(--control-row-h);
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+  align-items: center;
+  gap: 8px;
+  padding: 0 8px;
+  min-width: 0;
+}
+
+.knob {
+  justify-self: center;
+  width: var(--control-row-h);
+  height: var(--control-row-h);
+  border-radius: 999px;
+  background: radial-gradient(circle at 30% 30%, #3a4150, #151a24 70%);
+  border: 1px solid rgba(255,255,255,0.1);
+  box-shadow:
+    inset 0 2px 4px rgba(0,0,0,0.7),
+    0 1px 0 rgba(255,255,255,0.06);
+  position: relative;
+}
+
+.knob::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 50%;
+  width: 2px;
+  height: 38%;
+  transform: translateX(-50%);
+  border-radius: 2px;
+  background: rgba(246, 139, 30, 0.9);
+  box-shadow: 0 0 6px rgba(246, 139, 30, 0.35);
+}
+
+.edit-area {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: repeat(3, var(--control-row-h));
+  column-gap: calc(var(--device-gap) * 1.2);
+  align-items: center;
+  justify-content: start;
+  align-self: start;
+  margin-top: calc(var(--device-gap) * 0.75);
+  min-height: 0;
+  min-width: 0;
+  --qe-row-h: var(--control-row-h);
+  --qe-gap: @space-xxs;
+  --encoder-radius: calc(var(--qe-row-h) + var(--qe-gap));
+  --encoder-d: calc(var(--encoder-radius) * 2);
+}
+
+.encoder-slot {
+  grid-row: 2;
+  grid-column: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  justify-self: center;
+  min-height: 0;
+  min-width: 0;
+}
+
+.four-d-encoder {
+  width: var(--encoder-d);
+  height: var(--encoder-d);
+}
+
+.quick-edit-buttons {
+  grid-column: 2;
+  grid-row: 1 / span 3;
+  display: grid;
+  grid-template-rows: repeat(3, var(--qe-row-h));
+  gap: var(--qe-gap);
+  align-content: center;
+}
+
+.quick-edit-btn {
+  min-height: var(--qe-row-h);
+}
+
+.four-d-encoder {
+  position: relative;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #3c4352, #121722 70%);
+  border: 1px solid rgba(255,255,255,0.12);
+  box-shadow:
+    inset 0 3px 6px rgba(0,0,0,0.65),
+    0 2px 6px rgba(0,0,0,0.45);
+}
+
+.four-d-encoder::after {
+  content: '';
+  position: absolute;
+  top: 6%;
+  left: 50%;
+  width: 3px;
+  height: 30%;
+  transform: translateX(-50%);
+  border-radius: 2px;
+  background: rgba(246, 139, 30, 0.95);
+  box-shadow: 0 0 10px rgba(246, 139, 30, 0.35);
 }
 
 .bottom-row {
   display: grid;
   grid-template-columns: clamp(220px, 24%, 320px) minmax(0, 1fr);
-  gap: @space-m;
+  grid-template-areas: 'left right';
+  gap: var(--device-gap);
   min-height: 0;
 }
 
 .left-column {
+  grid-area: left;
   display: flex;
   flex-direction: column;
   gap: @space-s;
@@ -1297,18 +1633,33 @@ computed: {
 }
 
 .right-column {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: @space-m;
+  grid-area: right;
+  display: flex;
+  flex-direction: column;
+  gap: var(--device-gap);
   min-height: 0;
 }
 
 .pads-and-strip {
   display: grid;
-  grid-template-columns: auto 1fr;
-  gap: @space-m;
+  grid-template-columns: clamp(90px, 18%, 140px) minmax(0, 1fr);
+  grid-template-areas: 'strip pads';
+  gap: var(--device-gap);
   align-items: end;
+  width: 100%;
   min-height: 0;
+}
+
+.strip-column {
+  grid-area: strip;
+  align-self: end;
+  justify-self: start;
+  min-height: 0;
+}
+
+.pads-column {
+  grid-area: pads;
+  min-width: 0;
 }
 
 .pads-stack {
@@ -1320,6 +1671,8 @@ computed: {
   width: 100%;
   min-width: 0;
   min-height: 0;
+  align-self: end;
+  justify-self: end;
   background: linear-gradient(180deg, #191d27, #10141d);
   border: 1px solid fade(#3b4355, 60%);
   border-radius: @radius-m;
@@ -1329,7 +1682,7 @@ computed: {
 
 .pads-square {
   width: 100%;
-  max-width: clamp(520px, 62%, 760px);
+  max-width: clamp(420px, 62%, 780px);
   aspect-ratio: 1 / 1;
   min-height: 0;
   display: flex;
@@ -1348,6 +1701,7 @@ computed: {
   background: url('/img/maschine-reference.png') center / contain no-repeat;
   opacity: 0.35;
   pointer-events: none;
+  z-index: 5;
 }
 
 .device-hardware.debug-grid::after {
@@ -1360,6 +1714,7 @@ computed: {
   background-size: 20px 20px;
   opacity: 0.15;
   pointer-events: none;
+  z-index: 6;
 }
 
 .pad-grid-indicator {
@@ -1403,6 +1758,12 @@ computed: {
 
   .top-row {
     grid-template-columns: 1fr;
+    gap: @space-s;
+    align-items: start;
+  }
+  
+  .control-area {
+    grid-template-columns: 1fr;
   }
 
   .bottom-row {
@@ -1415,7 +1776,11 @@ computed: {
 
   .pads-and-strip {
     grid-template-columns: 1fr;
+    grid-template-areas:
+      'strip'
+      'pads';
     justify-items: center;
+    align-items: center;
   }
 
   .drawer-shell {
