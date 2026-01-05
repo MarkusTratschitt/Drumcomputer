@@ -206,13 +206,6 @@
                 </button>
               </div>
             </div>
-            <!-- <div class="transport-cluster" title="Transport cluster (MK3-style)">
-              <slot name="transport" :props="transportSlotProps" />
-            </div> 
-
-            <div class="drawer-shell" title="Drawer panels (Sound / FX / Patterns / Export)">
-              <slot name="drawer" :props="drawerSlotProps" />
-            </div>-->
           </div>
 
           <div class="right-column">
@@ -1596,6 +1589,14 @@ computed: {
   align-items: center;
 }
 
+.drum-machine-shell :deep(.soft-row) {
+  grid-row: 1;
+  height: var(--control-row-h);
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+
 .soft-row-grid {
   width: 100%;
   height: 100%;
@@ -1633,6 +1634,13 @@ computed: {
 }
 
 .display-grid {
+  display: grid;
+  grid-template-columns: var(--control-cols);
+  column-gap: var(--device-gap);
+  height: 100%;
+}
+
+.drum-machine-shell :deep(.display-grid) {
   display: grid;
   grid-template-columns: var(--control-cols);
   column-gap: var(--device-gap);
@@ -1818,6 +1826,14 @@ computed: {
   min-height: 0;
 }
 
+.drum-machine-shell :deep(.bottom-row) {
+  display: grid;
+  grid-template-columns: clamp(220px, 24%, 320px) minmax(0, 1fr);
+  grid-template-areas: 'left right';
+  gap: var(--device-gap);
+  min-height: 0;
+}
+
 .left-column {
   grid-area: left;
   display: flex;
@@ -1847,7 +1863,27 @@ computed: {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
+.drum-machine-shell :deep(.drawer-shell) {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: clamp(260px, 36vh, 360px);
+  overflow: auto;
+  background: linear-gradient(180deg, #1c202b, #10141d);
+  border: 1px solid fade(#3b4355, 65%);
+  border-radius: @radius-m;
+  padding: @space-s;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
 .right-column {
+  grid-area: right;
+  display: flex;
+  flex-direction: column;
+  gap: var(--device-gap);
+  min-height: 0;
+}
+
+.drum-machine-shell :deep(.right-column) {
   grid-area: right;
   display: flex;
   flex-direction: column;
@@ -1858,6 +1894,15 @@ computed: {
 .pads-and-strip {
   display: grid;
   //grid-template-columns: clamp(90px, 18%, 140px) minmax(0, 1fr);
+  grid-template-areas: 'strip pads';
+  gap: var(--device-gap);
+  align-items: end;
+  width: 100%;
+  min-height: 0;
+}
+
+.drum-machine-shell :deep(.pads-and-strip) {
+  display: grid;
   grid-template-areas: 'strip pads';
   gap: var(--device-gap);
   align-items: end;
@@ -1897,6 +1942,25 @@ computed: {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
+.drum-machine-shell :deep(.pads-stack) {
+  display: grid;
+  grid-columns: 4 / -1;
+  grid-rows: 4 / -1;
+  flex-direction: column;
+  gap: @space-xs;
+  align-items: end;
+  justify-content: end;
+  min-width: 0;
+  min-height: 0;
+  align-self: end;
+  justify-self: end;
+  background: linear-gradient(180deg, #191d27, #10141d);
+  border: 1px solid fade(#3b4355, 60%);
+  border-radius: @radius-m;
+  padding: @space-s;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
 .pads-square {
   width: 100%;
   // max-width: clamp(420px, 62%, 960px);
@@ -1905,7 +1969,20 @@ computed: {
   display: flex;
 }
 
+.drum-machine-shell :deep(.pads-square) {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  min-height: 0;
+  display: flex;
+}
+
 .pads-square > * {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+}
+
+.pads-square > :deep(*) {
   flex: 1 1 auto;
   min-width: 0;
   min-height: 0;
@@ -1943,6 +2020,15 @@ computed: {
   border-radius: @radius-s;
 }
 
+.drum-machine-shell :deep(.pad-grid-indicator) {
+  display: flex;
+  justify-content: center;
+  gap: @space-xs;
+  padding: @space-xxs;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: @radius-s;
+}
+
 .indicator-dot {
   width: 10px;
   height: 10px;
@@ -1964,6 +2050,14 @@ computed: {
   }
 
   .pads-square {
+    width: clamp(360px, 48vw, 520px);
+  }
+
+  .drum-machine-shell :deep(.bottom-row) {
+    grid-template-columns: 320px 1fr;
+  }
+
+  .drum-machine-shell :deep(.pads-square) {
     width: clamp(360px, 48vw, 520px);
   }
 }
@@ -2001,6 +2095,27 @@ computed: {
   }
 
   .drawer-shell {
+    max-height: 45vh;
+  }
+
+  .drum-machine-shell :deep(.bottom-row) {
+    grid-template-columns: 1fr;
+  }
+
+  .drum-machine-shell :deep(.right-column) {
+    grid-template-columns: 1fr;
+  }
+
+  .drum-machine-shell :deep(.pads-and-strip) {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      'strip'
+      'pads';
+    justify-items: center;
+    align-items: center;
+  }
+
+  .drum-machine-shell :deep(.drawer-shell) {
     max-height: 45vh;
   }
 }
@@ -2084,7 +2199,24 @@ computed: {
   width: 100%;
 }
 
+.drum-machine-shell :deep(.transport-area) {
+  background: linear-gradient(180deg, #1f2531, #141924);
+  border: 1px solid fade(#3b4355, 65%);
+  border-radius: @radius-m;
+  padding: @space-s;
+  min-height: 0;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  width: 100%;
+}
+
 .transport-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(2, var(--edit-btn-h, clamp(34px, 4.2vh, 44px)));
+  gap: @space-xxs;
+}
+
+.drum-machine-shell :deep(.transport-grid) {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   grid-template-rows: repeat(2, var(--edit-btn-h, clamp(34px, 4.2vh, 44px)));
@@ -2109,7 +2241,18 @@ computed: {
   justify-content: flex-end;
 }
 
+.drum-machine-shell :deep(.right-column) {
+  justify-content: flex-end;
+}
+
 .pads-and-strip {
+  --pads-square-size: clamp(320px, 42vh, 520px);
+  --pad-cell-size: calc(var(--pads-square-size) / 4);
+  align-items: end;
+  grid-template-columns: clamp(90px, 18%, 140px) minmax(0, 1fr);
+}
+
+.drum-machine-shell :deep(.pads-and-strip) {
   --pads-square-size: clamp(320px, 42vh, 520px);
   --pad-cell-size: calc(var(--pads-square-size) / 4);
   align-items: end;
@@ -2139,11 +2282,29 @@ computed: {
   height: var(--pads-square-size);
 }
 
+.drum-machine-shell :deep(.mode-buttons) {
+  grid-area: strip;
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: repeat(8, 1fr);
+  gap: @space-xxs;
+  align-self: end;
+  height: var(--pads-square-size);
+}
+
 .mode-buttons .control-btn {
   min-height: calc(var(--pad-cell-size) * 2);
 }
 
+.drum-machine-shell :deep(.mode-buttons .control-btn) {
+  min-height: calc(var(--pad-cell-size) * 2);
+}
+
 .pads-stack {
+  align-self: end;
+}
+
+.drum-machine-shell :deep(.pads-stack) {
   align-self: end;
 }
 
@@ -2152,7 +2313,16 @@ computed: {
   aspect-ratio: 1 / 1;
 }
 
+.drum-machine-shell :deep(.pads-square) {
+  max-width: var(--pads-square-size);
+  aspect-ratio: 1 / 1;
+}
+
 .pad-grid-indicator {
+  overflow: visible;
+}
+
+.drum-machine-shell :deep(.pad-grid-indicator) {
   overflow: visible;
 }
 
