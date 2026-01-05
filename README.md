@@ -48,18 +48,18 @@ PORT=3001 HMR_PORT=24679 npm run dev
 - Import/Export helpers for patterns, MIDI (@tonejs/midi), soundbank manifests + sample blobs, and WAV bounce via OfflineAudioContext.
 - Scene chains with bar-boundary pattern switching, per-step velocity/accent cycling, and an FX chain (filter/drive/reverb) routed through the WebAudio graph.
 
-## Analyse & Planung
+## Control Area (MK3)
 
-- **Iststand**: Index mounts TransportBar (play/stop/bpm/division/loop + MIDI learn), PadGrid, and FxPanel only; Patterns/Export/TabPanel exist but are not rendered; StepGrid/StepCell components are gone (docs only); transport store has no record/restart/tap/follow/loop-range handling.
-- **Fehlende UI-Elemente**: Pad/group LED and velocity/accent feedback; pad/key labels; soft-button/knob overlays and selector lists on touch; 4D encoder nav affordances; mode pinning + shift layer indicator; full transport panel actions (record, restart, count-in, tap tempo, follow, metronome, pattern preset length, loop range move/end adjust); grid-mode and loop-range UI; erase/live automation UI; channel properties and MIDI-mode panels; pattern/scene chain + preset mode UI; undo/redo controls; BFCache/state-resume and debug timeline surfaces; accessibility/ARIA/keyboard coverage.
-- **Fehlende Funktionen & Hardware-Workflows**: Record/count-in, stop-reset, pattern preset length, loop toggle/range move/end adjust (shift+restart+4D push/turn), tap tempo, follow toggle; grid mode selection; live erase, pad/group erase, automation erase, slot reset; channel properties control mode; MIDI mode (shift+channel) and contextual soft labels; pad/group LED feedback and mode pinning/shift behavior; undo/redo history for pattern/scene edits; 4D encoder navigation + selector-list overlays; quick-edit (volume/swing/tempo/tune) and performance zone (note repeat/strip) mappings; debug timeline and state-restore feedback.
-- **Priorisierte Feature-/Task-Liste**:
-  1) Sequencer-Oberflaeche wiederherstellen: StepGrid/StepCell (Options API, Pug, Less, a11y) und Patterns/Export/TabPanel auf index mounten.
-  2) Transport auf MK3-Paritaet bringen: play/stop toggle, stop-reset, restart, record + count-in + pattern preset mode, loop toggle/range move/end adjust, tap tempo, metronome, follow indicator und Loop-Range-UI.
-  3) Grid-Mode + Loop-Range-UX sowie Erase-Panels fuer Live-/Pad-/Automation-Loeschungen und Slot-Reset implementieren.
-  4) Pattern/Scene-Chain- und Preset-Length-UI mit Mode-Pinning/Shift-Feedback, Undo/Redo-History und sichtbaren Pad/Key-Labels samt Velocity/Accent-State liefern.
-  5) Soft-Button/Knob-Overlays und Selector-Listen (Touch + Overlay) mit 4D-Encoder-Navigation/Confirm und kontextueller Beschriftung verdrahten.
-  6) Hardware-Control-Modes auspraegen: Channel Properties/Plugin/Macro, MIDI-Mode-Toggle, Quick-Edit (Volume/Swing/Tempo/Tune), Performance-Zone (Note Repeat/Strip) inkl. LED-Feedback und Debug/BFCache-State-Surfaces testen.
+- Pinia store `stores/control.ts` owns modes, per-mode pages, soft buttons, encoder parameters, and display models; DrumMachine wires it without changing layout.
+- Mode buttons fire primary and SHIFT secondary actions (e.g., CHANNEL→MIDI, PLUGIN→Instance, BROWSER→Plug-in menu, FILE→Save As, MACRO→Set). Page ◀/▶ steps through pages within the active mode.
+- SoftButtonStrip renders 8 dynamic labels/tooltips per page and emits press events; display soft labels mirror the current soft buttons.
+- DualDisplay renders contextual panels for Browser, File, Settings, Sampling, Mixer, Arranger, and info views; header shows mode + page.
+- Encoders react to mousewheel on hover and arrow keys; SHIFT enables fine step. SHIFT hold is de-latched via global pointer/key listeners; knobs expose tabindex + aria-label.
+
+## Analysis & Plan
+
+- **Current gaps**: Pattern/scene editing UIs are not mounted on `pages/index.vue`; transport lacks full MK3 semantics; placeholder overlays for soft buttons/encoders/4D are not wired; accessibility coverage is partial.
+- **To close parity**: Restore sequencer UI (StepGrid/StepCell) and mount Patterns/Export/TabPanel; bring transport to MK3 semantics (play/stop toggle, stop-reset, restart, count-in, tap tempo, follow/metronome controls, loop range adjust); add grid/loop UX and erase panels; surface channel/plug-in/macro/midi control modes with soft labels; wire selector overlays to 4D/soft buttons; ensure a11y labels and focus flows.
 
 ## Timing & Sync
 
@@ -119,31 +119,12 @@ Copy the exported seed from the metadata panel (or the JSON blob) and supply it 
 - MIDI layer streamlined: mapping/learn persisted, simpler MIDI status access, layout metadata cleaned up.
 - Sequencer components (`StepGrid.vue`, `StepCell.vue`) removed from the build; only Markdown stubs remain, so the UI currently renders pads/transport/FX only.
 
-## Current Status (2025-12-21)
-
-- QA not re-run in this review; last documented commands remain `npm run lint` and `npm run typecheck`.
-- Runtime UI currently shows only Transport, FX drawer, and 16-pad grid; pattern/scene management, step sequencer, export, and MIDI/Sync panels exist in code but are not mounted on `pages/index.vue`.
-- Sequencer components (`StepGrid.vue`, `StepCell.vue`) are missing from the build; only MD documentation exists.
-- Nuxt output artifacts are present in the repo and were not regenerated in this pass.
-
 ## Diagrams
 
 - Transport timing: `diagrams/transport-engine.md`
 - UI sequencer flow: `diagrams/ui-sequencer.md`
 - Persistence + audio pipeline: `diagrams/persistence-and-audio.md`
-
-## Code Review Findings (2025-12-21)
-
-- `components/PadCell.vue`: Template renders only a bare button; labels/key labels are not displayed and `is-empty` is ignored, so pads appear label-less with weak accessibility. Render/flag label and empty state.
-- `pages/index.vue` + `components/DrumMachine.vue`: Only Pads/Transport/FX are mounted; PatternsPanel, ExportPanel, TabPanel, and any step/playhead grid are absent, so pattern editing, scene chains, export, and MIDI/Sync UI are currently unreachable.
-- `components/StepGrid.md`/`StepCell.md`: Only Markdown stubs remain; the actual Vue components were removed. README still describes Sequencer UI that is missing in the build; either restore the components or align README/UX.
-
-### Previous Findings (2025-12-19)
-
-- `components/PadGrid.vue`: Template contains a standalone `button.pad-cell` wired to undefined bindings (`padClasses`, `isFocusable`, `handleActivate`, `isSelected`, `velocityStyle`). Any interaction will throw and the element does not map to the pad model—likely leftover code that should be removed or folded into `PadCell`.
-- `components/PadGrid.vue`: The watcher tries to focus the selected pad via `$refs[newPad]`, but no `ref` is attached to `PadCell` instances. Focus restoration currently never works; add a `ref` per pad or alternative focus management.
-- `domain/transport/transportEngine.ts`: `setConfig` recalculates `startTimeSec`/phase but does not clear or re-queue scheduled boundaries. Pending scheduler items from the previous tempo/grid remain, so a mid-playback config change can fire steps at stale times. Clearing/reseeding the scheduler (with swing-aware offsets) on config changes would keep timing consistent.
-- `domain/transport/transportEngine.ts`: Scheduling always pushes `currentStep + 1` with raw step indices (not wrapped to total steps). With long play sessions and reconfigurations, `lastScheduledStep` monotonic growth can skip re-scheduling when the modulo-wrapped step repeats. Normalizing scheduled indices to the current grid would make the duplicate-guard reliable across loops.
+- Control area mapping: `diagrams/control-area-mapping.md`
 
 ## Current UI / Editing State
 
@@ -182,35 +163,29 @@ Copy the exported seed from the metadata panel (or the JSON blob) and supply it 
 - `components/PadGrid.vue`: Pads expose neither tooltips nor pad labels/LED hints in the UI. `is-empty` derives from missing pad state rather than sample presence, so freshly loaded banks render as “empty” even when defaults exist.
 - `components/PadGrid.vue`: KEY_LABELS are hard-coded to 16 entries; any future pad bank paging or alternate pad counts will desync labels and navigation unless the labels derive from the pads prop.
 
-## Hardware-Layout & UI-Referenz
+## Hardware Layout & UI Reference
 
 ### PadGrid (4×4)
-- 16 Pads in 4 Spalten × 4 Reihen (pad1–pad16); jede PadCell ist ein Button mit klaren visuell differenzierten Zuständen für selected, triggered (aktueller Step) und playing (irgendwo im Pattern).
-- Accessibility: Buttons mit `aria-label` pro Pad, rowcount/colcount und `aria-rowindex`/`aria-colindex` für Screenreader; `tabindex`-Reihenfolge folgt pad1–pad16. Fokus-Refs ermöglichen gezielte Fokussteuerung (z. B. beim Padwechsel per Keyboard).
-- Pattern Indicator sitzt am PadGrid und zeigt den aktiven Pattern-Status in unmittelbarer Nähe der Pads.
+- 16 pads in a 4×4 grid (pad1–pad16) with distinct states for selected, triggered (current step), and playing. Each PadCell is a native button.
+- Accessibility: `aria-label` per pad, `aria-rowcount`/`aria-colcount`/`aria-rowindex`/`aria-colindex`, and `tabindex` in pad order; focus refs support keyboard focus moves. The pattern indicator sits next to the grid.
 
-### Modus-Buttons (links vom PadGrid)
-- Vertikale Spalte mit 8 Modus-Buttons, jeweils eine Spalte breit und in der Höhe exakt 2 Pads groß (8 Buttons ≙ 16 Pad-Höhen).
-- Links neben dem PadGrid angeordnet und an der vertikalen Referenzlinie des Softbuttons 4 über Display 1 ausgerichtet; die Linie muss in Diagrammen/Mockups markiert bleiben.
-- Buttons tragen `aria-label`/`title` für Mode-Beschriftungen (Scene/Pattern/Events/Variation/Duplicate/Select/Mute/Solo o. ä.) und lassen sich per Tastatur fokussieren.
+### Mode Buttons (left of PadGrid)
+- Vertical stack of 8 mode buttons; sized to align with pad heights and the Softbutton 4 reference line above Display 1. Buttons expose `aria-label`/`title` and keyboard focus.
 
-### Fixed Velocity + Pad Mode Buttons (oberhalb)
-- Fixed-Velocity-Button sitzt oberhalb der Modus-Spalte; direkt daneben eine horizontale Reihe der Pad-Mode-Buttons (PAD MODE, KEYBOARD, CHORD, STEP wie im Build umgesetzt).
-- Die komplette Reihe orientiert sich an der Softbutton-Linie über Display 2 als horizontale Referenz, sodass Fixed Velocity und Pad-Mode-Buttons bündig zu Display 2 stehen.
+### Fixed Velocity + Pad Mode (top row)
+- Fixed Velocity plus PAD MODE/KEYBOARD/CHORD/STEP row aligned to the Softbutton row above Display 2 as the horizontal reference.
 
-### Softbutton-Referenzen
-- Softbuttons existieren als Platzhalter und liefern die Ausrichtungsachsen: Softbutton 4 über Display 1 definiert die vertikale Linie für die Modus-Buttons.
-- Die Softbutton-Reihe über Display 2 dient als horizontale Referenz für die Fixed-Velocity- und Pad-Mode-Buttons; beide Referenzen sind in `diagrams/padgrid-modus-layout.md` markiert.
+### Softbutton references
+- Softbutton 4 above Display 1 defines the vertical alignment line for the mode column. The softbutton row above Display 2 defines the horizontal reference for Fixed Velocity and Pad Mode buttons (see `diagrams/padgrid-modus-layout.md`).
 
 ### Accessibility
-- PadGrid: ARIA-Labels pro Pad, `tabindex`-Navigation in Grid-Reihenfolge, Fokussteuerung über Refs, und Grid-Metadaten (`aria-rowcount`, `aria-colcount`) für Screenreader.
-- Modus-/Pad-Mode-/Fixed-Velocity-Buttons: native Button-Rolle, `aria-label`/`title` für die Modusnamen, konsistente Tab-Reihenfolge entlang der Spalten/Zeilen.
-- Softbuttons als Referenzobjekte behalten klar beschriftete Slots, damit Screenreader die räumliche Zuordnung nachvollziehen können.
+- PadGrid: ARIA grid metadata, labels, and focusable buttons.
+- Mode/Pad-Mode/Fixed-Velocity buttons: native button semantics with labels/titles and consistent tab order.
+- Softbuttons remain labeled reference points for screen readers to understand spatial layout.
 
 ### TransportBar
-- Eigenständige Komponente für Transport-/Pattern-/Step-Logik mit Props wie `bpm`, `division`/`divisions`, `loop`, `patternBars`, `presetBars`/`presetDivision`, Pad-Selektion (`selectedPad`) und Statusflags (`isPlaying`, `isRecording`, `countInEnabled`, `metronomeEnabled`, `followEnabled`, `liveEraseEnabled`).
-- Events decken Transport (play/stop/stop-reset/restart), Tempo (`update-bpm`, `increment-bpm`, `decrement-bpm`, `tap-tempo`), Grid (`update-division`, `update-pattern-bars`, `update:preset-*`), Loop (`update-loop`, `nudge-loop-range`, `update-loop-start`, `update-loop-end`), Metronom/Follow (`toggle-metronome`, `update:metronome-volume`, `toggle-follow`), Count-In (`toggle-count-in`, `update-count-in-bars`), MIDI-Learn und Live-Erase (`toggle-live-erase`, `erase-pad`, `erase-current-step`) ab.
-- Buttons nutzen native `<button>`-Semantik (fokussierbar, Enter/Space aktivierbar); ergänzende `aria-label`/`title`-Attribute sichern konsistente Accessibility für Screenreader und Tooltips.
+- Standalone transport/pattern/step control component. Props include `bpm`, `division`/`divisions`, `loop`, `patternBars`, `presetBars`/`presetDivision`, `selectedPad`, and flags (`isPlaying`, `isRecording`, `countInEnabled`, `metronomeEnabled`, `followEnabled`, `liveEraseEnabled`).
+- Events cover transport (play/stop/stop-reset/restart), tempo (`update-bpm`, `increment-bpm`, `decrement-bpm`, `tap-tempo`), grid (`update-division`, `update-pattern-bars`, `update:preset-*`), loop (`update-loop`, `nudge-loop-range`, `update-loop-start`, `update-loop-end`), metronome/follow (`toggle-metronome`, `update:metronome-volume`, `toggle-follow`), count-in (`toggle-count-in`, `update-count-in-bars`), MIDI learn, and live erase (`toggle-live-erase`, `erase-pad`, `erase-current-step`). Buttons use native semantics plus `aria-label`/`title` for a11y/tooltips.
 
-### Diagramm
-- Layout-Visualisierung mit Referenzlinien, Dual Displays, Softbutton-Reihen, Modus-Spalte, Fixed-Velocity/Pad-Mode-Zeile und PadGrid: siehe `diagrams/padgrid-modus-layout.md` (Mermaid).
+### Diagram
+- Layout visualization with reference lines for dual displays, softbutton rows, mode column, Fixed Velocity/Pad Mode row, and PadGrid: see `diagrams/padgrid-modus-layout.md`.

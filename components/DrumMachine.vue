@@ -6,55 +6,137 @@
             <div class="control-area">
               <div class="control-fixed" aria-label="Fixed control buttons">
                 <div class="control-btn-grid" aria-label="Control buttons">
-                  <button class="control-btn r1 c1" type="button">
+                  <button
+                    class="control-btn r1 c1"
+                    type="button"
+                    :class="{ active: isActiveMode('CHANNEL') }"
+                    :title="modeTooltip('CHANNEL', 'CHANNEL', 'MIDI')"
+                    :aria-label="modeTooltip('CHANNEL', 'CHANNEL', 'MIDI')"
+                    @click="handleModePress('CHANNEL', 'CHANNEL_MIDI')"
+                  >
                     <span class="control-btn__main">CHANNEL</span>
                     <span class="control-btn__sub">MIDI</span>
                   </button>
 
-                  <button class="control-btn r1 c2" type="button">
+                  <button
+                    class="control-btn r1 c2"
+                    type="button"
+                    :class="{ active: isActiveMode('PLUGIN') }"
+                    :title="modeTooltip('PLUGIN', 'PLUG-IN', 'Instance')"
+                    :aria-label="modeTooltip('PLUGIN', 'PLUG-IN', 'Instance')"
+                    @click="handleModePress('PLUGIN', 'PLUGIN_INSTANCE')"
+                  >
                     <span class="control-btn__main">PLUG-IN</span>
                     <span class="control-btn__sub">Instance</span>
                   </button>
 
-                  <button class="control-btn r2 c1" type="button">
+                  <button
+                    class="control-btn r2 c1"
+                    type="button"
+                    :class="{ active: isActiveMode('ARRANGER') }"
+                    :title="modeTooltip('ARRANGER', 'ARRANGER')"
+                    :aria-label="modeTooltip('ARRANGER', 'ARRANGER')"
+                    @click="handleModePress('ARRANGER')"
+                  >
                     <span class="control-btn__main">ARRANGER</span>
                   </button>
 
-                  <button class="control-btn r2 c2" type="button">
+                  <button
+                    class="control-btn r2 c2"
+                    type="button"
+                    :class="{ active: isActiveMode('MIXER') }"
+                    :title="modeTooltip('MIXER', 'MIXER')"
+                    :aria-label="modeTooltip('MIXER', 'MIXER')"
+                    @click="handleModePress('MIXER')"
+                  >
                     <span class="control-btn__main">MIXER</span>
                   </button>
 
-                  <button class="control-btn r3 c1" type="button">
+                  <button
+                    class="control-btn r3 c1"
+                    type="button"
+                    :class="{ active: isActiveMode('BROWSER') }"
+                    :title="modeTooltip('BROWSER', 'BROWSER', '+Plug-In')"
+                    :aria-label="modeTooltip('BROWSER', 'BROWSER', '+Plug-In')"
+                    @click="handleModePress('BROWSER', 'BROWSER_PLUGIN_MENU')"
+                  >
                     <span class="control-btn__main">BROWSER</span>
                     <span class="control-btn__sub">+Plug-In</span>
                   </button>
 
-                  <button class="control-btn r3 c2" type="button">
+                  <button
+                    class="control-btn r3 c2"
+                    type="button"
+                    :class="{ active: isActiveMode('SAMPLING') }"
+                    :title="modeTooltip('SAMPLING', 'SAMPLING')"
+                    :aria-label="modeTooltip('SAMPLING', 'SAMPLING')"
+                    @click="handleModePress('SAMPLING')"
+                  >
                     <span class="control-btn__main">SAMPLING</span>
                   </button>
 
-                  <button class="control-btn control-btn--icon r4 c1" type="button" aria-label="Page backwards">
+                  <button
+                    class="control-btn control-btn--icon r4 c1"
+                    type="button"
+                    aria-label="Page backwards"
+                    :title="pageButtonTitle('prev')"
+                    @click="prevPage"
+                  >
                     <span class="control-btn__main">◀</span>
                   </button>
 
-                  <button class="control-btn control-btn--icon r4 c2" type="button" aria-label="Page forwards">
+                  <button
+                    class="control-btn control-btn--icon r4 c2"
+                    type="button"
+                    aria-label="Page forwards"
+                    :title="pageButtonTitle('next')"
+                    @click="nextPage"
+                  >
                     <span class="control-btn__main">▶</span>
                   </button>
 
-                  <button class="control-btn r5 c1" type="button">
+                  <button
+                    class="control-btn r5 c1"
+                    type="button"
+                    :class="{ active: isActiveMode('FILE') }"
+                    :title="modeTooltip('FILE', 'FILE', 'Save')"
+                    :aria-label="modeTooltip('FILE', 'FILE', 'Save')"
+                    @click="handleModePress('FILE', 'FILE_SAVE')"
+                  >
                     <span class="control-btn__main">FILE</span>
                     <span class="control-btn__sub">Save</span>
                   </button>
 
-                  <button class="control-btn r5 c2" type="button">
+                  <button
+                    class="control-btn r5 c2"
+                    type="button"
+                    :class="{ active: isActiveMode('SETTINGS') }"
+                    :title="modeTooltip('SETTINGS', 'SETTINGS')"
+                    :aria-label="modeTooltip('SETTINGS', 'SETTINGS')"
+                    @click="handleModePress('SETTINGS')"
+                  >
                     <span class="control-btn__main">SETTINGS</span>
                   </button>
 
-                  <button class="control-btn r6 c1" type="button">
+                  <button
+                    class="control-btn r6 c1"
+                    type="button"
+                    :class="{ active: isActiveMode('AUTO') }"
+                    :title="modeTooltip('AUTO', 'AUTO')"
+                    :aria-label="modeTooltip('AUTO', 'AUTO')"
+                    @click="handleModePress('AUTO')"
+                  >
                     <span class="control-btn__main">AUTO</span>
                   </button>
 
-                  <button class="control-btn r6 c2" type="button">
+                  <button
+                    class="control-btn r6 c2"
+                    type="button"
+                    :class="{ active: isActiveMode('MACRO') }"
+                    :title="modeTooltip('MACRO', 'MACRO', 'Set')"
+                    :aria-label="modeTooltip('MACRO', 'MACRO', 'Set')"
+                    @click="handleModePress('MACRO', 'MACRO_SET')"
+                  >
                     <span class="control-btn__main">MACRO</span>
                     <span class="control-btn__sub">Set</span>
                   </button>
@@ -63,33 +145,100 @@
               <div class="control-core">
                 <div class="soft-row">
                   <div class="soft-row-grid">
-                    <SoftButtonStripPlaceholder />
+                    <SoftButtonStrip
+                      :buttons="activeSoftButtons"
+                      :shift-held="shiftHeld"
+                      @press="pressSoftButton"
+                    />
                   </div>
                 </div>
                 <div class="display-block">
                   <div class="display-grid">
-                    <DualDisplayPlaceholder />
+                    <DualDisplay
+                      :left-model="leftDisplayModel"
+                      :right-model="rightDisplayModel"
+                      :mode-title="activeMode"
+                      :page-label="pageLabel"
+                      :param-slots-left="paramSlotsLeft"
+                      :param-slots-right="paramSlotsRight"
+                    />
                   </div>
                   <div class="display-param-labels" aria-hidden="true">
-                    <span class="param-label"></span>
-                    <span class="param-label"></span>
-                    <span class="param-label"></span>
-                    <span class="param-label"></span>
-                    <span class="param-label"></span>
-                    <span class="param-label"></span>
-                    <span class="param-label"></span>
-                    <span class="param-label"></span>
+                    <span class="param-label" :title="softLabels[0]">{{ softLabels[0] }}</span>
+                    <span class="param-label" :title="softLabels[1]">{{ softLabels[1] }}</span>
+                    <span class="param-label" :title="softLabels[2]">{{ softLabels[2] }}</span>
+                    <span class="param-label" :title="softLabels[3]">{{ softLabels[3] }}</span>
+                    <span class="param-label" :title="softLabels[4]">{{ softLabels[4] }}</span>
+                    <span class="param-label" :title="softLabels[5]">{{ softLabels[5] }}</span>
+                    <span class="param-label" :title="softLabels[6]">{{ softLabels[6] }}</span>
+                    <span class="param-label" :title="softLabels[7]">{{ softLabels[7] }}</span>
                   </div>
                 </div>
                 <div class="knob-row" aria-label="8 encoders">
-                  <div class="knob" role="presentation"></div>
-                  <div class="knob" role="presentation"></div>
-                  <div class="knob" role="presentation"></div>
-                  <div class="knob" role="presentation"></div>
-                  <div class="knob" role="presentation"></div>
-                  <div class="knob" role="presentation"></div>
-                  <div class="knob" role="presentation"></div>
-                  <div class="knob" role="presentation"></div>
+                  <div
+                    class="knob"
+                    role="presentation"
+                    tabindex="0"
+                    :aria-label="`Encoder 1: ${getParamName(0)}`"
+                    @wheel.prevent="onKnobWheel(0, $event)"
+                    @keydown="onKnobKey(0, $event)"
+                  ></div>
+                  <div
+                    class="knob"
+                    role="presentation"
+                    tabindex="0"
+                    :aria-label="`Encoder 2: ${getParamName(1)}`"
+                    @wheel.prevent="onKnobWheel(1, $event)"
+                    @keydown="onKnobKey(1, $event)"
+                  ></div>
+                  <div
+                    class="knob"
+                    role="presentation"
+                    tabindex="0"
+                    :aria-label="`Encoder 3: ${getParamName(2)}`"
+                    @wheel.prevent="onKnobWheel(2, $event)"
+                    @keydown="onKnobKey(2, $event)"
+                  ></div>
+                  <div
+                    class="knob"
+                    role="presentation"
+                    tabindex="0"
+                    :aria-label="`Encoder 4: ${getParamName(3)}`"
+                    @wheel.prevent="onKnobWheel(3, $event)"
+                    @keydown="onKnobKey(3, $event)"
+                  ></div>
+                  <div
+                    class="knob"
+                    role="presentation"
+                    tabindex="0"
+                    :aria-label="`Encoder 5: ${getParamName(4)}`"
+                    @wheel.prevent="onKnobWheel(4, $event)"
+                    @keydown="onKnobKey(4, $event)"
+                  ></div>
+                  <div
+                    class="knob"
+                    role="presentation"
+                    tabindex="0"
+                    :aria-label="`Encoder 6: ${getParamName(5)}`"
+                    @wheel.prevent="onKnobWheel(5, $event)"
+                    @keydown="onKnobKey(5, $event)"
+                  ></div>
+                  <div
+                    class="knob"
+                    role="presentation"
+                    tabindex="0"
+                    :aria-label="`Encoder 7: ${getParamName(6)}`"
+                    @wheel.prevent="onKnobWheel(6, $event)"
+                    @keydown="onKnobKey(6, $event)"
+                  ></div>
+                  <div
+                    class="knob"
+                    role="presentation"
+                    tabindex="0"
+                    :aria-label="`Encoder 8: ${getParamName(7)}`"
+                    @wheel.prevent="onKnobWheel(7, $event)"
+                    @keydown="onKnobKey(7, $event)"
+                  ></div>
                 </div>
               </div>
             </div>
@@ -201,7 +350,18 @@
                 <button class="control-btn" type="button">
                   <span class="control-btn__main">STOP</span>
                 </button>
-                <button class="control-btn" type="button">
+                <button
+                  class="control-btn"
+                  type="button"
+                  :class="{ active: shiftHeld }"
+                  :title="shiftHeld ? 'SHIFT (held)' : 'SHIFT (hold for secondary actions)'"
+                  aria-label="Hold to access secondary controls"
+                  :aria-pressed="shiftHeld"
+                  @pointerdown="onShiftDown"
+                  @pointerup="onShiftUp"
+                  @pointercancel="onShiftUp"
+                  @pointerleave="onShiftUpIfPressed"
+                >
                   <div class="shift-label">SHIFT</div>
                 </button>
               </div>
@@ -293,6 +453,7 @@ import { useTransportStore } from '@/stores/transport'
 import { usePatternsStore } from '@/stores/patterns'
 import { useSoundbanksStore } from '@/stores/soundbanks'
 import { useSessionStore } from '@/stores/session'
+import { useControlStore, type ControlMode } from '@/stores/control'
 import { useSequencer } from '@/composables/useSequencer'
 import { useSync } from '@/composables/useSync.client'
 import { useMidi } from '@/composables/useMidi.client'
@@ -310,12 +471,12 @@ import PatternsPanel from './panels/PatternsPanel.vue'
 import ExportPanel from './panels/ExportPanel.vue'
 import { createZip, type ZipEntry } from '@/utils/zip'
 import type { DrumPadId, Scene } from '@/types/drums'
-import type { TimeDivision } from '@/types/time'
+import type { GridSpec, TimeDivision } from '@/types/time'
 import type { FxSettings, SampleRef, Soundbank } from '@/types/audio'
 import type { RenderEvent, RenderMetadata } from '@/types/render'
 import type { StepGrid } from '@/types/drums'
-import DualDisplayPlaceholder from './placeholders/DualDisplayPlaceholder.vue'
-import SoftButtonStripPlaceholder from './placeholders/SoftButtonStripPlaceholder.vue'
+import DualDisplay from './control/DualDisplay.vue'
+import SoftButtonStrip from './control/SoftButtonStrip.vue'
 import FourDEncoderPlaceholder from './placeholders/FourDEncoderPlaceholder.vue'
 import ModeColumnPlaceholder from './placeholders/ModeColumnPlaceholder.vue'
 import TouchStripPlaceholder from './placeholders/TouchStripPlaceholder.vue'
@@ -377,8 +538,8 @@ export default defineComponent({
     FxPanel,
     PatternsPanel,
     ExportPanel,
-    DualDisplayPlaceholder,
-    SoftButtonStripPlaceholder,
+    DualDisplay,
+    SoftButtonStrip,
     FourDEncoderPlaceholder,
     ModeColumnPlaceholder,
     TouchStripPlaceholder
@@ -389,6 +550,7 @@ export default defineComponent({
     const patterns = usePatternsStore()
     const soundbanks = useSoundbanksStore()
     const session = useSessionStore()
+    const control = useControlStore()
     const capabilitiesProbe = useCapabilities()
     session.setCapabilities(capabilitiesProbe.capabilities.value)
 
@@ -474,6 +636,7 @@ export default defineComponent({
       patterns,
       soundbanks,
       session,
+      control,
       sequencer,
       sync,
       midi,
@@ -501,12 +664,53 @@ export default defineComponent({
       presetBars: patterns.currentPattern?.gridSpec?.bars ?? DEFAULT_GRID_SPEC.bars,
       presetDivision: patterns.currentPattern?.gridSpec?.division ?? DEFAULT_GRID_SPEC.division,
       channelTarget: 'sound' as 'sound' | 'group' | 'master',
-      midiMode: false
+      midiMode: false,
+      shiftPointerActive: false
     }
   },
 
 
 computed: {
+  activeMode(): ControlMode {
+    return this.control.modeTitle as ControlMode
+  },
+
+  shiftHeld(): boolean {
+    return this.control.shiftHeld
+  },
+
+  pageLabel(): string {
+    return this.control.pageLabel
+  },
+
+  activeSoftButtons() {
+    return this.control.activeSoftButtons
+  },
+
+  softLabels(): string[] {
+    return this.control.softLabels
+  },
+
+  leftDisplayModel() {
+    return this.control.leftModel
+  },
+
+  rightDisplayModel() {
+    return this.control.rightModel
+  },
+
+  paramSlotsLeft() {
+    return this.control.paramSlotsLeft
+  },
+
+  paramSlotsRight() {
+    return this.control.paramSlotsRight
+  },
+
+  encoderParams() {
+    return this.control.activeParams
+  },
+
   gridSpec() {
     return this.patterns.currentPattern?.gridSpec ?? { ...DEFAULT_GRID_SPEC }
   },
@@ -819,6 +1023,9 @@ computed: {
 
   mounted() {
     window.addEventListener('keydown', this.handleGridKeys)
+    window.addEventListener('keydown', this.handleShiftKeyDown)
+    window.addEventListener('keyup', this.handleShiftKeyUp)
+    window.addEventListener('pointerup', this.handleGlobalPointerUp)
     const storedPatterns = this.patternStorage.load()
     if (storedPatterns.patterns.length > 0) {
       this.patterns.setPatterns(storedPatterns.patterns)
@@ -899,12 +1106,86 @@ computed: {
   },
   beforeUnmount() {
     window.removeEventListener('keydown', this.handleGridKeys)
+    window.removeEventListener('keydown', this.handleShiftKeyDown)
+    window.removeEventListener('keyup', this.handleShiftKeyUp)
+    window.removeEventListener('pointerup', this.handleGlobalPointerUp)
     this.clearCountInTimer()
     this.unwatchers.forEach((stop) => stop())
   },
 
   
   methods: {
+    handleModePress(mode: ControlMode, shiftActionId?: string) {
+      this.control.setMode(mode)
+      if (this.shiftHeld && shiftActionId) {
+        this.control.applyAction(shiftActionId, mode)
+      }
+    },
+    isActiveMode(mode: ControlMode): boolean {
+      return this.control.activeMode === mode
+    },
+    modeTooltip(mode: ControlMode, primary: string, secondary?: string) {
+      return secondary ? `${primary} (SHIFT: ${secondary})` : primary
+    },
+    pageButtonTitle(direction: 'prev' | 'next') {
+      return `${direction === 'prev' ? 'Previous' : 'Next'} page (${this.pageLabel})`
+    },
+    prevPage() {
+      this.control.prevPage()
+    },
+    nextPage() {
+      this.control.nextPage()
+    },
+    pressSoftButton(index: number) {
+      this.control.pressSoftButton(index)
+    },
+    onShiftDown(event: PointerEvent) {
+      event.preventDefault()
+      this.shiftPointerActive = true
+      this.control.setShiftHeld(true)
+    },
+    onShiftUp() {
+      this.shiftPointerActive = false
+      this.control.setShiftHeld(false)
+    },
+    onShiftUpIfPressed() {
+      if (this.shiftPointerActive) {
+        this.onShiftUp()
+      }
+    },
+    handleGlobalPointerUp() {
+      if (this.shiftPointerActive) {
+        this.onShiftUp()
+      }
+    },
+    handleShiftKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Shift') {
+        this.control.setShiftHeld(true)
+      }
+    },
+    handleShiftKeyUp(event: KeyboardEvent) {
+      if (event.key === 'Shift') {
+        this.control.setShiftHeld(false)
+      }
+    },
+    onKnobWheel(index: number, event: WheelEvent) {
+      const direction = event.deltaY < 0 ? 1 : -1
+      const magnitude = Math.abs(event.deltaY)
+      const step = magnitude > 60 ? 2 : 1
+      this.control.turnEncoder(index, direction * step, { fine: this.shiftHeld })
+    },
+    onKnobKey(index: number, event: KeyboardEvent) {
+      if (event.key === 'ArrowUp' || event.key === 'ArrowRight') {
+        this.control.turnEncoder(index, 1, { fine: this.shiftHeld })
+        event.preventDefault()
+      } else if (event.key === 'ArrowDown' || event.key === 'ArrowLeft') {
+        this.control.turnEncoder(index, -1, { fine: this.shiftHeld })
+        event.preventDefault()
+      }
+    },
+    getParamName(index: number) {
+      return this.encoderParams?.[index]?.name ?? `Encoder ${index + 1}`
+    },
     addPattern(payload: { name?: string }) {
       this.patterns.addPattern(payload?.name)
     },
@@ -1041,7 +1322,7 @@ computed: {
       this.transport.setFollowEnabled(!this.transport.followEnabled)
     },
     setPatternBars(bars: number) {
-      const normalized = Math.max(1, Math.floor(bars))
+      const normalized = Math.max(1, Math.min(8, Math.floor(bars))) as GridSpec['bars']
       const gridSpec = normalizeGridSpec({ ...this.gridSpec, bars: normalized })
       this.transport.setGridSpec(gridSpec)
       this.patterns.updateGridSpec(gridSpec)
@@ -1073,7 +1354,7 @@ computed: {
       this.transport.setMetronomeVolume(value ?? 0.12)
     },
     setPresetBars(value: number) {
-      const bars = Math.max(1, Math.floor(value ?? 1))
+      const bars = Math.max(1, Math.min(8, Math.floor(value ?? 1))) as GridSpec['bars']
       this.presetBars = bars
     },
     setPresetDivision(value: TimeDivision | null) {
