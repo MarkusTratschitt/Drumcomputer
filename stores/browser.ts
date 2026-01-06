@@ -1,7 +1,9 @@
 import { defineStore } from 'pinia'
+import { markRaw } from 'vue'
 import { getFileSystemRepository, type DirectoryListing } from '../services/fileSystemRepository'
 import { getLibraryRepository, type LibraryItem } from '../services/libraryRepository'
 import { useRecentFiles, type RecentFileEntry } from '../composables/useRecentFiles'
+import { useSamplePreview, type PreviewState } from '../composables/useSamplePreview.client'
 import type { EncoderField } from '../composables/use4DEncoder'
 import type { BrowserMode, BrowserResultItem, BrowserFileEntry } from '../types/library'
 
@@ -120,6 +122,13 @@ const mapRecentType = (extension?: string): RecentFileEntry['type'] => {
   return 'sample'
 }
 
+const emptyPreviewState: PreviewState = {
+  isPlaying: false,
+  currentFile: null,
+  progress: 0,
+  duration: 0
+}
+
 export const useBrowserStore = defineStore('browser', {
   state: () => ({
     mode: 'LIBRARY' as BrowserMode,
@@ -137,14 +146,24 @@ export const useBrowserStore = defineStore('browser', {
     availableCategories: [] as string[],
     availableProducts: [] as string[],
     availableBanks: [] as string[],
-    recentEntries: [] as RecentFileEntry[]
+    recentEntries: [] as RecentFileEntry[],
+    preview: null as ReturnType<typeof useSamplePreview> | null
   }),
   getters: {
     recentFiles(state): RecentFileEntry[] {
       return state.recentEntries
+    },
+    previewState(state): PreviewState {
+      return state.preview?.state ?? emptyPreviewState
     }
   },
   actions: {
+    ensurePreview() {
+      if (!this.preview) {
+        this.preview = markRaw(useSamplePreview())
+      }
+      return this.preview
+    },
     async setMode(mode: BrowserMode) {
       this.mode = mode
       if (mode === 'LIBRARY') {
@@ -309,6 +328,25 @@ export const useBrowserStore = defineStore('browser', {
       this.loadRecentFiles()
       await repo.refreshIndex()
       await this.search()
+    },
+    async prehearSelected() {
+      const preview = this.ensurePreview()
+      const fileRepo = getFileSystemRepository()
+      if (this.mode === 'FILES') {
+        if (!this.files.selectedPath) return
+        const blob = await fileRepo.readFileBlob?.(this.files.selectedPath)
+        await preview.loadAndPlay(this.files.selectedPath, blob)
+        return
+      }
+      if (this.library.selectedId) {
+        const selected = this.library.results.find((item) => item.id === this.library.selectedId)
+        if (!selected?.path) return
+        const blob = await fileRepo.readFileBlob?.(selected.path)
+        await preview.loadAndPlay(selected.path, blob)
+      }
+    },
+    stopPrehear() {
+      this.preview?.stop()
     },
     toDisplayModels(): { leftModel: DisplayPanelModel; rightModel: DisplayPanelModel } {
       if (this.mode === 'FILES') {

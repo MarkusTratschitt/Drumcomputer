@@ -168,6 +168,14 @@ const buildParams = (params: Partial<EncoderParam>[]): EncoderParam[] => {
   return filled.slice(0, 8)
 }
 
+const buildPreviewParams = (): EncoderParam[] =>
+  buildParams([
+    { id: 'preview-vol', name: 'Preview Vol', value: 80, min: 0, max: 100, step: 1 },
+    { id: 'preview-start', name: 'Start', value: 0, min: 0, max: 100, step: 1 },
+    { id: 'preview-end', name: 'End', value: 100, min: 0, max: 100, step: 1 },
+    { id: 'preview-tune', name: 'Tune', value: 0, min: -12, max: 12, step: 1 }
+  ])
+
 const browserPages: ControlPage[] = [
   {
     label: 'Library',
@@ -716,6 +724,12 @@ export const useControlStore = defineStore('control', {
       return this.activeSoftButtons.map((btn) => btn.label || '')
     },
     activeParams(): EncoderParam[] {
+      if (this.activeMode === 'BROWSER') {
+        const browser = useBrowserStore()
+        if (browser.previewState.isPlaying) {
+          return buildPreviewParams()
+        }
+      }
       return this.activePage?.params ?? buildParams([])
     },
     paramSlotsLeft(): EncoderParam[] {
@@ -871,6 +885,14 @@ export const useControlStore = defineStore('control', {
         case 'BROWSER_SEARCH':
           void browser.search()
           this.lastAction = 'Browser search'
+          break
+        case 'BROWSER_PREHEAR':
+          void browser.prehearSelected()
+          this.lastAction = 'Prehear triggered'
+          break
+        case 'BROWSER_STOP':
+          browser.stopPrehear()
+          this.lastAction = 'Prehear stopped'
           break
         case 'BROWSER_LOAD':
         case 'BROWSER_REPLACE':
