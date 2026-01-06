@@ -454,6 +454,7 @@ import { usePatternsStore } from '@/stores/patterns'
 import { useSoundbanksStore } from '@/stores/soundbanks'
 import { useSessionStore } from '@/stores/session'
 import { useControlStore, type ControlMode } from '@/stores/control'
+import { useBrowserStore } from '@/stores/browser'
 import { useSequencer } from '@/composables/useSequencer'
 import { useSync } from '@/composables/useSync.client'
 import { useMidi } from '@/composables/useMidi.client'
@@ -551,6 +552,7 @@ export default defineComponent({
     const soundbanks = useSoundbanksStore()
     const session = useSessionStore()
     const control = useControlStore()
+    const browser = useBrowserStore()
     const capabilitiesProbe = useCapabilities()
     session.setCapabilities(capabilitiesProbe.capabilities.value)
 
@@ -637,6 +639,7 @@ export default defineComponent({
       soundbanks,
       session,
       control,
+      browser,
       sequencer,
       sync,
       midi,
@@ -1060,6 +1063,23 @@ computed: {
       },
       { deep: true }
     )
+    void this.browser.setMode('LIBRARY')
+    this.control.setBrowserDisplay(this.browser.toDisplayModels())
+    const stopBrowserDisplayWatch = this.$watch(
+      () => ({
+        mode: this.browser.mode,
+        query: this.browser.library.query,
+        results: this.browser.library.results,
+        selectedId: this.browser.library.selectedId,
+        path: this.browser.files.currentPath,
+        entries: this.browser.files.entries,
+        selectedPath: this.browser.files.selectedPath
+      }),
+      () => {
+        this.control.setBrowserDisplay(this.browser.toDisplayModels())
+      },
+      { deep: true }
+    )
     const stopMidiListener = this.midi.listen((message) => {
       if (this.midiLearn.handleMessage(message)) {
         return
@@ -1102,6 +1122,7 @@ computed: {
     })
     this.unwatchers.push(stopWatch)
     this.unwatchers.push(stopBankPatternWatch)
+    this.unwatchers.push(stopBrowserDisplayWatch)
     this.unwatchers.push(() => stopMidiListener?.())
   },
   beforeUnmount() {
@@ -1117,6 +1138,13 @@ computed: {
   methods: {
     handleModePress(mode: ControlMode, shiftActionId?: string) {
       this.control.setMode(mode)
+      if (mode === 'BROWSER') {
+        void this.browser.setMode('LIBRARY')
+        this.control.setBrowserDisplay(this.browser.toDisplayModels())
+      } else if (mode === 'FILE') {
+        void this.browser.setMode('FILES')
+        this.control.setBrowserDisplay(this.browser.toDisplayModels())
+      }
       if (this.shiftHeld && shiftActionId) {
         this.control.applyAction(shiftActionId, mode)
       }

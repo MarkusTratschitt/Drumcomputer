@@ -1,7 +1,7 @@
 import { describe, it } from 'mocha'
 import { expect } from 'chai'
 import { mount } from '@vue/test-utils'
-import PadCell from '../components/PadCell.vue'
+import PadCell from '@/components/PadCell.vue'
 
 describe('PadCell', () => {
   it('renders label', () => {

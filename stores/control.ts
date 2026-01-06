@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { useBrowserStore } from './browser'
 
 export type ControlMode =
   | 'CHANNEL'
@@ -649,7 +650,8 @@ export const useControlStore = defineStore('control', {
       metronome: true,
       countIn: true,
       automationArmed: false
-    }
+    },
+    browserDisplay: null as { leftModel: DisplayPanelModel; rightModel: DisplayPanelModel } | null
   }),
   getters: {
     activePage(state): ControlPage {
@@ -679,9 +681,15 @@ export const useControlStore = defineStore('control', {
       return this.activeParams.filter((param) => (param.side ?? 'left') === 'right').slice(0, 4)
     },
     leftModel(): DisplayPanelModel {
+      if ((this.activeMode === 'BROWSER' || this.activeMode === 'FILE') && this.browserDisplay?.leftModel) {
+        return this.browserDisplay.leftModel
+      }
       return this.activePage?.leftModel ?? { view: 'EMPTY', title: 'Empty' }
     },
     rightModel(): DisplayPanelModel {
+      if ((this.activeMode === 'BROWSER' || this.activeMode === 'FILE') && this.browserDisplay?.rightModel) {
+        return this.browserDisplay.rightModel
+      }
       return this.activePage?.rightModel ?? { view: 'EMPTY', title: 'Empty' }
     }
   },
@@ -695,6 +703,9 @@ export const useControlStore = defineStore('control', {
     },
     setShiftHeld(value: boolean) {
       this.shiftHeld = value
+    },
+    setBrowserDisplay(models: { leftModel: DisplayPanelModel; rightModel: DisplayPanelModel } | null) {
+      this.browserDisplay = models
     },
     nextPage() {
       const pages = this.pagesByMode[this.activeMode] ?? []
@@ -717,7 +728,22 @@ export const useControlStore = defineStore('control', {
       this.applyAction(actionId, btn.label)
     },
     applyAction(actionId: string, label?: string) {
+      const browser = useBrowserStore()
       switch (actionId) {
+        case 'BROWSER_SEARCH':
+          void browser.search()
+          this.lastAction = 'Browser search'
+          break
+        case 'BROWSER_LOAD':
+        case 'BROWSER_REPLACE':
+          void browser.importSelected()
+          this.lastAction = 'Import triggered'
+          break
+        case 'BROWSER_CLEAR':
+          browser.selectResult(null)
+          browser.selectPath(null)
+          this.lastAction = 'Browser cleared'
+          break
         case 'BROWSER_PLUGIN_MENU':
         case 'PLUGIN_INSTANCE':
         case 'PLUGIN_SWAP':

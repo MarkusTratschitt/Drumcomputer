@@ -133,6 +133,8 @@
 
 <script lang="ts">
 import { defineComponent, type PropType } from 'vue'
+import { useBrowserStore } from '@/stores/browser'
+import { useControlStore } from '@/stores/control'
 
 type ListItem = {
   title: string
@@ -185,7 +187,21 @@ export default defineComponent({
   },
   data() {
     return {
-      browserQuery: ''
+      browserQuery: '',
+      browserStore: useBrowserStore(),
+      controlStore: useControlStore()
+    }
+  },
+  watch: {
+    browserQuery(value: string) {
+      if (this.controlStore.activeMode === 'BROWSER') {
+        void this.browserStore.setQuery(value)
+      }
+    },
+    'browserStore.library.query'(value: string) {
+      if (value !== this.browserQuery) {
+        this.browserQuery = value
+      }
     }
   },
   methods: {
