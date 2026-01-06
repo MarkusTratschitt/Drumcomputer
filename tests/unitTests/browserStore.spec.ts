@@ -14,6 +14,7 @@ import {
 
 class MemoryLibraryRepo implements LibraryRepository {
   constructor(public items: LibraryItem[] = []) {}
+  favorites = new Set<string>()
 
   async search(query: string): Promise<LibraryItem[]>
   async search(query: string, filters?: BrowserFilters): Promise<LibraryItem[]> {
@@ -78,6 +79,22 @@ class MemoryLibraryRepo implements LibraryRepository {
 
   async refreshIndex(): Promise<void> {
     // no-op for in-memory
+  }
+
+  async addToFavorites(itemId: string): Promise<void> {
+    this.favorites.add(itemId)
+  }
+
+  async removeFromFavorites(itemId: string): Promise<void> {
+    this.favorites.delete(itemId)
+  }
+
+  async getFavorites(): Promise<LibraryItem[]> {
+    return this.items.filter((item) => this.favorites.has(item.id))
+  }
+
+  async isFavorite(itemId: string): Promise<boolean> {
+    return this.favorites.has(itemId)
   }
 
   async importDirectory(): Promise<void> {

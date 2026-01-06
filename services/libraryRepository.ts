@@ -33,6 +33,10 @@ export interface LibraryRepository {
   addTag(itemId: string, tag: string): Promise<string[]>
   removeTag(itemId: string, tag: string): Promise<string[]>
   importFile(path: string, meta?: Partial<LibraryItem>): Promise<LibraryItem>
+  addToFavorites(itemId: string): Promise<void>
+  removeFromFavorites(itemId: string): Promise<void>
+  getFavorites(): Promise<LibraryItem[]>
+  isFavorite(itemId: string): Promise<boolean>
   refreshIndex(): Promise<void>
   importDirectory?(
     path: string,
@@ -42,6 +46,7 @@ export interface LibraryRepository {
 }
 
 const STORAGE_KEY = 'drumcomputer_library_items_v1'
+const FAVORITES_KEY = 'drumcomputer_favorites_v1'
 
 const normalizeTag = (value: string): string => value.trim().toLowerCase()
 const supportedExtensions = new Set(['wav', 'wave', 'mp3', 'aiff', 'aif', 'flac', 'ogg'])
@@ -66,6 +71,7 @@ const extractMetadataFromPath = (path: string): Partial<LibraryItem> => {
 
 const createLocalRepository = (): LibraryRepository => {
   let items: LibraryItem[] = loadPersisted()
+  let favorites = loadFavorites()
 
   function persist() {
     try {
@@ -93,6 +99,31 @@ const createLocalRepository = (): LibraryRepository => {
       // ignore
     }
     return []
+  }
+
+  function persistFavorites() {
+    try {
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(FAVORITES_KEY, JSON.stringify(Array.from(favorites)))
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  function loadFavorites(): Set<string> {
+    try {
+      if (typeof localStorage === 'undefined') return new Set()
+      const raw = localStorage.getItem(FAVORITES_KEY)
+      if (!raw) return new Set()
+      const parsed = JSON.parse(raw)
+      if (Array.isArray(parsed)) {
+        return new Set(parsed.map(String))
+      }
+    } catch {
+      // ignore
+    }
+    return new Set()
   }
 
   return {
@@ -150,8 +181,23 @@ const createLocalRepository = (): LibraryRepository => {
       persist()
       return next
     },
+    async addToFavorites(itemId: string) {
+      favorites.add(itemId)
+      persistFavorites()
+    },
+    async removeFromFavorites(itemId: string) {
+      favorites.delete(itemId)
+      persistFavorites()
+    },
+    async getFavorites() {
+      return items.filter((item) => favorites.has(item.id))
+    },
+    async isFavorite(itemId: string) {
+      return favorites.has(itemId)
+    },
     async refreshIndex() {
       items = loadPersisted()
+      favorites = loadFavorites()
     },
     async importDirectory(path: string, options, onProgress) {
       const repo = getFileSystemRepository()

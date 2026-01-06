@@ -8,6 +8,7 @@ import { __setFileSystemRepositoryForTests } from '../../services/fileSystemRepo
 class ImportTrackingRepo implements LibraryRepository {
   imports: string[] = []
   items = []
+  favorites = new Set<string>()
   async search(_query: string, _filters?: unknown) {
     return this.items
   }
@@ -31,6 +32,18 @@ class ImportTrackingRepo implements LibraryRepository {
   }
   async refreshIndex() {
     return
+  }
+  async addToFavorites(itemId: string) {
+    this.favorites.add(itemId)
+  }
+  async removeFromFavorites(itemId: string) {
+    this.favorites.delete(itemId)
+  }
+  async getFavorites() {
+    return this.items.filter((item) => this.favorites.has(item.id))
+  }
+  async isFavorite(itemId: string) {
+    return this.favorites.has(itemId)
   }
   async importDirectory(): Promise<void> {
     return

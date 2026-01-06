@@ -877,6 +877,15 @@ export const useControlStore = defineStore('control', {
           void browser.importSelected()
           this.lastAction = 'Import triggered'
           break
+        case 'BROWSER_FAVORITES':
+          if (browser.library.selectedId) {
+            void browser.toggleFavorite(browser.library.selectedId)
+            this.lastAction = 'Favorite toggled'
+          } else {
+            browser.setFilter('favorites', !browser.filters.favorites)
+            this.lastAction = browser.filters.favorites ? 'Favorites filter on' : 'Favorites filter off'
+          }
+          break
         case 'BROWSER_CLEAR':
           browser.selectResult(null)
           browser.selectPath(null)

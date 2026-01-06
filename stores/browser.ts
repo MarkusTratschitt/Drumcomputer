@@ -96,7 +96,7 @@ const describeFilters = (filters: BrowserFilters): string => {
   return parts.join(', ')
 }
 
-const mapLibraryItemToResult = (item: LibraryItem): BrowserResultItem => ({
+const mapLibraryItemToResult = (item: LibraryItem, isFavorite: boolean): BrowserResultItem => ({
   id: item.id,
   title: item.name,
   ...(item.tags && item.tags.length > 0 ? { subtitle: item.tags.join(', '), tags: item.tags } : {}),
@@ -108,7 +108,7 @@ const mapLibraryItemToResult = (item: LibraryItem): BrowserResultItem => ({
   ...(item.bank ? { bank: item.bank } : {}),
   ...(item.subBank ? { subBank: item.subBank } : {}),
   ...(item.character ? { character: item.character } : {}),
-  ...(item.favorites ? { favorites: item.favorites } : {})
+  ...(isFavorite ? { favorites: true } : {})
 })
 
 const mapRecentType = (extension?: string): RecentFileEntry['type'] => {
@@ -137,11 +137,11 @@ export const useBrowserStore = defineStore('browser', {
     availableCategories: [] as string[],
     availableProducts: [] as string[],
     availableBanks: [] as string[],
-    recentFiles: [] as RecentFileEntry[]
+    recentEntries: [] as RecentFileEntry[]
   }),
   getters: {
     recentFiles(state): RecentFileEntry[] {
-      return state.recentFiles
+      return state.recentEntries
     }
   },
   actions: {
@@ -159,8 +159,11 @@ export const useBrowserStore = defineStore('browser', {
     },
     async search() {
       const repo = getLibraryRepository()
-      const results = await repo.search(this.library.query ?? '', this.filters)
-      const mapped = results.map(mapLibraryItemToResult)
+      const favorites = await repo.getFavorites()
+      const favoriteIds = new Set(favorites.map((item) => item.id))
+      const results =
+        this.filters.favorites === true ? favorites : await repo.search(this.library.query ?? '', this.filters)
+      const mapped = results.map((item) => mapLibraryItemToResult(item, favoriteIds.has(item.id)))
       this.availableCategories = uniqueNonEmpty(mapped.map((item) => item.category))
       this.availableProducts = uniqueNonEmpty(mapped.map((item) => item.product))
       this.availableBanks = uniqueNonEmpty(mapped.map((item) => item.bank))
@@ -249,7 +252,7 @@ export const useBrowserStore = defineStore('browser', {
     loadRecentFiles() {
       const recent = useRecentFiles()
       const entries = recent.getRecent()
-      this.recentFiles = entries
+      this.recentEntries = entries
       this.library.results = entries.map((entry) => ({
         id: entry.id,
         title: entry.name,
@@ -261,6 +264,16 @@ export const useBrowserStore = defineStore('browser', {
       if (!this.library.selectedId) return
       const repo = getLibraryRepository()
       await repo.addTag(this.library.selectedId, tag)
+      await this.search()
+    },
+    async toggleFavorite(itemId: string) {
+      const repo = getLibraryRepository()
+      const isFavorite = await repo.isFavorite(itemId)
+      if (isFavorite) {
+        await repo.removeFromFavorites(itemId)
+      } else {
+        await repo.addToFavorites(itemId)
+      }
       await this.search()
     },
     async removeTag(tag: string) {
@@ -330,13 +343,15 @@ export const useBrowserStore = defineStore('browser', {
         }
       ]
       const rightItems: DisplayListItem[] = this.library.results.map((result) => {
+        const subtitle = result.subtitle
+        const decoratedSubtitle = result.favorites ? `${subtitle ? `${subtitle} ` : ''}★` : subtitle
         const entry: DisplayListItem = {
           title: result.title,
           active: result.id === this.library.selectedId,
           value: result.id
         }
-        if (result.subtitle) {
-          entry.subtitle = result.subtitle
+        if (decoratedSubtitle) {
+          entry.subtitle = decoratedSubtitle
         }
         return entry
       })
