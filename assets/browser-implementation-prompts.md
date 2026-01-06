@@ -4,6 +4,14 @@ Diese Datei enthält detaillierte Prompts für die schrittweise Implementierung 
 
 ---
 
+## Globale Korrekturen (für alle Prompts)
+
+- Store-/Component-Style beibehalten: keine Migration Options ↔ Setup, bestehendes Pinia-Muster nutzen.
+- SSR-/Nuxt4-Sicherheit: keine `window`/`localStorage`/`AudioContext` Zugriffe beim Import; client-only Code nur in `.client.ts` oder hinter `import.meta.client`/`process.client`/`typeof window !== 'undefined'`.
+- Keine UI-Erweiterungen: keine neuen Buttons/Soft-Buttons/Template-Änderungen. Nur verdrahten, wenn ein passender Trigger bereits existiert.
+- Keine Breaking Changes: neue Interface-Methoden optional oder via Extension-Interface; alle Implementierungen/Mocks konsistent halten.
+- Tests im vorhandenen Stil (Vitest/Mocha/Chai) belassen; keine neuen Runner/Helper einführen.
+
 ## Phase 1: Kern-Navigation
 
 ### Prompt 1.1: 4-D-Encoder Composable
@@ -39,6 +47,7 @@ Diese Datei enthält detaillierte Prompts für die schrittweise Implementierung 
    - Testen der Wert-Änderung
    - Testen der Modi-Wechsel
    - Testen der Press-Aktion
+7. API ergänzen: `setFields(fields: EncoderField[])`, optional `setMode(mode)`, State als refs (`mode`, `activeFieldIndex`, `activeListIndex`, `fields`)
 
 **Constraints:**
 - TypeScript strict mode
@@ -65,13 +74,14 @@ Diese Datei enthält detaillierte Prompts für die schrittweise Implementierung 
    availableBanks: string[]
    ```
 4. Implementiere Actions:
-   - `setFilter(key: keyof BrowserFilters, value: any)`: Setzt einzelnen Filter
+   - `setFilter<K extends keyof BrowserFilters>(key: K, value: BrowserFilters[K])`: Setzt einzelnen Filter (typ-sicher)
    - `clearFilters()`: Setzt alle Filter zurück
    - `applyFilters()`: Wendet Filter auf Suchergebnisse an
    - `getAvailableOptions(filterKey: string)`: Gibt verfügbare Optionen für Filter zurück
    - `getEncoderFields()`: Konvertiert aktuelle Filter zu EncoderField[] für 4D-Encoder
 5. Erweitere `search()` Action um Filter-Anwendung
 6. Aktualisiere `toDisplayModels()` um aktive Filter anzuzeigen
+   - Nur erweitern, falls bestehende Anzeige-Slots dies bereits unterstützen (keine neuen UI-Elemente)
 7. Erweitere bestehende Tests in `tests/unitTests/browserStore.spec.ts`:
    - Testen der Filter-Anwendung
    - Testen der Filter-Kombination (z.B. fileType + category)
@@ -91,6 +101,8 @@ Diese Datei enthält detaillierte Prompts für die schrittweise Implementierung 
 - Keine Breaking Changes an bestehenden Methods
 - Backward-kompatibel mit existierendem Code
 - Bestehende Tests müssen weiterhin grün bleiben
+- Client-only Persistence (localStorage) nur hinter Guard `import.meta.client`.
+- `applyFilters()` darf das Verhalten unverändert lassen, wenn keine Filter gesetzt sind.
 
 **Erfolg:** Erweiterte Filter funktionieren, getEncoderFields() liefert korrekte Daten, alle Tests grün.
 
@@ -105,7 +117,7 @@ Diese Datei enthält detaillierte Prompts für die schrittweise Implementierung 
 2. Importiere `use4DEncoder` aus `composables/use4DEncoder.ts`
 3. Füge zum State hinzu:
    ```typescript
-   encoder4D: ReturnType<typeof use4DEncoder> | null
+   encoder4D: ReturnType<typeof use4DEncoder> | null // mit markRaw/shallowRef setzen, keine SSR-Leaks
    ```
 4. Erweitere `setMode()` Action:
    - Bei Wechsel zu BROWSER oder FILE Mode:
@@ -131,6 +143,7 @@ Diese Datei enthält detaillierte Prompts für die schrittweise Implementierung 
 - Encoder nur für BROWSER/FILE Modi aktiv
 - Andere Modi (CHANNEL, PLUGIN, etc.) unverändert
 - DrumMachine.vue bleibt unverändert
+- Keine neuen Soft-Buttons hinzufügen; nur vorhandene Trigger verdrahten.
 
 **Erfolg:** 4D-Encoder funktioniert im Browser-Mode, Filter werden korrekt gesetzt, Tests grün.
 
@@ -162,6 +175,7 @@ Diese Datei enthält detaillierte Prompts für die schrittweise Implementierung 
 7. Erweitere `getFileSystemRepository()`:
    - Wenn File System Access API verfügbar → BrowserFileSystemRepository
    - Sonst → existierendes Memory-FS (Fallback)
+   - Neue Methoden optional halten oder über Extension-Interface abbilden, damit bestehende Implementierungen nicht brechen.
 8. Schreibe Tests in `tests/unitTests/fileSystemRepository.spec.ts`:
    - Mock `showDirectoryPicker()`
    - Testen der Directory-Listing
@@ -172,9 +186,10 @@ Diese Datei enthält detaillierte Prompts für die schrittweise Implementierung 
 - Permission muss von User explizit erteilt werden
 - Handle nur während aktiver Session gültig
 - Bei Permission-Denial: Graceful Fallback
+- Client-only Guards (`import.meta.client`) für Browser-APIs; Window narrowing lokal lösen.
 
 **Constraints:**
-- Interface `FileSystemRepository` nicht ändern (nur erweitern)
+- Keine Breaking Changes: neue Methoden optional oder via Extension-Interface; alle Mocks/Typen anpassen.
 - Bestehende Memory-FS-Tests bleiben grün
 
 **Erfolg:** Echtes Dateisystem zugänglich (wenn User erlaubt), Fallback funktioniert, Tests grün.
@@ -223,15 +238,15 @@ Diese Datei enthält detaillierte Prompts für die schrittweise Implementierung 
    - Unsupported format → Skip, in errors[] sammeln
    - Read error → Skip, in errors[] sammeln
    - Am Ende: Wenn errors.length > 0, logge Warnung
-7. Schreibe Tests in `tests/unitTests/libraryImport.spec.ts`:
+7. Neue Methode optional halten oder via Extended-Interface; alle Implementierungen/Mocks anpassen.
+8. Schreibe Tests in `tests/unitTests/libraryImport.spec.ts`:
    - Testen des Progress-Callbacks
    - Testen der Metadaten-Extraktion
    - Testen der rekursiven Import
    - Testen der Fehlerbehandlung
 
 **Performance:**
-- Batch-Import (max 10 Files gleichzeitig)
-- Debounce Progress-Updates (max alle 100ms)
+- Stabiler Start: sequentiell importieren; optionale Parallelisierung/Debounce erst nach erfolgreichem Grundlauf.
 
 **Erfolg:** Directory-Import funktioniert, Progress wird gemeldet, Metadaten extrahiert, Tests grün.
 
@@ -276,7 +291,7 @@ Diese Datei enthält detaillierte Prompts für die schrittweise Implementierung 
    - Testen der localStorage-Persistence
 
 **Constraints:**
-- Client-only (localStorage nur im Browser)
+- Client-only (localStorage nur im Browser, Guard `import.meta.client`; in SSR `getRecent()` => [])
 - Graceful Degradation wenn localStorage voll
 
 **Erfolg:** Recent Files werden getrackt, in Browser-Store verfügbar, Tests grün.
@@ -310,8 +325,8 @@ Diese Datei enthält detaillierte Prompts für die schrittweise Implementierung 
    - Erweitere `search()`: Wenn `filters.favorites === true`, nur Favoriten zurückgeben
    - Update `toDisplayModels()`: Zeige Stern-Symbol bei Favoriten (in subtitle)
 5. Füge zu Control-Store Browser-Page hinzu:
-   - Soft-Button "Favorites": Toggle Favorites-Filter
-   - Button highlighted wenn aktiv
+   - Falls bereits vorhanden: Soft-Button "Favorites" Toggle verdrahten
+   - Kein neuer Button hinzufügen
 6. Schreibe Tests in `tests/unitTests/favorites.spec.ts`:
    - Testen von Add/Remove
    - Testen von Toggle
@@ -320,7 +335,7 @@ Diese Datei enthält detaillierte Prompts für die schrittweise Implementierung 
 
 **UI-Integration (ohne Änderungen):**
 - Subtitle-Format: `"{tags} ★"` für Favoriten
-- Soft-Button wird via `enabled` Property highlighted
+- Soft-Button nur nutzen, wenn vorhanden
 
 **Erfolg:** Favorites funktionieren, Filter anwendbar, Tests grün.
 
@@ -379,7 +394,7 @@ Diese Datei enthält detaillierte Prompts für die schrittweise Implementierung 
 
 **Constraints:**
 - Client-only (.client.ts Suffix)
-- Nutze bestehenden AudioContext (inject)
+- Nutze bestehenden AudioContext (wie im Projekt bereitgestellt), keine neuen Provider
 - Cleanup bei Component-Unmount
 
 **Erfolg:** Preview funktioniert, Audio wird abgespielt, Tests grün.
@@ -407,7 +422,7 @@ Diese Datei enthält detaillierte Prompts für die schrittweise Implementierung 
    - `date-desc`: Sortiere nach importedAt/timestamp absteigend (neueste zuerst)
    - `relevance`: Originale Reihenfolge (von search())
 6. Integriere in FILE Mode:
-   - Soft-Button "Sort" öffnet Sort-Menü (simuliert via Encoder-Field)
+   - Nur verdrahten, falls bereits ein passender Soft-Button existiert
    - Encoder-Field "Sort": Options: ["Name ↑", "Name ↓", "Date ↑", "Date ↓"]
 7. Update Display:
    - Zeige aktuellen Sort-Mode in subtitle (z.B. "Sorted by Name ↑")
@@ -463,13 +478,16 @@ Diese Datei enthält detaillierte Prompts für die schrittweise Implementierung 
    - In `importSelected()`: Rufe `quickBrowse.recordBrowse()` auf
    - Neue Action `openQuickBrowse(contextId: string)`: Lädt letzte Suche für Context
 7. Integriere in `stores/control.ts`:
-   - Neuer Soft-Button "Quick Browse" in Browser-Page (Shift+Search?)
+   - Nur verdrahten, wenn ein passender Trigger bereits existiert; keine neuen Buttons
    - Bei Trigger: Rufe `browser.openQuickBrowse(currentPadId)` auf
 8. Schreibe Tests in `tests/unitTests/quickBrowse.spec.ts`:
    - Testen der History-Aufzeichnung
    - Testen von getLastBrowse()
    - Testen von restoreBrowse()
    - Testen der Context-Gruppierung
+
+**Constraints:**
+- Client-only Persistence (localStorage) nur hinter Guard `import.meta.client`.
 
 **Context-ID-Schema:**
 - Pads: `pad-{index}` (z.B. "pad-0")
@@ -509,12 +527,12 @@ Diese Datei enthält detaillierte Prompts für die schrittweise Implementierung 
      - Press fügt Tag hinzu/entfernt Tag
      - Tilt right schließt Dialog
 6. Update Display-Models:
-   - Wenn Tag-Dialog offen: Overlay-View
+   - Wenn Tag-Dialog offen und Renderer unterstützt Overlay: Overlay-View
    - Linkes Display: "Add Tag" + verfügbare Tags (mit Checkbox wenn bereits zugewiesen)
    - Rechtes Display: Aktuelle Tags des Items (mit Remove-Option)
 7. Integriere in Control-Store:
-   - Soft-Button "Tag": Öffnet Tag-Dialog für selektiertes Item
-   - In Tag-Dialog: Button "Close" schließt Dialog
+   - Nur verdrahten, wenn ein Soft-Button "Tag" bereits existiert
+   - In Tag-Dialog: Button "Close" schließt Dialog (nur wenn vorhanden)
 8. Schreibe Tests in `tests/unitTests/tagManagement.spec.ts`:
    - Testen der Tag-Dialog-Öffnung
    - Testen von Add/Remove Tag
@@ -578,6 +596,7 @@ Diese Datei enthält detaillierte Prompts für die schrittweise Implementierung 
    - Testen der Hierarchie-Queries
    - Testen der Filter-Kaskade (Category → Product → Bank)
    - Testen der Metadaten-Extraktion aus Pfaden
+   - Neue Repo-Methoden optional oder via Extension-Interface; alle Implementierungen/Mocks anpassen.
 
 **Pfad-Schema:**
 ```
@@ -644,6 +663,8 @@ Diese Datei enthält detaillierte Prompts für die schrittweise Implementierung 
 6. Schreibe Performance-Tests
 
 **Erfolg:** Browser bleibt flüssig bei 10.000+ Items.
+
+> Hinweis: Bonus-Prompts (Missing Samples, Performance) beinhalten UI/Infra-Änderungen und sind nur auszuführen, wenn UI-Änderungen explizit erlaubt werden.
 
 ---
 
