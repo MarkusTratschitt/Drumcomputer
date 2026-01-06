@@ -1,3 +1,5 @@
+import { getFileSystemRepository } from './fileSystemRepository'
+
 export type LibraryItem = {
   id: string
   name: string
@@ -11,10 +13,18 @@ export type LibraryItem = {
   bank?: string
   subBank?: string
   character?: string
+  vendor?: string
   favorites?: boolean
 }
 
 export type LibrarySearchFilters = Record<string, string | string[] | boolean | undefined>
+
+export interface ImportProgress {
+  total: number
+  completed: number
+  current: string
+  errors: string[]
+}
 
 export interface LibraryRepository {
   search(query: string, filters?: LibrarySearchFilters): Promise<LibraryItem[]>
@@ -24,11 +34,35 @@ export interface LibraryRepository {
   removeTag(itemId: string, tag: string): Promise<string[]>
   importFile(path: string, meta?: Partial<LibraryItem>): Promise<LibraryItem>
   refreshIndex(): Promise<void>
+  importDirectory?(
+    path: string,
+    options?: { recursive?: boolean },
+    onProgress?: (progress: ImportProgress) => void
+  ): Promise<void>
 }
 
 const STORAGE_KEY = 'drumcomputer_library_items_v1'
 
 const normalizeTag = (value: string): string => value.trim().toLowerCase()
+const supportedExtensions = new Set(['wav', 'wave', 'mp3', 'aiff', 'aif', 'flac', 'ogg'])
+
+const getExtension = (path: string): string => {
+  const name = path.split('/').pop() ?? ''
+  const parts = name.split('.')
+  if (parts.length < 2) return ''
+  return (parts.pop() ?? '').toLowerCase()
+}
+
+const extractMetadataFromPath = (path: string): Partial<LibraryItem> => {
+  const parts = path.split('/').filter(Boolean)
+  return {
+    category: parts[0],
+    product: parts[1],
+    bank: parts[2],
+    subBank: parts[3],
+    vendor: 'user'
+  }
+}
 
 const createLocalRepository = (): LibraryRepository => {
   let items: LibraryItem[] = loadPersisted()
@@ -118,6 +152,52 @@ const createLocalRepository = (): LibraryRepository => {
     },
     async refreshIndex() {
       items = loadPersisted()
+    },
+    async importDirectory(path: string, options, onProgress) {
+      const repo = getFileSystemRepository()
+      const recursive = options?.recursive ?? false
+      const errors: string[] = []
+      const filesToImport: string[] = []
+
+      const collectFiles = async (dirPath: string) => {
+        try {
+          const listing = await repo.listDir(dirPath)
+          for (const file of listing.files) {
+            const extension = getExtension(file.path)
+            if (!supportedExtensions.has(extension)) {
+              errors.push(file.path)
+              continue
+            }
+            filesToImport.push(file.path)
+          }
+          if (recursive) {
+            for (const dir of listing.dirs) {
+              await collectFiles(dir.path)
+            }
+          }
+        } catch {
+          errors.push(dirPath)
+        }
+      }
+
+      await collectFiles(path)
+
+      const total = filesToImport.length
+      let completed = 0
+      for (const filePath of filesToImport) {
+        try {
+          const meta = extractMetadataFromPath(filePath)
+          await this.importFile(filePath, meta)
+        } catch {
+          errors.push(filePath)
+        }
+        completed += 1
+        onProgress?.({ total, completed, current: filePath, errors: [...errors] })
+      }
+
+      if (errors.length > 0) {
+        console.warn('Import completed with errors', errors)
+      }
     }
   }
 }
