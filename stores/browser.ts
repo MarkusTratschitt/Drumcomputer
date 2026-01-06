@@ -4,6 +4,7 @@ import { getFileSystemRepository, type DirectoryListing } from '../services/file
 import { getLibraryRepository, type LibraryItem } from '../services/libraryRepository'
 import { useRecentFiles, type RecentFileEntry } from '../composables/useRecentFiles'
 import { useSamplePreview, type PreviewState } from '../composables/useSamplePreview.client'
+import { useQuickBrowse, type BrowseHistoryEntry } from '../composables/useQuickBrowse'
 import type { EncoderField } from '../composables/use4DEncoder'
 import type { BrowserMode, BrowserResultItem, BrowserFileEntry } from '../types/library'
 
@@ -426,7 +427,7 @@ export const useBrowserStore = defineStore('browser', {
     selectPath(path: string | null) {
       this.files.selectedPath = path
     },
-    async importSelected() {
+    async importSelected(context?: { contextId?: string; contextType?: BrowseHistoryEntry['contextType'] }) {
       if (!this.files.selectedPath) return
       const fileRepo = getFileSystemRepository()
       const recent = useRecentFiles()
@@ -439,9 +440,25 @@ export const useBrowserStore = defineStore('browser', {
         name: meta.name,
         type: mapRecentType(meta.extension)
       })
+      const quickBrowse = useQuickBrowse()
+      quickBrowse.recordBrowse({
+        mode: this.mode,
+        query: this.library.query,
+        filters: this.filters,
+        selectedId: this.library.selectedId,
+        contextType: context?.contextType ?? 'sample',
+        contextId: context?.contextId ?? 'global'
+      })
       this.loadRecentFiles()
       await repo.refreshIndex()
       await this.search()
+    },
+    openQuickBrowse(contextId: string) {
+      const quickBrowse = useQuickBrowse()
+      const entry = quickBrowse.getLastBrowse(contextId)
+      if (entry) {
+        quickBrowse.restoreBrowse(entry)
+      }
     },
     async prehearSelected() {
       const preview = this.ensurePreview()
