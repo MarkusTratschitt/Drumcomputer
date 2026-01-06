@@ -1,0 +1,77 @@
+{
+  "phases": [
+    {
+      "id": 1,
+      "title": "Analyse & Planung",
+      "description": "Analyse aller json-Dateien (uiList, functionsList, nimamk3) und Abgleich mit der aktuellen Codebasis. Identifikation aller fehlenden UI-Elemente, Funktionen und Hardware-Workflows. Erstellung einer vollständigen Feature- und Task-Liste.",
+      "criteria": [
+        "Alle Anforderungen und Lücken sind dokumentiert",
+        "Abgleich mit Hardware-Workflows und Interaktionsmodellen"
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Architektur & Clean Code Setup",
+      "description": "Definition und Dokumentation der Architektur, Clean Code-Prinzipien, Performance-Standards und Nuxt 4-spezifischen Patterns (Options API, Pug, Less). Ergänzung/Anpassung der Diagramme im diagrams-Ordner.",
+      "criteria": [
+        "README.md enthält Architektur- und Clean Code-Richtlinien",
+        "Diagramme sind aktuell und vollständig"
+      ]
+    },
+    {
+      "id": 3,
+      "title": "UI/UX & Interaktions-Implementierung",
+      "description": "Schrittweise Implementierung aller fehlenden UI-Elemente und Interaktionsmodelle gemäß uiList.json und Hardware-Workflows. Fokus auf Performance, Accessibility und Options API. Jede Komponente erhält Pug/Less-Templates und ist in Nuxt 4 eingebunden.",
+      "criteria": [
+        "Alle UI-Elemente und Panels sind funktionsfähig",
+        "Accessibility und Fokussteuerung umgesetzt"
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Funktionale Logik & Audio/MIDI",
+      "description": "Implementierung aller fehlenden Funktionen aus functionsList.json und nimamk3.json (Transport, Pattern, Erase, Undo/Redo, MIDI, LED-Feedback etc.). Performance-Optimierung und deterministische Exporte. Erweiterung/Anpassung der Stores und Composables.",
+      "criteria": [
+        "Alle Funktionen sind testbar und performant",
+        "Audio/MIDI-Engine vollständig integriert"
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Testing, QA & Use Cases",
+      "description": "Komponententests, Unittests und End-to-End-Tests für alle neuen Features. Ergänzung der README.md um alle relevanten Use Cases. Testabdeckung und Performance werden dokumentiert.",
+      "criteria": [
+        "Tests für alle neuen Features vorhanden",
+        "README.md enthält alle Use Cases"
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Finalisierung & Review",
+      "description": "Abschluss aller Tasks im Feature-Branch. Review mit Repository-Inhaber vor Merge. Kein Merge ohne explizite Freigabe. Abschlussdokumentation und Übergabe.",
+      "criteria": [
+        "Alle Phasen abgeschlossen und dokumentiert",
+        "Review und Freigabe durch Inhaber"
+      ]
+    }
+  ],
+  "branching": {
+    "feature_branch_only": true,
+    "merge_policy": "Kein Merge ohne Rücksprache mit dem Inhaber des Repositories."
+  },
+  "documentation": {
+    "readme": "Jede Phase und alle neuen Use Cases werden in der README.md dokumentiert.",
+    "diagrams": "Alle relevanten Diagramme im diagrams-Ordner werden ergänzt/aktualisiert."
+  },
+  "tech_stack": {
+    "framework": "Nuxt 4",
+    "ui": "Vue 3 Options API, Pug, Less, Vuetify 3",
+    "audio": "Web Audio API, Web MIDI API",
+    "persistence": "IndexedDB, LocalStorage",
+    "testing": "Vitest, Vue Test Utils"
+  },
+  "quality": {
+    "performance": "Alle Komponenten und Funktionen werden auf Performance optimiert.",
+    "clean_code": "Strikte Einhaltung von Clean Code und Architekturprinzipien."
+  }
+}

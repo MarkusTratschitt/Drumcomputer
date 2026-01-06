@@ -36,3 +36,22 @@ sequenceDiagram
     Transport->>Scheduler: clear()
     Transport-->>Subs: emit stopped
 ```
+
+## MK3 transport mapping (placeholders + hover hints)
+
+```mermaid
+stateDiagram-v2
+    [*] --> Stopped
+    Stopped --> Playing: Play ▶
+    Playing --> Stopped: Play/Stop ■
+    Stopped --> CountingIn: Shift+Rec (Count-In ♩)
+    CountingIn --> Recording: Count-in done
+    Playing --> Recording: Rec ●
+    Recording --> Playing: Rec ● (toggle)
+    Stopped --> Stopped: Stop ■ (reset playhead)
+    Playing --> Stopped: Stop ■ (reset)
+    Playing --> Playing: Restart ↻ (jump to step 0)
+```
+
+- Transport cluster placeholder should expose hover hints for primary + shift: Play ▶ (toggle), Stop ■ (press twice = reset), Rec ● (hold = Pattern Preset length), Restart ↻ (shift+stop), Tap ☼, Loop ⟳, Metronome ♬, Count-In ♩, Follow ⇥.
+- Ensure the transport row stays within the left column and never forces a page scroll; stack controls into two compact rows with icons + labels so it fits under the dual displays.

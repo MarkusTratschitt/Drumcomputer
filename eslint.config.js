@@ -6,45 +6,62 @@ import vueParser from 'vue-eslint-parser'
 import globals from 'globals'
 
 export default [{
-    ignores: ['node_modules', '.nuxt', '.output', 'dist', 'coverage']
+    ignores: ['node_modules', '.nuxt', '.output', 'dist', 'coverage'],
   },
+
+  // Main config for JS/TS/Vue
   {
     files: ['**/*.{ts,tsx,js,jsx,vue}'],
     languageOptions: {
       parser: vueParser,
       parserOptions: {
-        parser: tsParser,
+        parser: tsParser, // use TS parser for <script> blocks and TS files
         ecmaVersion: 'latest',
         sourceType: 'module',
-        extraFileExtensions: ['.vue']
+        extraFileExtensions: ['.vue'],
       },
       globals: {
         ...globals.browser,
         ...globals.es2021,
         ...globals.node,
-        defineNuxtPlugin: 'readonly'
-      }
+        defineNuxtPlugin: 'readonly',
+      },
     },
     plugins: {
       '@typescript-eslint': tseslint,
-      vue
+      vue,
     },
     rules: {
       ...js.configs.recommended.rules,
       ...tseslint.configs.recommended.rules,
       ...vue.configs['vue3-recommended'].rules,
+
       '@typescript-eslint/no-explicit-any': 'error',
-      '@typescript-eslint/no-empty-object-type': 'off'
+      '@typescript-eslint/no-empty-object-type': 'off',
+
+      // ✅ Fix: TS types are not runtime globals → disable core no-undef
+      'no-undef': 'off',
+
+      // ✅ Fix: avoid duplicate unused-vars; use TS rule and allow leading underscores
+      'no-unused-vars': 'off',
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+        },
+      ],
     },
   },
 
-  // 🔹 ✅ Tests (Mocha)
+  // Tests (Mocha)
   {
-    files: ['**/*.spec.ts', '**/*.d.ts'],
+    files: ['**/*.spec.{ts,tsx,js,jsx}'],
     languageOptions: {
       globals: {
-        ...globals.mocha
-      }
-    }
-  }
+        ...globals.mocha,
+      },
+    },
+  },
 ]

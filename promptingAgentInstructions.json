@@ -1,0 +1,88 @@
+{
+  "branch": "featureImplementation",
+  "merge_policy": "Merge in master nur nach expliziter Freigabe durch den Inhaber.",
+  "phasen": [
+    {
+      "missing_functions": [
+        "Play/Stop Toggle (Transport)",
+        "Stop + Reset Playhead (Transport)",
+        "Record Toggle und Count-In (Transport)",
+        "Pattern Preset Mode (Pattern-Länge vor Aufnahme)",
+        "Restart Loop Range (Transport)",
+        "Loop On/Off und Loop-Range-Verschiebung/Endpunkt-Anpassung",
+        "Tap Tempo (Transport)",
+        "Metronom Toggle",
+        "Follow Toggle (Display folgt Playhead)",
+        "Grid Mode (Perform/Arrange/Step/Nudge Grid)",
+        "Live-Erase (Events während Playback löschen)",
+        "Erase All Events for Pad (Shortcut)",
+        "Erase Automation for Parameter",
+        "Remove Sound/Group Slot (Reset)",
+        "Channel Properties (Control Mode)",
+        "MIDI Mode Umschaltung (SHIFT + CHANNEL)",
+        "Pad/Group-LED-Feedback (Farben, Choke, Create)",
+        "Soft Button/Knob Kontextsteuerung (Overlays, Selector-Listen)",
+        "Mode-Pinning und Shift-Layer-Handling (UI/Logik)",
+        "Undo/Redo-Logik für Pattern/Scene-Edits (History)"
+      ],
+      "hardware_functions": [
+        "Pad Input: Note On/Off, Velocity, Aftertouch, RGB-Feedback je nach Modus (Mute/Solo/Pattern/Slot)",
+        "Pad Mode: Umschalten zwischen SCENE, PATTERN, PAD MODE, KEYBOARD, CHORD, STEP, ARRANGE, DUPLICATE",
+        "Group Select: 2x4 Buttons, Farbkodiert, Create-Button (dim white)",
+        "Transport: RESTART, ERASE, TAP, FOLLOW, PLAY, REC, STOP, SHIFT, mit Status-Feedback",
+        "Performance: Note Repeat, Lock, Strip Mode, Smart Strip (Touch/Slide, LED-Bar, Strip Mode)",
+        "Edit Zone: 4D-Encoder (tilt, push, turn), Quick Edit (VOLUME, SWING, TEMPO)",
+        "Screen Buttons: Soft Buttons 1–8, kontextabhängige Funktion",
+        "Screen Knobs: 8 Touch-Knobs, Touch blendet Werteliste ein, Push für Reset",
+        "Displays: 2x, dynamische Overlays, Kontext-Feedback, Selector-Listen",
+        "Control Zone: CHANNEL, PLUG-IN, ARRANGER, MIXER, BROWSER, SAMPLING, PATTERN, SCENE, PAD MODE, EVENTS, VARIATION, DUPLICATE",
+        "Pad Input Mode: FIXED VEL, PAD MODE, KEYBOARD, CHORD, STEP",
+        "Global: Shift-Layer, Mode-Pinning, Undo/Redo, Kontext-Feedback, LED-Feedback, Overlay-Icons"
+      ],
+      "interaction_models": [
+        "press: Kurzer Tastendruck (z.B. Pad, Button)",
+        "press_twice: Doppelklick (z.B. Stop)",
+        "hold: Gedrückt halten (Momentary)",
+        "hold_combo: Gedrückt halten + weiteres Element",
+        "shift_combo: SHIFT + Element",
+        "turn: Drehen (Knob, Encoder)",
+        "touch: Berühren (Touch-Knob, Strip)",
+        "slide: Fingerbewegung über Touch-Strip",
+        "push_turn: Encoder drücken + drehen",
+        "tilt: 4D-Encoder Richtung",
+        "confirm: Auswahl bestätigen (Encoder drücken)"
+      ],
+      "feedback_mechanisms": [
+        "Pad RGB: Status je nach Modus (Mute/Solo/Pattern/Slot)",
+        "Button LED: off/dim/bright/pinned",
+        "Group Button: Farbkodiert, dim white für Create",
+        "Soft Button/Knob: Overlay/Label im Display",
+        "Selector-Listen: Overlay bei Touch auf Knob",
+        "Touch Strip: LED-Bar, haptisches Feedback",
+        "4D-Encoder: LED-Ring für Richtungen, Push-Feedback"
+      ],
+      "roadmap": [
+        "1. Transport- und Playback-Funktionen vollständig implementieren",
+        "2. Pattern/Scene-Chain- und Preset-Mode-Logik entwickeln",
+        "3. Loop- und Grid-Handling (inkl. Endpunkt/Range) umsetzen",
+        "4. Erase- und Automation-Funktionen ergänzen",
+        "5. Channel-Properties- und MIDI-Mode-Logik bereitstellen",
+        "6. Pad/Group-LED-Feedback und Soft-Button/Knob-Kontextsteuerung integrieren",
+        "7. Mode-Pinning, Shift-Layer-Handling und Undo/Redo-Logik finalisieren"
+      ]
+    }
+  ],
+  "dokumentation": {
+    "readme": "Jede Phase und alle neuen Use Cases werden in der README.md dokumentiert.",
+    "diagrams": "Alle relevanten Diagramme im diagrams-Ordner werden ergänzt/aktualisiert."
+  },
+  "qualitaet": {
+    "performance": "Alle Komponenten und Funktionen werden auf Performance optimiert.",
+    "clean_code": "Strikte Einhaltung von Clean Code und Architekturprinzipien."
+  },
+  "hinweise": [
+    "Es darf ausschließlich im Branch 'featureImplementation' gearbeitet werden.",
+    "Der Merge in den master-Branch erfolgt nur nach expliziter Freigabe durch den Inhaber.",
+    "Alle Aufgaben sind so zu dokumentieren, dass ein Eingreifen des Inhabers erst zum Merge erforderlich ist."
+  ]
+}

@@ -1,32 +1,444 @@
 <template>
-  <div class="device-hardware">
-    <div class="device-control">
-      <div class="device-transport">
-        <slot name="transport" :props="transportSlotProps" />
-      </div>
-  
-      <div class="device-fx">
-        <slot name="drawer" :props="drawerSlotProps" />
-      </div>
-    </div>
-  
-    <!-- PADS (rechts) -->
-    <div class="device-pads">
-      <div class="pads-square">
-        <slot name="pads" :props="padsSlotProps" />
-      </div>
-  
-      <div class="pad-grid-indicator">
-        <span
-          v-for="i in gridCount"
-          :key="i"
-          :class="['indicator-dot', { active: currentGridIndex === i - 1 }]"
-          :aria-label="`Pad Bank ${i}`"
-        />
-      </div>
+    <div class="hardware-stage">
+      <div class="device-hardware" aria-label="Maschine MK3 layout placeholder">
+        <div class="top-row">
+          <div class="control-stack">
+            <div class="control-area">
+              <div class="control-fixed" aria-label="Fixed control buttons">
+                <div class="control-btn-grid" aria-label="Control buttons">
+                  <button
+                    class="control-btn r1 c1"
+                    type="button"
+                    :class="{ active: isActiveMode('CHANNEL') }"
+                    :title="modeTooltip('CHANNEL', 'CHANNEL', 'MIDI')"
+                    :aria-label="modeTooltip('CHANNEL', 'CHANNEL', 'MIDI')"
+                    @click="handleModePress('CHANNEL', 'CHANNEL_MIDI')"
+                  >
+                    <span class="control-btn__main">CHANNEL</span>
+                    <span class="control-btn__sub">MIDI</span>
+                  </button>
+
+                  <button
+                    class="control-btn r1 c2"
+                    type="button"
+                    :class="{ active: isActiveMode('PLUGIN') }"
+                    :title="modeTooltip('PLUGIN', 'PLUG-IN', 'Instance')"
+                    :aria-label="modeTooltip('PLUGIN', 'PLUG-IN', 'Instance')"
+                    @click="handleModePress('PLUGIN', 'PLUGIN_INSTANCE')"
+                  >
+                    <span class="control-btn__main">PLUG-IN</span>
+                    <span class="control-btn__sub">Instance</span>
+                  </button>
+
+                  <button
+                    class="control-btn r2 c1"
+                    type="button"
+                    :class="{ active: isActiveMode('ARRANGER') }"
+                    :title="modeTooltip('ARRANGER', 'ARRANGER')"
+                    :aria-label="modeTooltip('ARRANGER', 'ARRANGER')"
+                    @click="handleModePress('ARRANGER')"
+                  >
+                    <span class="control-btn__main">ARRANGER</span>
+                  </button>
+
+                  <button
+                    class="control-btn r2 c2"
+                    type="button"
+                    :class="{ active: isActiveMode('MIXER') }"
+                    :title="modeTooltip('MIXER', 'MIXER')"
+                    :aria-label="modeTooltip('MIXER', 'MIXER')"
+                    @click="handleModePress('MIXER')"
+                  >
+                    <span class="control-btn__main">MIXER</span>
+                  </button>
+
+                  <button
+                    class="control-btn r3 c1"
+                    type="button"
+                    :class="{ active: isActiveMode('BROWSER') }"
+                    :title="modeTooltip('BROWSER', 'BROWSER', '+Plug-In')"
+                    :aria-label="modeTooltip('BROWSER', 'BROWSER', '+Plug-In')"
+                    @click="handleModePress('BROWSER', 'BROWSER_PLUGIN_MENU')"
+                  >
+                    <span class="control-btn__main">BROWSER</span>
+                    <span class="control-btn__sub">+Plug-In</span>
+                  </button>
+
+                  <button
+                    class="control-btn r3 c2"
+                    type="button"
+                    :class="{ active: isActiveMode('SAMPLING') }"
+                    :title="modeTooltip('SAMPLING', 'SAMPLING')"
+                    :aria-label="modeTooltip('SAMPLING', 'SAMPLING')"
+                    @click="handleModePress('SAMPLING')"
+                  >
+                    <span class="control-btn__main">SAMPLING</span>
+                  </button>
+
+                  <button
+                    class="control-btn control-btn--icon r4 c1"
+                    type="button"
+                    aria-label="Page backwards"
+                    :title="pageButtonTitle('prev')"
+                    @click="prevPage"
+                  >
+                    <span class="control-btn__main">◀</span>
+                  </button>
+
+                  <button
+                    class="control-btn control-btn--icon r4 c2"
+                    type="button"
+                    aria-label="Page forwards"
+                    :title="pageButtonTitle('next')"
+                    @click="nextPage"
+                  >
+                    <span class="control-btn__main">▶</span>
+                  </button>
+
+                  <button
+                    class="control-btn r5 c1"
+                    type="button"
+                    :class="{ active: isActiveMode('FILE') }"
+                    :title="modeTooltip('FILE', 'FILE', 'Save')"
+                    :aria-label="modeTooltip('FILE', 'FILE', 'Save')"
+                    @click="handleModePress('FILE', 'FILE_SAVE')"
+                  >
+                    <span class="control-btn__main">FILE</span>
+                    <span class="control-btn__sub">Save</span>
+                  </button>
+
+                  <button
+                    class="control-btn r5 c2"
+                    type="button"
+                    :class="{ active: isActiveMode('SETTINGS') }"
+                    :title="modeTooltip('SETTINGS', 'SETTINGS')"
+                    :aria-label="modeTooltip('SETTINGS', 'SETTINGS')"
+                    @click="handleModePress('SETTINGS')"
+                  >
+                    <span class="control-btn__main">SETTINGS</span>
+                  </button>
+
+                  <button
+                    class="control-btn r6 c1"
+                    type="button"
+                    :class="{ active: isActiveMode('AUTO') }"
+                    :title="modeTooltip('AUTO', 'AUTO')"
+                    :aria-label="modeTooltip('AUTO', 'AUTO')"
+                    @click="handleModePress('AUTO')"
+                  >
+                    <span class="control-btn__main">AUTO</span>
+                  </button>
+
+                  <button
+                    class="control-btn r6 c2"
+                    type="button"
+                    :class="{ active: isActiveMode('MACRO') }"
+                    :title="modeTooltip('MACRO', 'MACRO', 'Set')"
+                    :aria-label="modeTooltip('MACRO', 'MACRO', 'Set')"
+                    @click="handleModePress('MACRO', 'MACRO_SET')"
+                  >
+                    <span class="control-btn__main">MACRO</span>
+                    <span class="control-btn__sub">Set</span>
+                  </button>
+                </div>
+              </div>
+              <div class="control-core">
+                <div class="soft-row">
+                  <div class="soft-row-grid">
+                    <SoftButtonStrip
+                      :buttons="activeSoftButtons"
+                      :shift-held="shiftHeld"
+                      @press="pressSoftButton"
+                    />
+                  </div>
+                </div>
+                <div class="display-block">
+                  <div class="display-grid">
+                    <DualDisplay
+                      :left-model="leftDisplayModel"
+                      :right-model="rightDisplayModel"
+                      :mode-title="activeMode"
+                      :page-label="pageLabel"
+                      :param-slots-left="paramSlotsLeft"
+                      :param-slots-right="paramSlotsRight"
+                    />
+                  </div>
+                  <div class="display-param-labels" aria-hidden="true">
+                    <span class="param-label" :title="softLabels[0]">{{ softLabels[0] }}</span>
+                    <span class="param-label" :title="softLabels[1]">{{ softLabels[1] }}</span>
+                    <span class="param-label" :title="softLabels[2]">{{ softLabels[2] }}</span>
+                    <span class="param-label" :title="softLabels[3]">{{ softLabels[3] }}</span>
+                    <span class="param-label" :title="softLabels[4]">{{ softLabels[4] }}</span>
+                    <span class="param-label" :title="softLabels[5]">{{ softLabels[5] }}</span>
+                    <span class="param-label" :title="softLabels[6]">{{ softLabels[6] }}</span>
+                    <span class="param-label" :title="softLabels[7]">{{ softLabels[7] }}</span>
+                  </div>
+                </div>
+                <div class="knob-row" aria-label="8 encoders">
+                  <div
+                    class="knob"
+                    role="presentation"
+                    tabindex="0"
+                    :aria-label="`Encoder 1: ${getParamName(0)}`"
+                    @wheel.prevent="onKnobWheel(0, $event)"
+                    @keydown="onKnobKey(0, $event)"
+                  ></div>
+                  <div
+                    class="knob"
+                    role="presentation"
+                    tabindex="0"
+                    :aria-label="`Encoder 2: ${getParamName(1)}`"
+                    @wheel.prevent="onKnobWheel(1, $event)"
+                    @keydown="onKnobKey(1, $event)"
+                  ></div>
+                  <div
+                    class="knob"
+                    role="presentation"
+                    tabindex="0"
+                    :aria-label="`Encoder 3: ${getParamName(2)}`"
+                    @wheel.prevent="onKnobWheel(2, $event)"
+                    @keydown="onKnobKey(2, $event)"
+                  ></div>
+                  <div
+                    class="knob"
+                    role="presentation"
+                    tabindex="0"
+                    :aria-label="`Encoder 4: ${getParamName(3)}`"
+                    @wheel.prevent="onKnobWheel(3, $event)"
+                    @keydown="onKnobKey(3, $event)"
+                  ></div>
+                  <div
+                    class="knob"
+                    role="presentation"
+                    tabindex="0"
+                    :aria-label="`Encoder 5: ${getParamName(4)}`"
+                    @wheel.prevent="onKnobWheel(4, $event)"
+                    @keydown="onKnobKey(4, $event)"
+                  ></div>
+                  <div
+                    class="knob"
+                    role="presentation"
+                    tabindex="0"
+                    :aria-label="`Encoder 6: ${getParamName(5)}`"
+                    @wheel.prevent="onKnobWheel(5, $event)"
+                    @keydown="onKnobKey(5, $event)"
+                  ></div>
+                  <div
+                    class="knob"
+                    role="presentation"
+                    tabindex="0"
+                    :aria-label="`Encoder 7: ${getParamName(6)}`"
+                    @wheel.prevent="onKnobWheel(6, $event)"
+                    @keydown="onKnobKey(6, $event)"
+                  ></div>
+                  <div
+                    class="knob"
+                    role="presentation"
+                    tabindex="0"
+                    :aria-label="`Encoder 8: ${getParamName(7)}`"
+                    @wheel.prevent="onKnobWheel(7, $event)"
+                    @keydown="onKnobKey(7, $event)"
+                  ></div>
+                </div>
+              </div>
+            </div>
+            <div class="edit-area">
+              <div class="encoder-slot">
+                <FourDEncoderPlaceholder class="four-d-encoder" />
+              </div>
+              <div class="quick-edit-buttons" aria-label="Quick edit controls">
+                <button class="quick-edit-btn control-btn" type="button">
+                  <span class="control-btn__main">VOLUME</span>
+                  <span class="control-btn__sub">Velocity</span>
+                </button>
+                <button class="quick-edit-btn control-btn" type="button">
+                  <span class="control-btn__main">SWING</span>
+                  <span class="control-btn__sub">Position</span>
+                </button>
+                <button class="quick-edit-btn control-btn" type="button">
+                  <span class="control-btn__main">TEMPO</span>
+                  <span class="control-btn__sub">Tune</span>
+                </button>
+              </div>
+            </div>
+            <div class="performance-vert">
+              <button class="control-btn" type="button">
+                <span class="control-btn__main">NOTE REPEAT</span>
+                <span class="control-btn__sub">Arp</span>
+              </button>
+              <div class="performance-vert__spacer" aria-hidden="true"></div>
+              <button class="control-btn" type="button">
+                <span class="control-btn__main">LOCK</span>
+                <span class="control-btn__sub">Ext Lock</span>
+              </button>
+            </div>
+
+            <div class="performance-block">
+              <div class="performance-btn-row">
+                <button class="control-btn" type="button">
+                  <span class="control-btn__main">PITCH</span>
+                </button>
+                <button class="control-btn" type="button">
+                  <span class="control-btn__main">MOD</span>
+                </button>
+                <button class="control-btn" type="button">
+                  <span class="control-btn__main">PERFORMANCE</span>
+                  <span class="control-btn__sub">Fx Select</span>
+                </button>
+                <button class="control-btn" type="button">
+                  <span class="control-btn__main">NOTES</span>
+                </button>
+              </div>
+              <div class="smart-strip" aria-hidden="true"></div>
+              <div class="group-area">
+                <button class="control-btn" type="button">
+                  <span class="control-btn__main">A</span>
+                </button>
+                <button class="control-btn" type="button">
+                  <span class="control-btn__main">B</span>
+                </button>
+                <button class="control-btn" type="button">
+                  <span class="control-btn__main">C</span>
+                </button>
+                <button class="control-btn" type="button">
+                  <span class="control-btn__main">D</span>
+                </button>
+                <button class="control-btn" type="button">
+                  <span class="control-btn__main">E</span>
+                </button>
+                <button class="control-btn" type="button">
+                  <span class="control-btn__main">F</span>
+                </button>
+                <button class="control-btn" type="button">
+                  <span class="control-btn__main">G</span>
+                </button>
+                <button class="control-btn" type="button">
+                  <span class="control-btn__main">H</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bottom-row">
+          <div class="left-column">
+            <div class="transport-area" title="Transport area (MK3-style)" aria-label="Transport area (MK3-style)">
+              <div class="transport-grid">
+                <button class="control-btn" type="button">
+                  <span class="control-btn__main">RESTART</span>
+                  <span class="control-btn__sub">Loop</span>
+                </button>
+                <button class="control-btn" type="button">
+                  <span class="control-btn__main">ERASE</span>
+                  <span class="control-btn__sub">Replace</span>
+                </button>
+                <button class="control-btn" type="button">
+                  <span class="control-btn__main">TAP</span>
+                  <span class="control-btn__sub">Metro</span>
+                </button>
+                <button class="control-btn" type="button">
+                  <span class="control-btn__main">FOLLOW</span>
+                  <span class="control-btn__sub">Grid</span>
+                </button>
+                <button class="control-btn" type="button">
+                  <span class="control-btn__main">PLAY</span>
+                </button>
+                <button class="control-btn" type="button">
+                  <span class="control-btn__main">REC</span>
+                  <span class="control-btn__sub">Count In</span>
+                </button>
+                <button class="control-btn" type="button">
+                  <span class="control-btn__main">STOP</span>
+                </button>
+                <button
+                  class="control-btn"
+                  type="button"
+                  :class="{ active: shiftHeld }"
+                  :title="shiftHeld ? 'SHIFT (held)' : 'SHIFT (hold for secondary actions)'"
+                  aria-label="Hold to access secondary controls"
+                  :aria-pressed="shiftHeld"
+                  @pointerdown="onShiftDown"
+                  @pointerup="onShiftUp"
+                  @pointercancel="onShiftUp"
+                  @pointerleave="onShiftUpIfPressed"
+                >
+                  <div class="shift-label">SHIFT</div>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="right-column">
+            <div class="pad-top-buttons" aria-label="Pad top buttons">
+              <button class="control-btn" type="button">
+                <span class="control-btn__main">FIXED VELOCITY</span>
+                <span class="control-btn__sub">16 Vel</span>
+              </button>
+              <button class="control-btn" type="button">
+                <span class="control-btn__main">PAD MODE</span>
+              </button>
+              <button class="control-btn" type="button">
+                <span class="control-btn__main">KEYBOARD</span>
+              </button>
+              <button class="control-btn" type="button">
+                <span class="control-btn__main">CHORDS</span>
+              </button>
+              <button class="control-btn" type="button">
+                <span class="control-btn__main">STEP</span>
+              </button>
+            </div>
+            <div class="pads-and-strip">
+              <div class="mode-buttons" aria-label="Mode buttons">
+                <button class="control-btn" type="button">
+                  <span class="control-btn__main">SCENE</span>
+                  <span class="control-btn__sub">Section</span>
+                </button>
+                <button class="control-btn" type="button">
+                  <span class="control-btn__main">PATTERN</span>
+                </button>
+                <button class="control-btn" type="button">
+                  <span class="control-btn__main">EVENTS</span>
+                </button>
+                <button class="control-btn" type="button">
+                  <span class="control-btn__main">VARIATION</span>
+                  <span class="control-btn__sub">Navigate</span>
+                </button>
+                <button class="control-btn" type="button">
+                  <span class="control-btn__main">DUPLICATE</span>
+                  <span class="control-btn__sub">Double</span>
+                </button>
+                <button class="control-btn" type="button">
+                  <span class="control-btn__main">SELECT</span>
+                </button>
+                <button class="control-btn" type="button">
+                  <span class="control-btn__main">SOLO</span>
+                </button>
+                <button class="control-btn" type="button">
+                  <span class="control-btn__main">MUTE</span>
+                  <span class="control-btn__sub">Choke</span>
+                </button>
+              </div>
+              <div class="pads-column">
+                <div class="pads-stack" title="Pad grid with bank indicators">
+                  <div class="pads-square">
+                    <slot name="pads" :props="padsSlotProps" />
+                  </div>
+                  <div class="pad-grid-indicator">
+                    <span
+                      v-for="i in gridCount"
+                      :key="i"
+                      :class="['indicator-dot', { active: currentGridIndex === i - 1 }]"
+                      :aria-label="`Pad Bank ${i}`"
+                      :title="`Pad Bank ${i}`"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
     </div>
   </div>
-
 </template>
 
 
@@ -41,6 +453,8 @@ import { useTransportStore } from '@/stores/transport'
 import { usePatternsStore } from '@/stores/patterns'
 import { useSoundbanksStore } from '@/stores/soundbanks'
 import { useSessionStore } from '@/stores/session'
+import { useControlStore, type ControlMode } from '@/stores/control'
+import { useBrowserStore } from '@/stores/browser'
 import { useSequencer } from '@/composables/useSequencer'
 import { useSync } from '@/composables/useSync.client'
 import { useMidi } from '@/composables/useMidi.client'
@@ -58,10 +472,15 @@ import PatternsPanel from './panels/PatternsPanel.vue'
 import ExportPanel from './panels/ExportPanel.vue'
 import { createZip, type ZipEntry } from '@/utils/zip'
 import type { DrumPadId, Scene } from '@/types/drums'
-import type { TimeDivision } from '@/types/time'
+import type { GridSpec, TimeDivision } from '@/types/time'
 import type { FxSettings, SampleRef, Soundbank } from '@/types/audio'
 import type { RenderEvent, RenderMetadata } from '@/types/render'
 import type { StepGrid } from '@/types/drums'
+import DualDisplay from './control/DualDisplay.vue'
+import SoftButtonStrip from './control/SoftButtonStrip.vue'
+import FourDEncoderPlaceholder from './placeholders/FourDEncoderPlaceholder.vue'
+import ModeColumnPlaceholder from './placeholders/ModeColumnPlaceholder.vue'
+import TouchStripPlaceholder from './placeholders/TouchStripPlaceholder.vue'
 
 const slugify = (value: string): string => {
   const cleaned = value
@@ -119,13 +538,21 @@ export default defineComponent({
     SoundPanel,
     FxPanel,
     PatternsPanel,
-    ExportPanel
+    ExportPanel,
+    DualDisplay,
+    SoftButtonStrip,
+    FourDEncoderPlaceholder,
+    ModeColumnPlaceholder,
+    TouchStripPlaceholder
   },
+  // ModeColumnPlaceholder currently unused; consider removing or wiring into the layout.
   data() {
     const transport = useTransportStore()
     const patterns = usePatternsStore()
     const soundbanks = useSoundbanksStore()
     const session = useSessionStore()
+    const control = useControlStore()
+    const browser = useBrowserStore()
     const capabilitiesProbe = useCapabilities()
     session.setCapabilities(capabilitiesProbe.capabilities.value)
 
@@ -211,6 +638,8 @@ export default defineComponent({
       patterns,
       soundbanks,
       session,
+      control,
+      browser,
       sequencer,
       sync,
       midi,
@@ -231,12 +660,60 @@ export default defineComponent({
       selectedPadId: 'pad1' as DrumPadId,
       currentGridIndex: 0,
       padsPerGrid: 16,
-      drawerTab: 'sound'
+      drawerTab: 'sound',
+      countInTimer: null as number | null,
+      tapTimestamps: [] as number[],
+      liveEraseEnabled: false,
+      presetBars: patterns.currentPattern?.gridSpec?.bars ?? DEFAULT_GRID_SPEC.bars,
+      presetDivision: patterns.currentPattern?.gridSpec?.division ?? DEFAULT_GRID_SPEC.division,
+      channelTarget: 'sound' as 'sound' | 'group' | 'master',
+      midiMode: false,
+      shiftPointerActive: false
     }
   },
 
 
 computed: {
+  activeMode(): ControlMode {
+    return this.control.modeTitle as ControlMode
+  },
+
+  shiftHeld(): boolean {
+    return this.control.shiftHeld
+  },
+
+  pageLabel(): string {
+    return this.control.pageLabel
+  },
+
+  activeSoftButtons() {
+    return this.control.activeSoftButtons
+  },
+
+  softLabels(): string[] {
+    return this.control.softLabels
+  },
+
+  leftDisplayModel() {
+    return this.control.leftModel
+  },
+
+  rightDisplayModel() {
+    return this.control.rightModel
+  },
+
+  paramSlotsLeft() {
+    return this.control.paramSlotsLeft
+  },
+
+  paramSlotsRight() {
+    return this.control.paramSlotsRight
+  },
+
+  encoderParams() {
+    return this.control.activeParams
+  },
+
   gridSpec() {
     return this.patterns.currentPattern?.gridSpec ?? { ...DEFAULT_GRID_SPEC }
   },
@@ -263,6 +740,24 @@ computed: {
 
   currentStep() {
     return this.transport.currentStep
+  },
+
+  totalSteps(): number {
+    return Math.max(1, this.gridSpec.bars * this.gridSpec.division)
+  },
+
+  patternChainEntries() {
+    const chain = this.patterns.currentScene?.patternIds ?? []
+    if (!Array.isArray(chain) || chain.length === 0) {
+      return null
+    }
+    return chain
+      .map((patternId) => {
+        const entry = this.patterns.patterns.find((pattern) => pattern.id === patternId)
+        if (!entry) return null
+        return { id: patternId, bars: entry.gridSpec?.bars ?? this.gridSpec.bars }
+      })
+      .filter(Boolean) as Array<{ id: string; bars: number }> | null
   },
 
   bpm() {
@@ -353,7 +848,22 @@ computed: {
   },
 
   mainSlotProps() {
-    return {}
+    return {
+      stepGridProps: {
+        gridSpec: this.gridSpec,
+        steps: this.pattern.steps,
+        patternChain: this.patternChainEntries,
+        selectedPad: this.selectedPadId as DrumPadId | null,
+        currentStep: this.currentStep,
+        isPlaying: this.isPlaying,
+        followEnabled: this.transport.followEnabled,
+        loopStart: this.transport.loopStart,
+        loopEnd: this.transport.loopEnd,
+        'onStep:toggle': this.toggleStep,
+        'onPlayhead:scrub': this.scrubPlayhead,
+        'onStep:velocity': this.updateStepVelocity
+      }
+    }
   },
   
 
@@ -366,14 +876,77 @@ computed: {
         division: this.gridSpec.division,
         divisions: this.divisions,
         isMidiLearning: this.midiLearn.isLearning,
+        isRecording: this.transport.isRecording,
+        countInEnabled: this.transport.countInEnabled,
+        countInBars: this.transport.countInBars,
+        metronomeEnabled: this.transport.metronomeEnabled,
+        followEnabled: this.transport.followEnabled,
+        patternBars: this.gridSpec.bars,
+        loopStart: this.transport.loopStart,
+        loopEnd: this.transport.loopEnd,
+        totalSteps: this.totalSteps,
+        selectedPad: this.selectedPadId,
+        liveEraseEnabled: this.liveEraseEnabled,
+        metronomeVolume: this.transport.metronomeVolume,
+        presetBars: this.presetBars,
+        presetDivision: this.presetDivision
+        ,
         onPlay: this.start,
         onStop: this.stop,
+        onStopReset: this.resetPlayhead,
+        onRestart: this.restartLoop,
+        onToggleRecord: this.toggleRecord,
+        onToggleCountIn: this.toggleCountIn,
+        onUpdateCountInBars: this.setCountInBars,
+        onTapTempo: this.tapTempo,
+        onToggleMetronome: this.toggleMetronome,
+        onToggleFollow: this.toggleFollow,
+        onUpdatePatternBars: this.setPatternBars,
+        onNudgeLoopRange: this.nudgeLoopRange,
+        onUpdateLoopStart: this.updateLoopStart,
+        onUpdateLoopEnd: this.updateLoopEnd,
+        'onUpdate:metronomeVolume': this.setMetronomeVolume,
+        onToggleLiveErase: this.toggleLiveErase,
+        onErasePad: this.eraseSelectedPad,
+        onEraseCurrentStep: this.eraseSelectedPadAtCurrentStep,
+        'onUpdate:presetBars': this.setPresetBars,
+        'onUpdate:presetDivision': this.setPresetDivision,
+        onApplyPatternPreset: this.applyPatternPreset,
         onUpdateBpm: this.updateBpm,
         onIncrementBpm: this.incrementBpm,
         onDecrementBpm: this.decrementBpm,
         onUpdateDivision: this.setDivision,
         onUpdateLoop: this.setLoop,
         onToggleMidiLearn: this.toggleMidiLearn
+      },
+      transportListeners: {
+        play: this.start,
+        stop: this.stop,
+        'stop-reset': this.resetPlayhead,
+        restart: this.restartLoop,
+        'toggle-record': this.toggleRecord,
+        'toggle-count-in': this.toggleCountIn,
+        'update-count-in-bars': this.setCountInBars,
+        'tap-tempo': this.tapTempo,
+        'toggle-metronome': this.toggleMetronome,
+        'toggle-follow': this.toggleFollow,
+        'update-pattern-bars': this.setPatternBars,
+        'nudge-loop-range': this.nudgeLoopRange,
+        'update-loop-start': this.updateLoopStart,
+        'update-loop-end': this.updateLoopEnd,
+        'update:metronome-volume': this.setMetronomeVolume,
+        'toggle-live-erase': this.toggleLiveErase,
+        'erase-pad': this.eraseSelectedPad,
+        'erase-current-step': this.eraseSelectedPadAtCurrentStep,
+        'update:preset-bars': this.setPresetBars,
+        'update:preset-division': this.setPresetDivision,
+        'apply-pattern-preset': this.applyPatternPreset,
+        'update-bpm': this.updateBpm,
+        'increment-bpm': this.incrementBpm,
+        'decrement-bpm': this.decrementBpm,
+        'update-division': this.setDivision,
+        'update-loop': this.setLoop,
+        'toggle-midi-learn': this.toggleMidiLearn
       },
       midiLearnLabel: this.midiLearnLabel
     }
@@ -393,9 +966,58 @@ computed: {
 
   drawerSlotProps() {
     return {
+      drawerTab: this.drawerTab,
+      onUpdateDrawerTab: (value: string) => {
+        this.drawerTab = value
+      },
+      soundProps: {
+        banks: this.banks,
+        selectedBankId: this.soundbanks.selectedBankId,
+        'onBank:select': this.selectBank,
+        'onPad:replace': this.replacePadSample
+      },
       fxProps: {
         fxSettings: (this.sequencer.fxSettings ?? {}) as FxSettings,
-        onUpdateFx: this.updateFx
+        'onFx:update': this.updateFx
+      },
+      patternsProps: {
+        patterns: this.patterns.patterns,
+        selectedPatternId: this.patterns.selectedPatternId,
+        scenes: this.patterns.scenes,
+        activeSceneId: this.patterns.activeSceneId,
+        'onPattern:add': this.addPattern,
+        'onPattern:select': this.selectPattern,
+        'onPattern:rename': this.renamePattern,
+        'onPattern:undo': this.undoPattern,
+        'onPattern:redo': this.redoPattern,
+        'onScene:add': this.addScene,
+        'onScene:update': this.updateScene,
+        'onScene:select': this.selectScene,
+        'onErase:pad': this.eraseSelectedPad,
+        'onErase:step': this.eraseSelectedPadAtCurrentStep
+      },
+      exportProps: {
+        isExporting: this.isExporting,
+        exportError: this.exportError,
+        exportMetadata: this.exportMetadata,
+        audioBlob: this.exportAudioBlob,
+        hasZipArtifacts: this.hasZipArtifacts,
+        stemEntries: this.stemEntries,
+        onExport: this.exportBounce,
+        'onDownload:mixdown': this.downloadMixdown,
+        'onDownload:zip': this.downloadZip,
+        'onDownload:stem': this.downloadStem,
+        'onDownload:stems': this.downloadAllStems
+      },
+      channelProps: {
+        controlTarget: this.channelTarget,
+        midiMode: this.midiMode,
+        'onUpdate:control-target': (value: string) => {
+          this.channelTarget = value as 'sound' | 'group' | 'master'
+        },
+        'onUpdate:midi-mode': (value: boolean) => {
+          this.midiMode = Boolean(value)
+        }
       }
     }
   }
@@ -404,6 +1026,9 @@ computed: {
 
   mounted() {
     window.addEventListener('keydown', this.handleGridKeys)
+    window.addEventListener('keydown', this.handleShiftKeyDown)
+    window.addEventListener('keyup', this.handleShiftKeyUp)
+    window.addEventListener('pointerup', this.handleGlobalPointerUp)
     const storedPatterns = this.patternStorage.load()
     if (storedPatterns.patterns.length > 0) {
       this.patterns.setPatterns(storedPatterns.patterns)
@@ -435,6 +1060,23 @@ computed: {
         if (bankId) {
           void this.soundbankStorage.savePatterns(bankId, value)
         }
+      },
+      { deep: true }
+    )
+    void this.browser.setMode('LIBRARY')
+    this.control.setBrowserDisplay(this.browser.toDisplayModels())
+    const stopBrowserDisplayWatch = this.$watch(
+      () => ({
+        mode: this.browser.mode,
+        query: this.browser.library.query,
+        results: this.browser.library.results,
+        selectedId: this.browser.library.selectedId,
+        path: this.browser.files.currentPath,
+        entries: this.browser.files.entries,
+        selectedPath: this.browser.files.selectedPath
+      }),
+      () => {
+        this.control.setBrowserDisplay(this.browser.toDisplayModels())
       },
       { deep: true }
     )
@@ -480,15 +1122,98 @@ computed: {
     })
     this.unwatchers.push(stopWatch)
     this.unwatchers.push(stopBankPatternWatch)
+    this.unwatchers.push(stopBrowserDisplayWatch)
     this.unwatchers.push(() => stopMidiListener?.())
   },
   beforeUnmount() {
     window.removeEventListener('keydown', this.handleGridKeys)
+    window.removeEventListener('keydown', this.handleShiftKeyDown)
+    window.removeEventListener('keyup', this.handleShiftKeyUp)
+    window.removeEventListener('pointerup', this.handleGlobalPointerUp)
+    this.clearCountInTimer()
     this.unwatchers.forEach((stop) => stop())
   },
 
   
   methods: {
+    handleModePress(mode: ControlMode, shiftActionId?: string) {
+      this.control.setMode(mode)
+      if (mode === 'BROWSER') {
+        void this.browser.setMode('LIBRARY')
+        this.control.setBrowserDisplay(this.browser.toDisplayModels())
+      } else if (mode === 'FILE') {
+        void this.browser.setMode('FILES')
+        this.control.setBrowserDisplay(this.browser.toDisplayModels())
+      }
+      if (this.shiftHeld && shiftActionId) {
+        this.control.applyAction(shiftActionId, mode)
+      }
+    },
+    isActiveMode(mode: ControlMode): boolean {
+      return this.control.activeMode === mode
+    },
+    modeTooltip(mode: ControlMode, primary: string, secondary?: string) {
+      return secondary ? `${primary} (SHIFT: ${secondary})` : primary
+    },
+    pageButtonTitle(direction: 'prev' | 'next') {
+      return `${direction === 'prev' ? 'Previous' : 'Next'} page (${this.pageLabel})`
+    },
+    prevPage() {
+      this.control.prevPage()
+    },
+    nextPage() {
+      this.control.nextPage()
+    },
+    pressSoftButton(index: number) {
+      this.control.pressSoftButton(index)
+    },
+    onShiftDown(event: PointerEvent) {
+      event.preventDefault()
+      this.shiftPointerActive = true
+      this.control.setShiftHeld(true)
+    },
+    onShiftUp() {
+      this.shiftPointerActive = false
+      this.control.setShiftHeld(false)
+    },
+    onShiftUpIfPressed() {
+      if (this.shiftPointerActive) {
+        this.onShiftUp()
+      }
+    },
+    handleGlobalPointerUp() {
+      if (this.shiftPointerActive) {
+        this.onShiftUp()
+      }
+    },
+    handleShiftKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Shift') {
+        this.control.setShiftHeld(true)
+      }
+    },
+    handleShiftKeyUp(event: KeyboardEvent) {
+      if (event.key === 'Shift') {
+        this.control.setShiftHeld(false)
+      }
+    },
+    onKnobWheel(index: number, event: WheelEvent) {
+      const direction = event.deltaY < 0 ? 1 : -1
+      const magnitude = Math.abs(event.deltaY)
+      const step = magnitude > 60 ? 2 : 1
+      this.control.turnEncoder(index, direction * step, { fine: this.shiftHeld })
+    },
+    onKnobKey(index: number, event: KeyboardEvent) {
+      if (event.key === 'ArrowUp' || event.key === 'ArrowRight') {
+        this.control.turnEncoder(index, 1, { fine: this.shiftHeld })
+        event.preventDefault()
+      } else if (event.key === 'ArrowDown' || event.key === 'ArrowLeft') {
+        this.control.turnEncoder(index, -1, { fine: this.shiftHeld })
+        event.preventDefault()
+      }
+    },
+    getParamName(index: number) {
+      return this.encoderParams?.[index]?.name ?? `Encoder ${index + 1}`
+    },
     addPattern(payload: { name?: string }) {
       this.patterns.addPattern(payload?.name)
     },
@@ -539,21 +1264,166 @@ computed: {
       this.sync.startTransport(this.transport.bpm)
     },
     stop() {
+      if (!this.transport.isPlaying) {
+        this.resetPlayhead()
+        this.transport.setRecording(false)
+        return
+      }
       if (this.midiLearn.isLearning) {
         this.midiLearn.setTarget({ type: 'transport', action: 'stop' })
       }
       this.sequencer.stop()
       this.sync.stopTransport()
+      this.transport.setRecording(false)
+    },
+    resetPlayhead() {
+      this.transport.setCurrentStep(0)
+    },
+    restartLoop() {
+      if (this.transport.isPlaying) {
+        this.sequencer.stop()
+        this.transport.setCurrentStep(this.transport.loopStart)
+        this.patterns.prepareScenePlayback()
+        void this.sequencer.start()
+      } else {
+        this.transport.setCurrentStep(this.transport.loopStart)
+      }
+    },
+    toggleRecord() {
+      const next = !this.transport.isRecording
+      this.transport.setRecording(next)
+      if (!next) {
+        this.clearCountInTimer()
+        return
+      }
+      if (!this.transport.isPlaying) {
+        if (this.transport.countInEnabled) {
+          this.startWithCountIn()
+        } else {
+          void this.start()
+        }
+      }
+    },
+    startWithCountIn() {
+      this.clearCountInTimer()
+      const bars = Math.max(1, this.transport.countInBars)
+      const delayMs = (bars * 4 * 60 * 1000) / Math.max(1, this.bpm)
+      this.countInTimer = window.setTimeout(() => {
+        void this.start()
+        this.transport.setRecording(true)
+        this.clearCountInTimer()
+      }, delayMs)
+    },
+    clearCountInTimer() {
+      if (this.countInTimer != null) {
+        window.clearTimeout(this.countInTimer)
+        this.countInTimer = null
+      }
+    },
+    toggleCountIn() {
+      this.transport.setCountInEnabled(!this.transport.countInEnabled)
+      if (!this.transport.countInEnabled) {
+        this.clearCountInTimer()
+      }
+    },
+    setCountInBars(value: number) {
+      this.transport.setCountInBars(value ?? 1)
+    },
+    tapTempo() {
+      const now = Date.now()
+      this.tapTimestamps.push(now)
+      const recent = this.tapTimestamps.slice(-4)
+      this.tapTimestamps = recent
+      if (recent.length < 2) return
+      const intervals = []
+      for (let i = 1; i < recent.length; i += 1) {
+        intervals.push(recent[i] - recent[i - 1])
+      }
+      const avgMs = intervals.reduce((sum, val) => sum + val, 0) / intervals.length
+      const bpm = Math.max(1, Math.round(60000 / avgMs))
+      this.updateBpm(bpm)
+    },
+    toggleMetronome() {
+      this.transport.setMetronomeEnabled(!this.transport.metronomeEnabled)
+    },
+    toggleFollow() {
+      this.transport.setFollowEnabled(!this.transport.followEnabled)
+    },
+    setPatternBars(bars: number) {
+      const normalized = Math.max(1, Math.min(8, Math.floor(bars))) as GridSpec['bars']
+      const gridSpec = normalizeGridSpec({ ...this.gridSpec, bars: normalized })
+      this.transport.setGridSpec(gridSpec)
+      this.patterns.updateGridSpec(gridSpec)
+      const total = gridSpec.bars * gridSpec.division
+      this.transport.setLoopRange(0, total)
+      this.resetPlayhead()
+    },
+    nudgeLoopRange(delta: number) {
+      this.transport.nudgeLoopRange(delta)
+      const clamped = Math.min(Math.max(this.transport.currentStep, this.transport.loopStart), this.transport.loopEnd - 1)
+      this.transport.setCurrentStep(clamped)
+    },
+    updateLoopStart(value: number) {
+      const nextStart = Math.max(0, Math.floor(value))
+      const end = Math.max(nextStart + 1, this.transport.loopEnd)
+      this.transport.setLoopRange(nextStart, end)
+      const clamped = Math.min(Math.max(this.transport.currentStep, nextStart), end - 1)
+      this.transport.setCurrentStep(clamped)
+    },
+    updateLoopEnd(value: number) {
+      const total = this.totalSteps
+      const nextEnd = Math.min(total, Math.max(1, Math.floor(value)))
+      const start = Math.min(this.transport.loopStart, nextEnd - 1)
+      this.transport.setLoopRange(start, nextEnd)
+      const clamped = Math.min(Math.max(this.transport.currentStep, start), nextEnd - 1)
+      this.transport.setCurrentStep(clamped)
+    },
+    setMetronomeVolume(value: number) {
+      this.transport.setMetronomeVolume(value ?? 0.12)
+    },
+    setPresetBars(value: number) {
+      const bars = Math.max(1, Math.min(8, Math.floor(value ?? 1))) as GridSpec['bars']
+      this.presetBars = bars
+    },
+    setPresetDivision(value: TimeDivision | null) {
+      if (value != null) {
+        this.presetDivision = value
+      }
+    },
+    applyPatternPreset() {
+      const gridSpec = normalizeGridSpec({
+        ...this.gridSpec,
+        bars: this.presetBars,
+        division: this.presetDivision
+      })
+      this.transport.setGridSpec(gridSpec)
+      this.patterns.updateGridSpec(gridSpec)
+      this.transport.setLoopRange(0, gridSpec.bars * gridSpec.division)
+      this.resetPlayhead()
     },
     handleGridKeys(e: KeyboardEvent) {
-      if (!e.ctrlKey) return
-      const index = Number(e.key) - 1
-      if (index >= 0 && index < this.gridCount) {
+      if (e.ctrlKey && !e.shiftKey) {
+        const index = Number(e.key) - 1
+        if (index >= 0 && index < this.gridCount) {
+          e.preventDefault()
+          this.selectPadGrid(index)
+          return
+        }
+      }
+      if (e.ctrlKey && e.key.toLowerCase() === 'z') {
         e.preventDefault()
-        this.selectPadGrid(index)
+        if (e.shiftKey) {
+          this.redoPattern()
+        } else {
+          this.undoPattern()
+        }
       }
     },
     async handlePad(pad: DrumPadId, velocity = 1) {
+      if (this.liveEraseEnabled) {
+        this.erasePadAtStep(pad, this.transport.currentStep)
+        return
+      }
       try {
         await this.sequencer.recordHit(pad, velocity, true)
       } catch (error) {
@@ -593,6 +1463,22 @@ computed: {
     },
     scrubPlayhead(payload: { stepIndex: number }) {
       this.transport.setCurrentStep(payload.stepIndex)
+    },
+    erasePadAtStep(pad: DrumPadId, stepIndex: number) {
+      const stepsPerPattern = this.totalSteps
+      const normalizedStep =
+        ((stepIndex % stepsPerPattern) + stepsPerPattern) % stepsPerPattern
+      const barIndex = Math.floor(normalizedStep / this.gridSpec.division)
+      const stepInBar = normalizedStep % this.gridSpec.division
+      this.patterns.eraseStepForPad(barIndex, stepInBar, pad)
+    },
+    eraseSelectedPad() {
+      if (!this.selectedPadId) return
+      this.patterns.erasePadEvents(this.selectedPadId)
+    },
+    eraseSelectedPadAtCurrentStep() {
+      if (!this.selectedPadId) return
+      this.erasePadAtStep(this.selectedPadId, this.transport.currentStep)
     },
 
     async requestMidi() {
@@ -650,6 +1536,9 @@ computed: {
       } else {
         this.midiLearn.enable()
       }
+    },
+    toggleLiveErase() {
+      this.liveEraseEnabled = !this.liveEraseEnabled
     },
     setDivision(division: TimeDivision) {
       const gridSpec = normalizeGridSpec({ ...this.gridSpec, division })
@@ -847,61 +1736,551 @@ computed: {
   border-radius: @radius-l;
 }
 
+.hardware-stage {
+  --stage-pad: clamp(12px, 1.6vw, 24px);
+  height: 100svh;
+  min-height: 100svh;
+  width: 100%;
+  padding: var(--stage-pad);
+  box-sizing: border-box;
+  overflow: hidden;
+  background: radial-gradient(130% 130% at 25% 20%, #2c313c 0%, #1a1e26 50%, #0d0f14 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .device-hardware {
-  --control-w: clamp(260px, 16vw, 340px);
-  --pads-w: clamp(620px, 30vw, 820px);
+  position: relative;
+  --device-w: 100%;
+  --device-gap: clamp(8px, 1.2vh, 16px);
+  --panel-radius: @radius-l;
+  aspect-ratio: 1080 / 760;
+  max-width: calc(100vw - (2 * var(--stage-pad)));
+  max-height: calc(100svh - (2 * var(--stage-pad)));
 
-  flex: 0 0 auto;
-  width: calc(var(--control-w) + var(--pads-w) + @space-m);
-  min-height: 0;
-
+  height: auto;
+  margin: 0 auto;
   display: grid;
-  grid-template-columns: var(--control-w) var(--pads-w);
   grid-template-rows: auto 1fr;
-  gap: @space-m;
+  gap: var(--device-gap);
+  background: linear-gradient(180deg, #1f232c, #151821);
+  border: 1px solid fade(#3b4355, 70%);
+  border-radius: var(--panel-radius);
+  padding: @space-m;
+  box-sizing: border-box;
+  overflow: hidden;
+  box-shadow:
+    0 30px 62px rgba(0, 0, 0, 0.6),
+    0 2px 12px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.8);
+  width: min(
+    calc((100svh - (2 * var(--stage-pad))) * (1080 / 760))
+  );
+}
+
+.top-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: auto auto;
+  gap: var(--device-gap);
+  align-items: start;
+  min-height: 0;
+}
+
+.control-stack {
+  display: grid;
+  grid-template-columns: var(--control-cols, repeat(8, 1fr));
+  grid-template-rows: auto auto;
+  column-gap: var(--control-col-gap, @space-xs);
+  row-gap: var(--device-gap);
+  width: 100%;
+}
+
+.control-area {
+  --control-row-h: clamp(44px, 4.2vh, 56px);
+  --control-cols: repeat(8, 1fr);
+  --control-col-gap: @space-xs;
+  grid-column: 1 / -1;
+  grid-row: 1;
+  display: grid;
+  grid-template-columns: clamp(210px, 18%, 280px) 1fr;
+  gap: var(--device-gap);
+  min-width: 0;
+  min-height: 0;
   align-items: stretch;
+  width: 100%;
 }
 
-.device-control {
-  grid-column: 1;
-  grid-row: 1 / span 2;
-  min-height: 0;
+.control-fixed {
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+}
 
+.control-btn-grid {
   display: grid;
-  grid-template-rows: auto 1fr;
-  gap: @space-m;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: repeat(6, var(--control-row-h));
+  gap: @space-xxs;
+  width: 100%;
+  max-width: 100%;
 }
 
-.device-transport {
-  background: @color-surface-1;
-  border: 1px solid @color-border-1;
-  border-radius: @radius-m;
-  padding: @space-s;
-  overflow: hidden;
-}
+.control-btn.r1 { grid-row: 1; }
+.control-btn.r2 { grid-row: 2; }
+.control-btn.r3 { grid-row: 3; }
+.control-btn.r4 { grid-row: 4; }
+.control-btn.r5 { grid-row: 5; }
+.control-btn.r6 { grid-row: 6; }
+.control-btn.c1 { grid-column: 1; }
+.control-btn.c2 { grid-column: 2; }
 
-.device-fx {
-  background: @color-surface-3;
-  border: 1px solid @color-border-1;
-  border-radius: @radius-m;
-  padding: @space-s;
-  overflow: hidden;
-  min-height: 0;
-}
-
-.device-pads {
-  min-height: 0;
+.control-btn {
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid fade(#3b4355, 65%);
+  background: linear-gradient(180deg, #1c2230, #121826);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+  color: rgba(255, 255, 255, 0.88);
+  line-height: 1.05;
+  text-align: left;
+  min-height: 44px;
+  max-width: 100%;
+}
+
+.control-btn__main {
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.control-btn__sub {
+  margin-top: 2px;
+  font-weight: 400;
+  font-style: italic;
+  opacity: 0.75;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
+.control-btn--icon {
+  align-items: center;
+  text-align: center;
+}
+
+.control-btn--icon .control-btn__main {
+  font-size: 16px;
+  letter-spacing: 0;
+}
+
+.control-core {
+  display: grid;
+  grid-template-rows: repeat(6, var(--control-row-h));
+  gap: 0;
+  min-width: 0;
+  --control-cols: repeat(8, 1fr);
+  --control-col-gap: @space-xs;
+}
+
+.soft-row {
+  grid-row: 1;
+  height: var(--control-row-h);
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+
+.drum-machine-shell :deep(.soft-row) {
+  grid-row: 1;
+  height: var(--control-row-h);
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+
+.soft-row-grid {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template-columns: var(--control-cols);
+  column-gap: var(--control-col-gap);
+}
+
+.soft-row :deep(.soft-strip) {
+  display: grid;
+  grid-template-columns: var(--control-cols);
+  column-gap: var(--control-col-gap);
+  height: 100%;
+  grid-column: 1 / -1;
+}
+
+.soft-row :deep(.soft-btn) {
+  min-height: 100%;
+}
+
+.soft-row :deep(*) {
+  height: 100%;
+  min-height: 0;
+  width: 100%;
+}
+
+.display-block {
+  grid-row: 2 / span 4;
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  height: calc(var(--control-row-h) * 4);
+  display: grid;
   align-items: stretch;
+}
+
+.display-grid {
+  display: grid;
+  grid-template-columns: var(--control-cols);
+  column-gap: var(--device-gap);
+  height: 100%;
+}
+
+.drum-machine-shell :deep(.display-grid) {
+  display: grid;
+  grid-template-columns: var(--control-cols);
+  column-gap: var(--device-gap);
+  height: 100%;
+}
+
+.display-grid :deep(.dual-display-root),
+.display-grid :deep(.dual-display),
+.display-grid :deep(.dual-display-placeholder) {
+  height: 100%;
+  min-height: 0;
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: var(--control-cols);
+  column-gap: var(--control-col-gap);
+  row-gap: 0;
+}
+
+.display-grid :deep(.dual-display .display) {
+  grid-column: span 4;
+  min-width: 0;
+}
+
+.display-grid :deep(.dual-display .display:nth-child(1)) {
+  grid-column: 1 / span 4;
+}
+
+.display-grid :deep(.dual-display .display:nth-child(2)) {
+  grid-column: 5 / span 4;
+}
+
+.display-param-labels {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 0 8px 6px 8px;
+  display: grid;
+  grid-template-columns: var(--control-cols);
+  column-gap: var(--control-col-gap);
+  pointer-events: none;
+}
+
+.param-label {
+  justify-self: center;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.75;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.knob-row {
+  grid-row: 6;
+  height: var(--control-row-h);
+  display: grid;
+  grid-template-columns: var(--control-cols);
+  align-items: center;
+  gap: var(--device-gap);
+  padding: 12px 8px;
+  min-width: 0;
+  --knob-y: 0px;
+}
+
+.knob {
+  justify-self: center;
+  width: var(--control-row-h);
+  height: var(--control-row-h);
+  transform: translateY(var(--knob-y));
+  border-radius: 999px;
+  background: radial-gradient(circle at 30% 30%, #3a4150, #151a24 70%);
+  border: 1px solid rgba(255,255,255,0.1);
+  box-shadow:
+    inset 0 2px 4px rgba(0,0,0,0.7),
+    0 1px 0 rgba(255,255,255,0.06);
+  position: relative;
+}
+
+.knob::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 50%;
+  width: 2px;
+  height: 38%;
+  transform: translateX(-50%);
+  border-radius: 2px;
+  background: rgba(246, 139, 30, 0.9);
+  box-shadow: 0 0 6px rgba(246, 139, 30, 0.35);
+}
+
+.edit-area {
+  --edit-btn-h: clamp(34px, 4.2vh, 44px);
+  --edit-row-gap: @space-xxs;
+  --edit-stack-d: calc((3 * var(--edit-btn-h)) + (2 * var(--edit-row-gap)));
+
+  /* statt grid-column: 1 / span 3; */
+  grid-column: 1 / 3;     
+  grid-row: 6;             
+  justify-self: normal;
+
+  --core-w: calc(100% - var(--fixed-col-w) - var(--device-gap));
+
+  margin-left: calc(var(--fixed-col-w) - var(--device-gap));
+  width: calc(var(--core-w) * 0.375); /* 3/8 = 0.375 */
+
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: repeat(3, var(--edit-btn-h));
+  column-gap: var(--control-col-gap);
+  row-gap: var(--edit-row-gap);
+  flex-direction: column;
+  align-items: start;
+  justify-items: center;
+  align-self: start;
+  margin-top: calc(var(--device-gap) * 0.5);
+  min-height: 0;
+  min-width: 0;
+}
+
+.encoder-slot {
+  grid-column: 1 / 3;
+  grid-row: 1 / -1;
+  display: grid;
+  padding-left: 30%;
+  align-items: start;
+  justify-content: center;
+  justify-self: start;
+  align-self: start;
+  width: var(--edit-stack-d);
+  height: var(--edit-stack-d);
+}
+
+
+
+.quick-edit-buttons {
+  grid-column: 3 / -1;
+  grid-row: 1;
+  display: grid;
+  grid-template-rows: repeat(3, var(--edit-btn-h));
+  row-gap: var(--edit-row-gap);
+  align-content: start;
+  align-items: start;
+
+}
+
+.quick-edit-btn {
+  min-height: var(--edit-btn-h);
+  height: var(--edit-btn-h);
+  width: 100%;
+}
+
+.four-d-encoder {
+  position: relative;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #3c4352, #121722 70%);
+  border: 1px solid rgba(255,255,255,0.12);
+  box-shadow:
+    inset 0 3px 6px rgba(0,0,0,0.65),
+    0 2px 6px rgba(0,0,0,0.45);
+}
+
+.four-d-encoder::after {
+  content: '';
+  position: absolute;
+  top: 6%;
+  left: 50%;
+  width: 3px;
+  height: 30%;
+  transform: translateX(-50%);
+  border-radius: 2px;
+  background: rgba(246, 139, 30, 0.95);
+  box-shadow: 0 0 10px rgba(246, 139, 30, 0.35);
+}
+
+.bottom-row {
+  display: grid;
+  grid-template-columns: clamp(220px, 24%, 320px) minmax(0, 1fr);
+  grid-template-areas: 'left right';
+  gap: var(--device-gap);
+  min-height: 0;
+}
+
+.drum-machine-shell :deep(.bottom-row) {
+  display: grid;
+  grid-template-columns: clamp(220px, 24%, 320px) minmax(0, 1fr);
+  grid-template-areas: 'left right';
+  gap: var(--device-gap);
+  min-height: 0;
+}
+
+.left-column {
+  grid-area: left;
+  display: flex;
+  flex-direction: column;
   gap: @space-s;
+  min-height: 0;
+}
+
+.transport-cluster {
+  background: linear-gradient(180deg, #1f2531, #141924);
+  border: 1px solid fade(#3b4355, 65%);
+  border-radius: @radius-m;
+  padding: @space-s;
+  min-height: 0;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.drawer-shell {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: clamp(260px, 36vh, 360px);
+  overflow: auto;
+  background: linear-gradient(180deg, #1c202b, #10141d);
+  border: 1px solid fade(#3b4355, 65%);
+  border-radius: @radius-m;
+  padding: @space-s;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.drum-machine-shell :deep(.drawer-shell) {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: clamp(260px, 36vh, 360px);
+  overflow: auto;
+  background: linear-gradient(180deg, #1c202b, #10141d);
+  border: 1px solid fade(#3b4355, 65%);
+  border-radius: @radius-m;
+  padding: @space-s;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.right-column {
+  grid-area: right;
+  display: flex;
+  flex-direction: column;
+  gap: var(--device-gap);
+  min-height: 0;
+}
+
+.drum-machine-shell :deep(.right-column) {
+  grid-area: right;
+  display: flex;
+  flex-direction: column;
+  gap: var(--device-gap);
+  min-height: 0;
+}
+
+.pads-and-strip {
+  display: grid;
+  //grid-template-columns: clamp(90px, 18%, 140px) minmax(0, 1fr);
+  grid-template-areas: 'strip pads';
+  gap: var(--device-gap);
+  align-items: end;
+  width: 100%;
+  min-height: 0;
+}
+
+.drum-machine-shell :deep(.pads-and-strip) {
+  display: grid;
+  grid-template-areas: 'strip pads';
+  gap: var(--device-gap);
+  align-items: end;
+  width: 100%;
+  min-height: 0;
+}
+
+.strip-column {
+  grid-area: strip;
+  align-self: end;
+  justify-self: start;
+  min-height: 0;
+}
+
+.pads-column {
+  grid-area: pads;
+  min-width: 0;
+}
+
+.pads-stack {
+  display: grid;
+  grid-columns: 4 / -1;
+  grid-rows: 4 / -1;
+  flex-direction: column;
+  gap: @space-xs;
+  align-items: end;
+  justify-content: end;
+  //width: 80%;
+  min-width: 0;
+  min-height: 0;
+  align-self: end;
+  justify-self: end;
+  background: linear-gradient(180deg, #191d27, #10141d);
+  border: 1px solid fade(#3b4355, 60%);
+  border-radius: @radius-m;
+  padding: @space-s;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+.drum-machine-shell :deep(.pads-stack) {
+  display: grid;
+  grid-columns: 4 / -1;
+  grid-rows: 4 / -1;
+  flex-direction: column;
+  gap: @space-xs;
+  align-items: end;
+  justify-content: end;
+  min-width: 0;
+  min-height: 0;
+  align-self: end;
+  justify-self: end;
+  background: linear-gradient(180deg, #191d27, #10141d);
+  border: 1px solid fade(#3b4355, 60%);
+  border-radius: @radius-m;
+  padding: @space-s;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
 .pads-square {
-  width: clamp(460px, 28vw, 640px);
+  width: 100%;
+  // max-width: clamp(420px, 62%, 960px);
   aspect-ratio: 1 / 1;
-  margin-left: auto;
+  min-height: 0;
+  display: flex;
+}
+
+.drum-machine-shell :deep(.pads-square) {
+  width: 100%;
+  aspect-ratio: 1 / 1;
   min-height: 0;
   display: flex;
 }
@@ -912,48 +2291,353 @@ computed: {
   min-height: 0;
 }
 
+.pads-square > :deep(*) {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+}
+
+.device-hardware.debug-overlay::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: url('/img/maschine-reference.png') center / contain no-repeat;
+  opacity: 0.35;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.device-hardware.debug-grid::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.15) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.15) 1px, transparent 1px);
+  background-size: 20px 20px;
+  opacity: 0.15;
+  pointer-events: none;
+  z-index: 6;
+}
+
 .pad-grid-indicator {
   display: flex;
   justify-content: center;
   gap: @space-xs;
+  padding: @space-xxs;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: @radius-s;
+}
+
+.drum-machine-shell :deep(.pad-grid-indicator) {
+  display: flex;
+  justify-content: center;
+  gap: @space-xs;
+  padding: @space-xxs;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: @radius-s;
 }
 
 .indicator-dot {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
-  background: @color-border-1;
-  box-shadow: inset 0 0 2px rgba(0,0,0,0.8);
+  background: #1f2734;
+  box-shadow: inset 0 0 4px rgba(0,0,0,0.9);
 }
 
 .indicator-dot.active {
-  background: @color-accent-primary;
+  background: #f68b1e;
   box-shadow:
-    0 0 6px fade(@color-accent-primary, 60%),
-    0 0 12px fade(@color-accent-primary, 35%);
+    0 0 6px fade(#f68b1e, 60%),
+    0 0 12px fade(#f68b1e, 35%);
+}
+
+@media (max-width: 1200px) {
+  .bottom-row {
+    grid-template-columns: 320px 1fr;
+  }
+
+  .pads-square {
+    width: clamp(360px, 48vw, 520px);
+  }
+
+  .drum-machine-shell :deep(.bottom-row) {
+    grid-template-columns: 320px 1fr;
+  }
+
+  .drum-machine-shell :deep(.pads-square) {
+    width: clamp(360px, 48vw, 520px);
+  }
 }
 
 @media (max-width: 960px) {
-  .device-stage {
-    flex-direction: column;
-  }
-
   .device-hardware {
-    width: 100%;
+    grid-template-rows: auto auto 1fr;
+  }
+
+  .top-row {
     grid-template-columns: 1fr;
-    grid-template-rows: auto auto;
+    gap: @space-s;
+    align-items: start;
+  }
+  
+  .control-area {
+    grid-template-columns: 1fr;
   }
 
-  .device-control {
-    grid-column: 1;
-    grid-row: 1;
-    grid-template-rows: auto;
+  .bottom-row {
+    grid-template-columns: 1fr;
   }
 
-  .device-pads {
-    grid-column: 1;
-    grid-row: 2;
+  .right-column {
+    grid-template-columns: 1fr;
   }
+
+  .pads-and-strip {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      'strip'
+      'pads';
+    justify-items: center;
+    align-items: center;
+  }
+
+  .drawer-shell {
+    max-height: 45vh;
+  }
+
+  .drum-machine-shell :deep(.bottom-row) {
+    grid-template-columns: 1fr;
+  }
+
+  .drum-machine-shell :deep(.right-column) {
+    grid-template-columns: 1fr;
+  }
+
+  .drum-machine-shell :deep(.pads-and-strip) {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      'strip'
+      'pads';
+    justify-items: center;
+    align-items: center;
+  }
+
+  .drum-machine-shell :deep(.drawer-shell) {
+    max-height: 45vh;
+  }
+}
+
+.edit-area {
+  grid-column: 1 / 3;
+  grid-row: 2;
+}
+
+.performance-vert {
+  grid-column: 4;
+  grid-row: 2;
+  display: grid;
+  grid-template-rows: repeat(3, var(--edit-btn-h, clamp(34px, 4.2vh, 44px)));
+  row-gap: var(--edit-row-gap, @space-xxs);
+  align-self: end;
+  justify-self: stretch;
+  width: 100%;
+}
+
+.performance-vert .control-btn {
+  width: 100%;
+  min-height: var(--edit-btn-h, clamp(34px, 4.2vh, 44px));
+}
+
+.performance-vert__spacer {
+  width: 100%;
+  height: 100%;
+}
+
+.performance-block {
+  grid-column: 1 / span 4;
+  grid-row: 3;
+  display: grid;
+  grid-template-rows: auto auto auto;
+  row-gap: var(--edit-row-gap, @space-xxs);
+  align-self: start;
+  justify-self: stretch;
+  width: 100%;
+}
+
+.performance-btn-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: @space-xxs;
+}
+
+.performance-btn-row .control-btn {
+  width: 100%;
+  min-height: var(--edit-btn-h, clamp(34px, 4.2vh, 44px));
+}
+
+.smart-strip {
+  width: 100%;
+  height: clamp(46px, 5vh, 64px);
+  border-radius: @radius-m;
+  background: linear-gradient(90deg, #2a2f3a, #141824);
+  border: 1px solid fade(#3b4355, 60%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.group-area {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(2, var(--edit-btn-h, clamp(34px, 4.2vh, 44px)));
+  gap: @space-xxs;
+}
+
+.group-area .control-btn {
+  width: 100%;
+  min-height: var(--edit-btn-h, clamp(34px, 4.2vh, 44px));
+}
+
+.transport-area {
+  background: linear-gradient(180deg, #1f2531, #141924);
+  border: 1px solid fade(#3b4355, 65%);
+  border-radius: @radius-m;
+  padding: @space-s;
+  min-height: 0;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  width: 100%;
+}
+
+.drum-machine-shell :deep(.transport-area) {
+  background: linear-gradient(180deg, #1f2531, #141924);
+  border: 1px solid fade(#3b4355, 65%);
+  border-radius: @radius-m;
+  padding: @space-s;
+  min-height: 0;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  width: 100%;
+}
+
+.transport-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(2, var(--edit-btn-h, clamp(34px, 4.2vh, 44px)));
+  gap: @space-xxs;
+}
+
+.drum-machine-shell :deep(.transport-grid) {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(2, var(--edit-btn-h, clamp(34px, 4.2vh, 44px)));
+  gap: @space-xxs;
+}
+
+.shift-label {
+  height: 14px;
+  background: #fff;
+  color: #000;
+  font-weight: 800;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  border-radius: 4px;
+}
+
+.right-column {
+  justify-content: flex-end;
+}
+
+.drum-machine-shell :deep(.right-column) {
+  justify-content: flex-end;
+}
+
+.pads-and-strip {
+  --pads-square-size: clamp(320px, 42vh, 520px);
+  --pad-cell-size: calc(var(--pads-square-size) / 4);
+  align-items: end;
+  grid-template-columns: clamp(90px, 18%, 140px) minmax(0, 1fr);
+}
+
+.drum-machine-shell :deep(.pads-and-strip) {
+  --pads-square-size: clamp(320px, 42vh, 520px);
+  --pad-cell-size: calc(var(--pads-square-size) / 4);
+  align-items: end;
+  grid-template-columns: clamp(90px, 18%, 140px) minmax(0, 1fr);
+}
+
+.pad-top-buttons {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: @space-xxs;
+  width: 100%;
+  margin-bottom: @space-xs;
+}
+
+.pads-column {
+  grid-area: pads;
+  align-self: end;
+}
+
+.mode-buttons {
+  grid-area: strip;
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: repeat(8, 1fr);
+  gap: @space-xxs;
+  align-self: end;
+  height: var(--pads-square-size);
+}
+
+.drum-machine-shell :deep(.mode-buttons) {
+  grid-area: strip;
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: repeat(8, 1fr);
+  gap: @space-xxs;
+  align-self: end;
+  height: var(--pads-square-size);
+}
+
+.mode-buttons .control-btn {
+  min-height: calc(var(--pad-cell-size) * 2);
+}
+
+.drum-machine-shell :deep(.mode-buttons .control-btn) {
+  min-height: calc(var(--pad-cell-size) * 2);
+}
+
+.pads-stack {
+  align-self: end;
+}
+
+.drum-machine-shell :deep(.pads-stack) {
+  align-self: end;
+}
+
+.pads-square {
+  max-width: var(--pads-square-size);
+  aspect-ratio: 1 / 1;
+}
+
+.drum-machine-shell :deep(.pads-square) {
+  max-width: var(--pads-square-size);
+  aspect-ratio: 1 / 1;
+}
+
+.pad-grid-indicator {
+  overflow: visible;
+}
+
+.drum-machine-shell :deep(.pad-grid-indicator) {
+  overflow: visible;
+}
+
+.drawer-shell :deep([data-tab='fx']),
+.drawer-shell :deep(.fx-panel) {
+  display: none !important;
 }
 
 </style>

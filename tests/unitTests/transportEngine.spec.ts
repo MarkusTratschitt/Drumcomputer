@@ -1,5 +1,4 @@
-import { describe, it, beforeEach } from 'mocha'
-import { expect } from 'chai'
+import { describe, it, expect, beforeEach } from 'vitest'
 import { createTransportEngine } from '@/domain/transport/transportEngine'
 import type { RenderClock } from '@/domain/clock/renderClock'
 import type { Scheduler, ScheduledFn } from '@/domain/clock/scheduler'

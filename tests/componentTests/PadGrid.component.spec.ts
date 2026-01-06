@@ -1,7 +1,7 @@
-import { describe, it } from 'mocha'
-import { expect } from 'chai'
+import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
-import PadGrid from '../components/PadGrid.vue'
+import PadGrid from '@/components/PadGrid.vue'
+
 
 describe('PadGrid', () => {
   const pads = ['pad1', 'pad2']
@@ -24,7 +24,7 @@ describe('PadGrid', () => {
       .vm.$emit('pad:select', 'pad1')
 
     const emitted = wrapper.emitted('pad:select') as unknown[][]
-    const payload = emitted
+    const payload = emitted?.[0]?.[0]
     expect(emitted).to.be.an('array')
     expect(emitted!.length).to.equal(1)
     expect(payload).to.equal('pad1')

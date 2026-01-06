@@ -1,0 +1,217 @@
+diff --git a/composables/useAudioEngine.client.ts b/composables/useAudioEngine.client 2.ts
+index 0121d6e..fbea6c1 100644
+--- a/composables/useAudioEngine.client.ts
++++ b/composables/useAudioEngine.client 2.ts	
+@@ -1,8 +1,6 @@
+ import { onBeforeUnmount, ref } from 'vue'
+-import type { DrumPadId } from '@/types/drums'
+-import type { FxSettings, SampleRef, Soundbank } from '@/types/audio'
+-import { createSeededRandom, type RandomSource } from '@/utils/seededRandom'
+-import { createFxGraph, connectFxGraph, updateFxGraph, type FxGraphNodes } from '@/audio/fxGraph'
++import type { DrumPadId } from '~/types/drums'
++import type { SampleRef, Soundbank } from '~/types/audio'
+ 
+ interface TriggerRequest {
+   padId: DrumPadId
+@@ -10,43 +8,10 @@ interface TriggerRequest {
+   velocity?: number
+ }
+ 
+-const cloneFxSettings = (settings: FxSettings): FxSettings => ({
+-  filter: { ...settings.filter },
+-  drive: { ...settings.drive },
+-  reverb: { ...settings.reverb }
+-})
+-
+-const createAudioEngineInstance = () => {
++export function useAudioEngine() {
+   const audioContext = ref<AudioContext | null>(null)
+   const masterGain = ref<GainNode | null>(null)
+   const sampleCache = ref<Map<DrumPadId, AudioBuffer>>(new Map())
+-  const fxSettings = ref<FxSettings>({
+-    filter: { enabled: true, frequency: 12000, q: 0.7 },
+-    drive: { enabled: false, amount: 0.25 },
+-    reverb: { enabled: false, mix: 0.15 }
+-  })
+-  const fxSnapshot = ref<FxSettings>(cloneFxSettings(fxSettings.value))
+-  const fxGraph = ref<FxGraphNodes | null>(null)
+-  let randomSource: RandomSource = createSeededRandom(0)
+-  let wasRunningOnHide = false
+-  let handlePageHide: (() => void) | null = null
+-  let handlePageShow: (() => void) | null = null
+-
+-  const syncFxSnapshot = () => {
+-    fxSnapshot.value = cloneFxSettings(fxSettings.value)
+-    return fxSnapshot.value
+-  }
+-
+-  const ensureFxGraph = (ctx: BaseAudioContext, snapshot: FxSettings) => {
+-    if (!masterGain.value) {
+-      return
+-    }
+-    if (!fxGraph.value) {
+-      fxGraph.value = createFxGraph(ctx)
+-      connectFxGraph(fxGraph.value, masterGain.value)
+-    }
+-    updateFxGraph(ctx, fxGraph.value, snapshot, randomSource)
+-  }
+ 
+   const ensureContext = () => {
+     if (!audioContext.value) {
+@@ -57,45 +22,21 @@ const createAudioEngineInstance = () => {
+       audioContext.value = context
+       masterGain.value = gain
+     }
+-    ensureFxGraph(audioContext.value as BaseAudioContext, fxSnapshot.value)
+-    return audioContext.value as AudioContext
+-  }
+-
+-  const resumeContext = async () => {
+-    const ctx = ensureContext()
+-    if (ctx.state === 'suspended') {
+-      await ctx.resume()
+-    }
+-    return ctx
+-  }
+-
+-  const getFxSnapshot = () => cloneFxSettings(fxSnapshot.value)
+-
+-  const setFxRandomSource = (source: RandomSource) => {
+-    randomSource = source
+-    if (fxGraph.value?.reverbNode) {
+-      fxGraph.value.reverbNode.buffer = null
+-    }
+-    if (audioContext.value) {
+-      ensureFxGraph(audioContext.value, fxSnapshot.value)
++    if (audioContext.value.state === 'suspended') {
++      void audioContext.value.resume()
+     }
++    return audioContext.value as AudioContext
+   }
+ 
+   const decodeSample = async (sample: SampleRef): Promise<AudioBuffer | null> => {
+     const ctx = ensureContext()
+-    if (sample.buffer) {
+-      return sample.buffer
+-    }
+-    if (sample.blob) {
+-      const arrayBuffer = await sample.blob.arrayBuffer()
+-      return ctx.decodeAudioData(arrayBuffer.slice(0))
++    if (!sample.url) {
++      return sample.buffer ?? null
+     }
+-    if (sample.url) {
+-      const response = await fetch(sample.url)
+-      const arrayBuffer = await response.arrayBuffer()
+-      return ctx.decodeAudioData(arrayBuffer)
+-    }
+-    return null
++    const response = await fetch(sample.url)
++    const arrayBuffer = await response.arrayBuffer()
++    const buffer = await ctx.decodeAudioData(arrayBuffer)
++    return buffer
+   }
+ 
+   const setSampleForPad = async (padId: DrumPadId, sample: SampleRef) => {
+@@ -116,17 +57,6 @@ const createAudioEngineInstance = () => {
+     )
+   }
+ 
+-  const setFx = (partial: Partial<FxSettings>) => {
+-    fxSettings.value = {
+-      filter: { ...fxSettings.value.filter, ...(partial.filter ?? {}) },
+-      drive: { ...fxSettings.value.drive, ...(partial.drive ?? {}) },
+-      reverb: { ...fxSettings.value.reverb, ...(partial.reverb ?? {}) }
+-    }
+-    const snapshot = syncFxSnapshot()
+-    const ctx = ensureContext()
+-    ensureFxGraph(ctx, snapshot)
+-  }
+-
+   const trigger = async ({ padId, when, velocity = 1 }: TriggerRequest) => {
+     const ctx = ensureContext()
+     const buffer = sampleCache.value.get(padId) ?? null
+@@ -138,55 +68,11 @@ const createAudioEngineInstance = () => {
+     const gain = ctx.createGain()
+     gain.gain.value = velocity
+     source.connect(gain)
+-    if (fxGraph.value) {
+-      gain.connect(fxGraph.value.fxInput)
+-    } else {
+-      gain.connect(masterGain.value ?? ctx.destination)
+-    }
+-    source.start(when)
+-  }
+-
+-  const triggerClick = async (when: number, accented = false, volume = 0.12) => {
+-    const ctx = ensureContext()
+-    const osc = ctx.createOscillator()
+-    const gain = ctx.createGain()
+-    osc.type = 'square'
+-    osc.frequency.value = accented ? 2200 : 1600
+-    const base = Math.max(0, Math.min(1, volume))
+-    gain.gain.setValueAtTime((accented ? 1.4 : 1) * base, when)
+-    gain.gain.exponentialRampToValueAtTime(0.0001, when + 0.06)
+-    osc.connect(gain)
+     gain.connect(masterGain.value ?? ctx.destination)
+-    osc.start(when)
+-    osc.stop(when + 0.08)
+-  }
+-
+-  if (typeof window !== 'undefined') {
+-    handlePageHide = () => {
+-      if (audioContext.value) {
+-        wasRunningOnHide = audioContext.value.state === 'running'
+-        void audioContext.value.suspend().catch(() => undefined)
+-      }
+-    }
+-
+-    handlePageShow = () => {
+-      if (wasRunningOnHide && audioContext.value) {
+-        void audioContext.value.resume().catch(() => undefined)
+-      }
+-      wasRunningOnHide = false
+-    }
+-
+-    window.addEventListener('pagehide', handlePageHide)
+-    window.addEventListener('pageshow', handlePageShow)
++    source.start(when)
+   }
+ 
+   onBeforeUnmount(() => {
+-    if (handlePageHide) {
+-      window.removeEventListener('pagehide', handlePageHide)
+-    }
+-    if (handlePageShow) {
+-      window.removeEventListener('pageshow', handlePageShow)
+-    }
+     audioContext.value?.close()
+     sampleCache.value.clear()
+   })
+@@ -195,25 +81,10 @@ const createAudioEngineInstance = () => {
+     audioContext,
+     masterGain,
+     sampleCache,
+-    fxSettings,
+     ensureContext,
+-    resumeContext,
+     decodeSample,
+     applySoundbank,
+-    setFx,
+     setSampleForPad,
+-    trigger,
+-    triggerClick,
+-    getFxSnapshot,
+-    setFxRandomSource
+-  }
+-}
+-
+-let audioEngineInstance: ReturnType<typeof createAudioEngineInstance> | null = null
+-
+-export function useAudioEngine() {
+-  if (!audioEngineInstance) {
+-    audioEngineInstance = createAudioEngineInstance()
++    trigger
+   }
+-  return audioEngineInstance
+ }

@@ -152,19 +152,19 @@ export function createTransportEngine(
       emit()
     },
 
-    setConfig(next: TransportConfig): void {
+  setConfig(next: TransportConfig): void {
       cfg = next
       if (isPlaying) {
         const now = clock.audioTime()
         const dur = stepDurationSec()
         const steps = Math.max(totalSteps(), 1)
-        const current = ((lastStep % steps) + steps) % steps
+        const current = ((lastAbsoluteStep % steps) + steps) % steps
         startTimeSec = now - lastAbsoluteStep * dur - swingOffsetSec(current)
-        scheduler.clear()
-        lastScheduledStep = -1
         lastAbsoluteStep = computeAbsoluteStepAt(now)
         lastStep = normalizeStep(lastAbsoluteStep)
-        scheduleStepBoundary(lastAbsoluteStep + 1)
+        if (lastScheduledStep < lastAbsoluteStep) {
+          lastScheduledStep = lastAbsoluteStep
+        }
       } else {
         lastScheduledStep = -1
       }

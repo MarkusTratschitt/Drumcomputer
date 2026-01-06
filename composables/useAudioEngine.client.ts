@@ -146,6 +146,21 @@ const createAudioEngineInstance = () => {
     source.start(when)
   }
 
+  const triggerClick = async (when: number, accented = false, volume = 0.12) => {
+    const ctx = ensureContext()
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+    osc.type = 'square'
+    osc.frequency.value = accented ? 2200 : 1600
+    const base = Math.max(0, Math.min(1, volume))
+    gain.gain.setValueAtTime((accented ? 1.4 : 1) * base, when)
+    gain.gain.exponentialRampToValueAtTime(0.0001, when + 0.06)
+    osc.connect(gain)
+    gain.connect(masterGain.value ?? ctx.destination)
+    osc.start(when)
+    osc.stop(when + 0.08)
+  }
+
   if (typeof window !== 'undefined') {
     handlePageHide = () => {
       if (audioContext.value) {
@@ -188,6 +203,7 @@ const createAudioEngineInstance = () => {
     setFx,
     setSampleForPad,
     trigger,
+    triggerClick,
     getFxSnapshot,
     setFxRandomSource
   }

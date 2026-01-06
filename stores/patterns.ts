@@ -168,6 +168,37 @@ export const usePatternsStore = defineStore('patterns', {
       updated[padId] = { velocity: { value: clampVelocity(velocity || DEFAULT_STEP_VELOCITY) } }
       grid[barIndex] = { ...bar, [stepInBar]: updated }
     },
+    eraseStepForPad(barIndex: number, stepInBar: number, padId: DrumPadId) {
+      this.recordHistory()
+      const pattern = this.currentPattern
+      const grid = pattern.steps as StepGrid
+      const bar = grid[barIndex] ?? {}
+      const stepRow = bar[stepInBar] ?? {}
+      if (stepRow && stepRow[padId]) {
+        const updated = { ...stepRow }
+        delete updated[padId]
+        grid[barIndex] = { ...bar, [stepInBar]: updated }
+      }
+    },
+    erasePadEvents(padId: DrumPadId) {
+      this.recordHistory()
+      const pattern = this.currentPattern
+      const grid = pattern.steps as StepGrid
+      Object.entries(grid).forEach(([barIndex, bar]) => {
+        const barIdx = Number(barIndex)
+        Object.entries(bar ?? {}).forEach(([stepIndex, row]) => {
+          if (row && row[padId]) {
+            const updated = { ...row }
+            delete updated[padId]
+            grid[barIdx] = { ...(grid[barIdx] ?? {}), [Number(stepIndex)]: updated }
+          }
+        })
+      })
+    },
+    eraseAutomationForPad(padId: DrumPadId) {
+      // Placeholder: no automation envelope stored yet; reuse pad erase.
+      this.erasePadEvents(padId)
+    },
     updateGridSpec(gridSpec: GridSpec) {
       this.recordHistory()
       const pattern = this.currentPattern

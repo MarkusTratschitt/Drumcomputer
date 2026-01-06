@@ -42,7 +42,19 @@ export interface ScheduleStepOptions {
 export function scheduleStep(options: ScheduleStepOptions, when: number) {
   const pattern = options.getPattern()
   const totalSteps = totalStepsForGrid(pattern.gridSpec)
-  const stepIndex = options.currentStep.value % totalSteps
+  const loopStart = Math.min(
+    Math.max(0, options.transport.loopStart),
+    Math.max(0, totalSteps - 1)
+  )
+  const loopEnd = Math.min(
+    Math.max(loopStart + 1, options.transport.loopEnd),
+    totalSteps
+  )
+  const loopLength = Math.max(1, loopEnd - loopStart)
+  const stepIndex =
+    loopStart +
+    (((options.currentStep.value - loopStart) % loopLength) + loopLength) %
+      loopLength
   const barIndex = Math.floor(stepIndex / pattern.gridSpec.division)
   const stepInBar = stepIndex % pattern.gridSpec.division
   const scheduledWhen = Math.max(when, options.clock.now())
@@ -63,9 +75,25 @@ export function scheduleStep(options: ScheduleStepOptions, when: number) {
         })
       }
 
-      options.currentStep.value = (options.currentStep.value + 1) % totalSteps
-      options.transport.setCurrentStep(options.currentStep.value)
-      const isPatternBoundary = options.currentStep.value === 0
+      const rawNext = options.currentStep.value + 1
+      const nextStepInLoop =
+        loopStart + (((rawNext - loopStart) % loopLength) + loopLength) % loopLength
+      const isPatternBoundary = nextStepInLoop === 0
+
+      if (options.transport.metronomeEnabled) {
+        const isQuarter =
+          pattern.gridSpec.division % 4 === 0
+            ? stepInBar % (pattern.gridSpec.division / 4) === 0
+            : stepInBar === 0
+        if (isQuarter) {
+          void options.audio.triggerClick(
+            scheduledWhen,
+            isPatternBoundary,
+            options.transport.metronomeVolume
+          )
+        }
+      }
+
       let nextPattern = pattern
       if (isPatternBoundary && options.onPatternBoundary) {
         const candidate = options.onPatternBoundary()
@@ -76,6 +104,9 @@ export function scheduleStep(options: ScheduleStepOptions, when: number) {
           nextPattern = options.getPattern()
         }
       }
+
+      options.currentStep.value = nextStepInLoop
+      options.transport.setCurrentStep(options.currentStep.value)
 
       if (options.transport.loop) {
         const stepDuration = secondsPerStep(options.transport.bpm, nextPattern.gridSpec.division)
@@ -121,9 +152,9 @@ export function useSequencer(options: SequencerOptions) {
     pattern.gridSpec = gridSpec
     transport.setGridSpec(gridSpec)
     loopStartTime = renderClock.now()
-    currentStep.value = 0
+    currentStep.value = Math.max(0, transport.loopStart)
     pendingSteps.value = []
-    transport.setCurrentStep(0)
+    transport.setCurrentStep(currentStep.value)
     transport.setPlaying(true)
     scheduler.clear()
     const stepOptions = buildStepOptions(renderClock)
@@ -137,8 +168,8 @@ export function useSequencer(options: SequencerOptions) {
     scheduler.stop()
     scheduler.clear()
     pendingSteps.value = []
-    currentStep.value = 0
-    transport.setCurrentStep(0)
+    currentStep.value = Math.max(0, transport.loopStart)
+    transport.setCurrentStep(currentStep.value)
     loopStartTime = 0
     renderClock = null
   }

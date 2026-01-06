@@ -4,6 +4,15 @@ Nuxt 4 drum machine using Vue 3 Options API + TypeScript strict, Vuetify 3 (Pug 
 
 ![UI screenshot](assets/screenshots/Video%20Screen1766291171020.png)
 
+## Maschine MK3 UI Parity Plan (2026-01-04)
+
+- **No-scroll full-screen shell**: Lock the hardware wrapper to `100vh` with inner flex grids only; push any overflow (sound/FX/pattern drawers) into internal scroll areas and clamp paddings/margins so a 1080p viewport fits without page scroll.
+- **Layout map (placeholders first)**: Dual displays with 8 soft buttons on top, 8 screen knobs below, 4D encoder + master/volume knob cluster and nav buttons between displays, transport cluster bottom-left, left column for mode buttons (Scene/Pattern/Events/Variation/Duplicate/Select/Mute/Solo) plus Shift, right column for touch strip + pad mode buttons (Keyboard/Chord/Step/Note Repeat), 4×4 pads on the right, performance LEDs, and a small meter/pad bank indicator row.
+- **Button symbols + hover hints**: Use consistent symbols and `title`/tooltip hints on every control. Proposed symbols: Play ▶, Stop ■, Rec ●, Restart ↻, Loop ⟳, Count-In ♩, Tap Tempo ☼, Metronome ♬, Follow ⇥, Pad Bank ◪, Duplicate ⧉, Select ☐, Mute 🔇, Solo ⚡, Scene ▤, Pattern ▦, Events ✱, Variation ≈, Keyboard ⌨, Chords ♫, Step ◫, Note Repeat ✺, Shift ⇧, 4D encoder arrows ↕↔, Touch Strip ≡.
+- **Placeholder components to scaffold**: `DualDisplayPlaceholder` (dual LCD mock with soft-label text), `SoftButtonStripPlaceholder`, `ScreenKnobRingPlaceholder` (shows detents + hover hint), `FourDEncoderPlaceholder`, `TransportClusterPlaceholder`, `ModeColumnPlaceholder`, `TouchStripPlaceholder`, `PadBankIndicator`, `PerformanceMeterPlaceholder`, `OverlayHint` (hover helper for any element), and `DrawerPanelFrame` with fixed height for scroll containment.
+- **Interaction & hover behavior**: Every element should expose a hover hint describing primary + shift-layer functions; knobs/buttons trigger placeholder overlays that can later be wired to real handlers. Touching/hovering a screen knob opens a selector overlay mock; encoder hover shows navigation arrows + confirm hint; transport buttons expose play/stop/reset semantics.
+- **Sizing refactor plan**: Reduce outer gutters, use CSS `clamp()` for hardware widths/heights, pin pad square to max 640px with responsive shrink, align display + knob rows to match MK3 proportions, and keep drawers at a fixed height (e.g., 360px) with internal scroll so the main stage never scrolls.
+
 ## Setup
 
 ```bash
@@ -38,6 +47,19 @@ PORT=3001 HMR_PORT=24679 npm run dev
 - Configurable step grid divisions (1/2/4/8/16/32/64) with responsive layout for larger sequences and stable transport start/stop handling.
 - Import/Export helpers for patterns, MIDI (@tonejs/midi), soundbank manifests + sample blobs, and WAV bounce via OfflineAudioContext.
 - Scene chains with bar-boundary pattern switching, per-step velocity/accent cycling, and an FX chain (filter/drive/reverb) routed through the WebAudio graph.
+
+## Control Area (MK3)
+
+- Pinia store `stores/control.ts` owns modes, per-mode pages, soft buttons, encoder parameters, and display models; DrumMachine wires it without changing layout.
+- Mode buttons fire primary and SHIFT secondary actions (e.g., CHANNEL→MIDI, PLUGIN→Instance, BROWSER→Plug-in menu, FILE→Save As, MACRO→Set). Page ◀/▶ steps through pages within the active mode.
+- SoftButtonStrip renders 8 dynamic labels/tooltips per page and emits press events; display soft labels mirror the current soft buttons.
+- DualDisplay renders contextual panels for Browser, File, Settings, Sampling, Mixer, Arranger, and info views; header shows mode + page.
+- Encoders react to mousewheel on hover and arrow keys; SHIFT enables fine step. SHIFT hold is de-latched via global pointer/key listeners; knobs expose tabindex + aria-label.
+
+## Analysis & Plan
+
+- **Current gaps**: Pattern/scene editing UIs are not mounted on `pages/index.vue`; transport lacks full MK3 semantics; placeholder overlays for soft buttons/encoders/4D are not wired; accessibility coverage is partial.
+- **To close parity**: Restore sequencer UI (StepGrid/StepCell) and mount Patterns/Export/TabPanel; bring transport to MK3 semantics (play/stop toggle, stop-reset, restart, count-in, tap tempo, follow/metronome controls, loop range adjust); add grid/loop UX and erase panels; surface channel/plug-in/macro/midi control modes with soft labels; wire selector overlays to 4D/soft buttons; ensure a11y labels and focus flows.
 
 ## Timing & Sync
 
@@ -97,31 +119,12 @@ Copy the exported seed from the metadata panel (or the JSON blob) and supply it 
 - MIDI layer streamlined: mapping/learn persisted, simpler MIDI status access, layout metadata cleaned up.
 - Sequencer components (`StepGrid.vue`, `StepCell.vue`) removed from the build; only Markdown stubs remain, so the UI currently renders pads/transport/FX only.
 
-## Current Status (2025-12-21)
-
-- QA not re-run in this review; last documented commands remain `npm run lint` and `npm run typecheck`.
-- Runtime UI currently shows only Transport, FX drawer, and 16-pad grid; pattern/scene management, step sequencer, export, and MIDI/Sync panels exist in code but are not mounted on `pages/index.vue`.
-- Sequencer components (`StepGrid.vue`, `StepCell.vue`) are missing from the build; only MD documentation exists.
-- Nuxt output artifacts are present in the repo and were not regenerated in this pass.
-
 ## Diagrams
 
 - Transport timing: `diagrams/transport-engine.md`
 - UI sequencer flow: `diagrams/ui-sequencer.md`
 - Persistence + audio pipeline: `diagrams/persistence-and-audio.md`
-
-## Code Review Findings (2025-12-21)
-
-- `components/PadCell.vue`: Template renders only a bare button; labels/key labels are not displayed and `is-empty` is ignored, so pads appear label-less with weak accessibility. Render/flag label and empty state.
-- `pages/index.vue` + `components/DrumMachine.vue`: Only Pads/Transport/FX are mounted; PatternsPanel, ExportPanel, TabPanel, and any step/playhead grid are absent, so pattern editing, scene chains, export, and MIDI/Sync UI are currently unreachable.
-- `components/StepGrid.md`/`StepCell.md`: Only Markdown stubs remain; the actual Vue components were removed. README still describes Sequencer UI that is missing in the build; either restore the components or align README/UX.
-
-### Previous Findings (2025-12-19)
-
-- `components/PadGrid.vue`: Template contains a standalone `button.pad-cell` wired to undefined bindings (`padClasses`, `isFocusable`, `handleActivate`, `isSelected`, `velocityStyle`). Any interaction will throw and the element does not map to the pad model—likely leftover code that should be removed or folded into `PadCell`.
-- `components/PadGrid.vue`: The watcher tries to focus the selected pad via `$refs[newPad]`, but no `ref` is attached to `PadCell` instances. Focus restoration currently never works; add a `ref` per pad or alternative focus management.
-- `domain/transport/transportEngine.ts`: `setConfig` recalculates `startTimeSec`/phase but does not clear or re-queue scheduled boundaries. Pending scheduler items from the previous tempo/grid remain, so a mid-playback config change can fire steps at stale times. Clearing/reseeding the scheduler (with swing-aware offsets) on config changes would keep timing consistent.
-- `domain/transport/transportEngine.ts`: Scheduling always pushes `currentStep + 1` with raw step indices (not wrapped to total steps). With long play sessions and reconfigurations, `lastScheduledStep` monotonic growth can skip re-scheduling when the modulo-wrapped step repeats. Normalizing scheduled indices to the current grid would make the duplicate-guard reliable across loops.
+- Control area mapping: `diagrams/control-area-mapping.md`
 
 ## Current UI / Editing State
 
@@ -151,3 +154,38 @@ Copy the exported seed from the metadata panel (or the JSON blob) and supply it 
 - Expand automated coverage: integrate component tests for `PadGrid`/`StepGrid` interactions and regression tests around transport start/stop/reconfigure flows.
 - UX polish: expose scheduler/debug timelines in dev mode, improve empty-state messaging for pads without a selected bank/pad, and add ARIA labels around sequencing controls.
 - Stretch: FX chain enhancements (filter/drive) and an extended sample browser with drag/drop and manifest previews.
+
+## Code Review Findings (2026-01-04)
+
+- `pages/index.vue`: Main slot renders a blank placeholder and mounts only transport/pads/FX; there is no scaffold for displays, soft buttons, encoder, mode clusters, touch strip, or hover hints, so MK3 parity cannot be reached without adding new slots/components.
+- `components/DrumMachine.vue`: The hardware shell is fixed to a two-column transport+drawer vs. pads layout with clamped widths; adding the MK3 top displays, left/right button columns, and touch strip would currently overflow and reintroduce page scroll. Needs a size refactor and new placeholder regions.
+- `components/TransportBar.vue`: Transport buttons rely solely on icons, have no hover hints/tooltips, and miss MK3 semantics (play/stop toggle, stop-reset, shift+rec count-in, restart). The dense vertical stack will not fit once displays/soft buttons are added.
+- `components/PadGrid.vue`: Pads expose neither tooltips nor pad labels/LED hints in the UI. `is-empty` derives from missing pad state rather than sample presence, so freshly loaded banks render as “empty” even when defaults exist.
+- `components/PadGrid.vue`: KEY_LABELS are hard-coded to 16 entries; any future pad bank paging or alternate pad counts will desync labels and navigation unless the labels derive from the pads prop.
+
+## Hardware Layout & UI Reference
+
+### PadGrid (4×4)
+- 16 pads in a 4×4 grid (pad1–pad16) with distinct states for selected, triggered (current step), and playing. Each PadCell is a native button.
+- Accessibility: `aria-label` per pad, `aria-rowcount`/`aria-colcount`/`aria-rowindex`/`aria-colindex`, and `tabindex` in pad order; focus refs support keyboard focus moves. The pattern indicator sits next to the grid.
+
+### Mode Buttons (left of PadGrid)
+- Vertical stack of 8 mode buttons; sized to align with pad heights and the Softbutton 4 reference line above Display 1. Buttons expose `aria-label`/`title` and keyboard focus.
+
+### Fixed Velocity + Pad Mode (top row)
+- Fixed Velocity plus PAD MODE/KEYBOARD/CHORD/STEP row aligned to the Softbutton row above Display 2 as the horizontal reference.
+
+### Softbutton references
+- Softbutton 4 above Display 1 defines the vertical alignment line for the mode column. The softbutton row above Display 2 defines the horizontal reference for Fixed Velocity and Pad Mode buttons (see `diagrams/padgrid-modus-layout.md`).
+
+### Accessibility
+- PadGrid: ARIA grid metadata, labels, and focusable buttons.
+- Mode/Pad-Mode/Fixed-Velocity buttons: native button semantics with labels/titles and consistent tab order.
+- Softbuttons remain labeled reference points for screen readers to understand spatial layout.
+
+### TransportBar
+- Standalone transport/pattern/step control component. Props include `bpm`, `division`/`divisions`, `loop`, `patternBars`, `presetBars`/`presetDivision`, `selectedPad`, and flags (`isPlaying`, `isRecording`, `countInEnabled`, `metronomeEnabled`, `followEnabled`, `liveEraseEnabled`).
+- Events cover transport (play/stop/stop-reset/restart), tempo (`update-bpm`, `increment-bpm`, `decrement-bpm`, `tap-tempo`), grid (`update-division`, `update-pattern-bars`, `update:preset-*`), loop (`update-loop`, `nudge-loop-range`, `update-loop-start`, `update-loop-end`), metronome/follow (`toggle-metronome`, `update:metronome-volume`, `toggle-follow`), count-in (`toggle-count-in`, `update-count-in-bars`), MIDI learn, and live erase (`toggle-live-erase`, `erase-pad`, `erase-current-step`). Buttons use native semantics plus `aria-label`/`title` for a11y/tooltips.
+
+### Diagram
+- Layout visualization with reference lines for dual displays, softbutton rows, mode column, Fixed Velocity/Pad Mode row, and PadGrid: see `diagrams/padgrid-modus-layout.md`.

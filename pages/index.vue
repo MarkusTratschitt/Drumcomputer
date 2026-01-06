@@ -1,4 +1,5 @@
 <template>
+<ClientOnly>
   <DrumMachine>
     <template #main>
       <div class="main-placeholder" />
@@ -12,10 +13,8 @@
       <TransportBar v-bind="props.transportProps" />
     </template>
 
-    <template #drawer="{ props }">
-      <FxPanel v-bind="props.fxProps" />
-    </template>
   </DrumMachine>
+</ClientOnly>
 </template>
 
 <script>
