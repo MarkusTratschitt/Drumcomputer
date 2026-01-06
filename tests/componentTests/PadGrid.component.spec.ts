@@ -1,7 +1,7 @@
-import { describe, it } from 'mocha'
-import { expect } from 'chai'
+import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
 import PadGrid from '@/components/PadGrid.vue'
+
 
 describe('PadGrid', () => {
   const pads = ['pad1', 'pad2']

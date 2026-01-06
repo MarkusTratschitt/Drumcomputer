@@ -8,15 +8,25 @@ const root = fileURLToPath(new URL('./', import.meta.url))
 export default defineConfig({
   plugins: [vue()],
   resolve: {
-    alias: {
-      '@': root,
-      '~': root,
-    },
+    alias: { '@': root, '~': root },
   },
   test: {
     environment: 'jsdom',
     globals: true,
-    // wir splitten gleich Mocha raus:
-    exclude: ['**/*.mocha.spec.*', '**/transportEngine.spec.ts'],
+
+    // ✅ NUR deine Tests einsammeln
+    include: [
+      'tests/**/*.{test,spec}.?(c|m)[tj]s?(x)',
+    ],
+
+    // ✅ zusätzlich absichern
+    exclude: [
+      '**/node_modules/**',
+      '**/.nuxt/**',
+      '**/.output/**',
+      '**/dist/**',
+      '**/coverage/**',
+      '**/*.mocha.spec.*',
+    ],
   },
 })
