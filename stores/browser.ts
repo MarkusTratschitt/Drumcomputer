@@ -6,7 +6,7 @@ import { useRecentFiles, type RecentFileEntry } from '../composables/useRecentFi
 import { useSamplePreview, type PreviewState } from '../composables/useSamplePreview.client'
 import { useQuickBrowse, type BrowseHistoryEntry } from '../composables/useQuickBrowse'
 import type { EncoderField } from '../composables/use4DEncoder'
-import type { BrowserMode, BrowserResultItem, BrowserFileEntry } from '../types/library'
+import type { BrowserMode, BrowserResultItem, BrowserFileEntry as _BrowserFileEntry } from '../types/library'
 
 type DisplayListItem = {
   title: string
@@ -132,7 +132,6 @@ const sortStorageKey = 'drumcomputer_sort_mode_v1'
 
 const hasClientStorage = (): boolean => {
   if (typeof window === 'undefined' || typeof localStorage === 'undefined') return false
-  if (typeof import.meta !== 'undefined' && 'client' in import.meta && !import.meta.client) return false
   return true
 }
 
@@ -283,18 +282,20 @@ export const useBrowserStore = defineStore('browser', {
     setFilter<K extends keyof BrowserFilters>(key: K, value: BrowserFilters[K]) {
       const nextValue = Array.isArray(value) ? [...value] : value
       const nextFilters = { ...this.filters, [key]: nextValue } as BrowserFilters
+
       if (key === 'category') {
-        nextFilters.product = undefined
-        nextFilters.bank = undefined
-        nextFilters.subBank = undefined
+        delete nextFilters.product
+        delete nextFilters.bank
+        delete nextFilters.subBank
       }
       if (key === 'product') {
-        nextFilters.bank = undefined
-        nextFilters.subBank = undefined
+        delete nextFilters.bank
+        delete nextFilters.subBank
       }
       if (key === 'bank') {
-        nextFilters.subBank = undefined
+        delete nextFilters.subBank
       }
+
       this.filters = nextFilters
       void this.applyFilters()
     },

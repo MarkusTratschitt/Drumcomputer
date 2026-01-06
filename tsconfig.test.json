@@ -5,11 +5,14 @@
     "module": "NodeNext",
     "target": "ES2022",
     "moduleResolution": "NodeNext",
-    "types": ["node", "mocha"],
+    "skipLibCheck": true,
+    "types": ["node", "mocha",  "vite/client", "wicg-file-system-access"],
     "sourceMap": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "~/*": ["./*"],
+      "~~/*": ["./*"]
     }
   },
   "include": [
