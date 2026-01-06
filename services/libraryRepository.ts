@@ -13,7 +13,7 @@ export type LibraryItem = {
   bank?: string
   subBank?: string
   character?: string
-  vendor?: string
+  vendor?: 'factory' | 'user'
   favorites?: boolean
 }
 
@@ -37,6 +37,10 @@ export interface LibraryRepository {
   removeFromFavorites(itemId: string): Promise<void>
   getFavorites(): Promise<LibraryItem[]>
   isFavorite(itemId: string): Promise<boolean>
+  getCategories?: () => Promise<string[]>
+  getProducts?: (category?: string) => Promise<string[]>
+  getBanks?: (product?: string) => Promise<string[]>
+  getSubBanks?: (bank?: string) => Promise<string[]>
   refreshIndex(): Promise<void>
   importDirectory?(
     path: string,
@@ -65,6 +69,7 @@ const extractMetadataFromPath = (path: string): Partial<LibraryItem> => {
     product: parts[1],
     bank: parts[2],
     subBank: parts[3],
+    character: parts[4],
     vendor: 'user'
   }
 }
@@ -194,6 +199,25 @@ const createLocalRepository = (): LibraryRepository => {
     },
     async isFavorite(itemId: string) {
       return favorites.has(itemId)
+    },
+    async getCategories() {
+      const values = items.map((item) => item.category).filter((value): value is string => !!value)
+      return Array.from(new Set(values)).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
+    },
+    async getProducts(category?: string) {
+      const filtered = category ? items.filter((item) => item.category === category) : items
+      const values = filtered.map((item) => item.product).filter((value): value is string => !!value)
+      return Array.from(new Set(values)).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
+    },
+    async getBanks(product?: string) {
+      const filtered = product ? items.filter((item) => item.product === product) : items
+      const values = filtered.map((item) => item.bank).filter((value): value is string => !!value)
+      return Array.from(new Set(values)).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
+    },
+    async getSubBanks(bank?: string) {
+      const filtered = bank ? items.filter((item) => item.bank === bank) : items
+      const values = filtered.map((item) => item.subBank).filter((value): value is string => !!value)
+      return Array.from(new Set(values)).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
     },
     async refreshIndex() {
       items = loadPersisted()

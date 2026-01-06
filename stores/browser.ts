@@ -59,15 +59,6 @@ const createInitialFilters = (): BrowserFilters => ({
   favorites: false
 })
 
-const uniqueNonEmpty = (values: Array<string | undefined>): string[] => {
-  const result = new Set(
-    values
-      .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
-      .map((value) => value.trim())
-  )
-  return Array.from(result)
-}
-
 const normalizeTags = (tags?: string[]) =>
   (tags ?? []).map((tag) => tag.trim().toLowerCase()).filter((tag) => tag.length > 0)
 
@@ -98,6 +89,7 @@ const describeFilters = (filters: BrowserFilters): string => {
   if (filters.category) parts.push(`Cat: ${filters.category}`)
   if (filters.product) parts.push(`Prod: ${filters.product}`)
   if (filters.bank) parts.push(`Bank: ${filters.bank}`)
+  if (filters.subBank) parts.push(`Sub: ${filters.subBank}`)
   if (filters.tags && filters.tags.length > 0) parts.push(`Tags: ${filters.tags.join(', ')}`)
   if (filters.favorites) parts.push('Favs')
   return parts.join(', ')
@@ -182,6 +174,17 @@ const emptyPreviewState: PreviewState = {
   duration: 0
 }
 
+const collectTags = (items: BrowserResultItem[]): string[] => {
+  const tags = new Set<string>()
+  items.forEach((item) => {
+    item.tags?.forEach((tag) => {
+      const trimmed = tag.trim()
+      if (trimmed.length > 0) tags.add(trimmed)
+    })
+  })
+  return Array.from(tags).sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }))
+}
+
 export const useBrowserStore = defineStore('browser', {
   state: () => ({
     mode: 'LIBRARY' as BrowserMode,
@@ -201,7 +204,11 @@ export const useBrowserStore = defineStore('browser', {
     availableCategories: [] as string[],
     availableProducts: [] as string[],
     availableBanks: [] as string[],
+    availableSubBanks: [] as string[],
     recentEntries: [] as RecentFileEntry[],
+    availableTags: [] as string[],
+    tagDialogOpen: false,
+    tagDialogItemId: null as string | null,
     sortMode: loadSortMode(),
     preview: null as ReturnType<typeof useSamplePreview> | null
   }),
@@ -223,6 +230,7 @@ export const useBrowserStore = defineStore('browser', {
     async setMode(mode: BrowserMode) {
       this.mode = mode
       if (mode === 'LIBRARY') {
+        await this.loadAvailableTags()
         await this.search()
       } else {
         await this.listDir(this.files.currentPath || '/')
@@ -239,20 +247,31 @@ export const useBrowserStore = defineStore('browser', {
       const results =
         this.filters.favorites === true ? favorites : await repo.search(this.library.query ?? '', this.filters)
       const mapped = results.map((item) => mapLibraryItemToResult(item, favoriteIds.has(item.id)))
-      this.availableCategories = uniqueNonEmpty(mapped.map((item) => item.category))
-      this.availableProducts = uniqueNonEmpty(mapped.map((item) => item.product))
-      this.availableBanks = uniqueNonEmpty(mapped.map((item) => item.bank))
       const filtered = mapped.filter((item) => matchesFilters(item, this.filters))
       this.library.rawResults = filtered
       this.library.results = filtered
       if (this.library.selectedId && !filtered.find((entry) => entry.id === this.library.selectedId)) {
         this.library.selectedId = null
       }
+      await this.refreshHierarchyOptions()
       this.sortResults()
     },
     setFilter<K extends keyof BrowserFilters>(key: K, value: BrowserFilters[K]) {
       const nextValue = Array.isArray(value) ? [...value] : value
-      this.filters = { ...this.filters, [key]: nextValue } as BrowserFilters
+      const nextFilters = { ...this.filters, [key]: nextValue } as BrowserFilters
+      if (key === 'category') {
+        nextFilters.product = undefined
+        nextFilters.bank = undefined
+        nextFilters.subBank = undefined
+      }
+      if (key === 'product') {
+        nextFilters.bank = undefined
+        nextFilters.subBank = undefined
+      }
+      if (key === 'bank') {
+        nextFilters.subBank = undefined
+      }
+      this.filters = nextFilters
       void this.applyFilters()
     },
     async clearFilters() {
@@ -274,11 +293,27 @@ export const useBrowserStore = defineStore('browser', {
           return this.availableProducts
         case 'bank':
           return this.availableBanks
+        case 'subBank':
+          return this.availableSubBanks
         default:
           return []
       }
     },
+    async refreshHierarchyOptions() {
+      const repo = getLibraryRepository()
+      this.availableCategories = (await repo.getCategories?.()) ?? []
+      this.availableProducts = (await repo.getProducts?.(this.filters.category)) ?? []
+      this.availableBanks = (await repo.getBanks?.(this.filters.product)) ?? []
+      this.availableSubBanks = (await repo.getSubBanks?.(this.filters.bank)) ?? []
+    },
     getEncoderFields(): EncoderField[] {
+      if (this.tagDialogOpen) {
+        return this.availableTags.map((tag, index) => ({
+          id: `tag-${index}`,
+          label: tag,
+          value: tag
+        }))
+      }
       const fields: EncoderField[] = [
         {
           id: 'fileType',
@@ -311,6 +346,12 @@ export const useBrowserStore = defineStore('browser', {
           options: this.getAvailableOptions('bank')
         },
         {
+          id: 'subBank',
+          label: 'Sub Bank',
+          value: this.filters.subBank ?? '',
+          options: this.getAvailableOptions('subBank')
+        },
+        {
           id: 'tags',
           label: 'Tags',
           value: (this.filters.tags ?? []).join(', ')
@@ -334,6 +375,43 @@ export const useBrowserStore = defineStore('browser', {
     },
     async selectResult(id: string | null) {
       this.library.selectedId = id
+    },
+    async loadAvailableTags() {
+      const repo = getLibraryRepository()
+      const items = await repo.search('', undefined)
+      const mapped = items.map((item) => mapLibraryItemToResult(item, false))
+      this.availableTags = collectTags(mapped)
+    },
+    async openTagDialog(itemId: string) {
+      this.tagDialogOpen = true
+      this.tagDialogItemId = itemId
+      await this.loadAvailableTags()
+      await this.selectResult(itemId)
+    },
+    closeTagDialog() {
+      this.tagDialogOpen = false
+      this.tagDialogItemId = null
+    },
+    async addTagToSelected(tag: string) {
+      const itemId = this.tagDialogItemId ?? this.library.selectedId
+      if (!itemId) return
+      const repo = getLibraryRepository()
+      await repo.addTag(itemId, tag)
+      await this.search()
+      await this.loadAvailableTags()
+      await this.selectResult(itemId)
+    },
+    async removeTagFromSelected(tag: string) {
+      const itemId = this.tagDialogItemId ?? this.library.selectedId
+      if (!itemId) return
+      const repo = getLibraryRepository()
+      await repo.removeTag(itemId, tag)
+      await this.search()
+      await this.loadAvailableTags()
+      await this.selectResult(itemId)
+    },
+    getAvailableTags(): string[] {
+      return this.availableTags
     },
     loadRecentFiles() {
       const recent = useRecentFiles()
@@ -450,6 +528,7 @@ export const useBrowserStore = defineStore('browser', {
         contextId: context?.contextId ?? 'global'
       })
       this.loadRecentFiles()
+      await this.loadAvailableTags()
       await repo.refreshIndex()
       await this.search()
     },
@@ -481,6 +560,33 @@ export const useBrowserStore = defineStore('browser', {
     },
     toDisplayModels(): { leftModel: DisplayPanelModel; rightModel: DisplayPanelModel } {
       const sortSummary = this.sortMode === 'relevance' ? '' : `Sorted by ${sortLabel(this.sortMode)}`
+      if (this.tagDialogOpen) {
+        const selectedId = this.tagDialogItemId ?? this.library.selectedId
+        const selected = this.library.results.find((item) => item.id === selectedId)
+        const selectedTags = selected?.tags ?? []
+        const leftItems: DisplayListItem[] = this.availableTags.map((tag) => ({
+          title: tag,
+          subtitle: selectedTags.includes(tag) ? '[x]' : '[ ]'
+        }))
+        const rightItems: DisplayListItem[] = selectedTags.map((tag) => ({
+          title: tag,
+          subtitle: 'Remove'
+        }))
+        return {
+          leftModel: {
+            view: 'BROWSER',
+            title: 'Add Tag',
+            summary: `${selectedTags.length} tags`,
+            items: leftItems
+          },
+          rightModel: {
+            view: 'BROWSER',
+            title: 'Current Tags',
+            summary: 'Press to toggle',
+            items: rightItems
+          }
+        }
+      }
       if (this.mode === 'FILES') {
         const leftItems: DisplayListItem[] = this.files.entries.dirs.map((dir) => ({
           title: dir.name,

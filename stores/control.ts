@@ -778,6 +778,21 @@ export const useControlStore = defineStore('control', {
     },
     syncBrowserDisplay() {
       const browser = useBrowserStore()
+      if (browser.tagDialogOpen) {
+        if (this.encoder4D) {
+          const fields = browser.getEncoderFields()
+          this.encoder4D.setFields(fields)
+          this.encoder4D.setMode('list-navigate')
+          if (fields.length === 0) {
+            this.encoder4D.activeListIndex.value = 0
+          } else {
+            const index = clamp(this.encoder4D.activeListIndex.value, 0, fields.length - 1)
+            this.encoder4D.activeListIndex.value = index
+          }
+        }
+        this.setBrowserDisplay(browser.toDisplayModels())
+        return
+      }
       if (this.activeMode === 'BROWSER' && this.activePage?.label === 'Recent') {
         browser.loadRecentFiles()
         const recentItems = browser.recentFiles.map((entry) => ({
@@ -900,6 +915,13 @@ export const useControlStore = defineStore('control', {
           void browser.search()
           this.lastAction = 'Browser search'
           break
+        case 'BROWSER_TAG':
+        case 'BROWSER_TAG_RECENT':
+          if (browser.library.selectedId) {
+            browser.openTagDialog(browser.library.selectedId)
+            this.lastAction = 'Tag dialog opened'
+          }
+          break
         case 'BROWSER_PREHEAR':
           void browser.prehearSelected()
           this.lastAction = 'Prehear triggered'
@@ -957,6 +979,19 @@ export const useControlStore = defineStore('control', {
     },
     tiltEncoder4D(direction: 'left' | 'right' | 'up' | 'down') {
       if (!this.encoder4D) return
+      const browser = useBrowserStore()
+      if (browser.tagDialogOpen) {
+        if (direction === 'right') {
+          browser.closeTagDialog()
+          this.syncBrowserDisplay()
+          return
+        }
+        if (direction === 'up' || direction === 'down') {
+          this.encoder4D.tiltVertical(direction)
+          this.syncBrowserDisplay()
+        }
+        return
+      }
       if (direction === 'left' || direction === 'right') {
         this.encoder4D.tiltHorizontal(direction)
         this.syncBrowserDisplay()
@@ -967,6 +1002,13 @@ export const useControlStore = defineStore('control', {
     },
     turnEncoder4D(delta: number) {
       if (!this.encoder4D) return
+      const browser = useBrowserStore()
+      if (browser.tagDialogOpen) {
+        this.encoder4D.setMode('list-navigate')
+        this.encoder4D.turn(delta)
+        this.syncBrowserDisplay()
+        return
+      }
       const mode = this.encoder4D.mode.value
       this.encoder4D.turn(delta)
       if (mode === 'value-adjust') {
@@ -978,6 +1020,22 @@ export const useControlStore = defineStore('control', {
     async pressEncoder4D() {
       if (!this.encoder4D) return
       const browser = useBrowserStore()
+      if (browser.tagDialogOpen) {
+        const index = clamp(this.encoder4D.activeListIndex.value, 0, browser.availableTags.length - 1)
+        const tag = browser.availableTags[index]
+        if (tag) {
+          const selectedId = browser.tagDialogItemId ?? browser.library.selectedId
+          const selected = browser.library.results.find((item) => item.id === selectedId)
+          const assigned = selected?.tags?.includes(tag) ?? false
+          if (assigned) {
+            await browser.removeTagFromSelected(tag)
+          } else {
+            await browser.addTagToSelected(tag)
+          }
+          this.syncBrowserDisplay()
+        }
+        return
+      }
       const previousMode = this.encoder4D.mode.value
       if (previousMode === 'value-adjust') {
         this.applyEncoderFieldFilter()
