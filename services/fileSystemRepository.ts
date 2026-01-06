@@ -18,6 +18,12 @@ export interface FileSystemRepository {
   readFileBlob?: (path: string) => Promise<Blob>
 }
 
+declare global {
+  interface Window {
+    showDirectoryPicker?: () => Promise<FileSystemDirectoryHandle>
+  }
+}
+
 type FsNode = {
   name: string
   children?: FsNode[]
@@ -55,12 +61,24 @@ const normalizePath = (path: string): string => {
   return parts.length === 0 ? '/' : `/${parts.join('/')}`
 }
 
+const isDirectoryHandle = (handle: FileSystemHandle): handle is FileSystemDirectoryHandle =>
+  handle.kind === 'directory'
+
+const isFileHandle = (handle: FileSystemHandle): handle is FileSystemFileHandle => handle.kind === 'file'
+
+const getDirectoryPicker = (): (() => Promise<FileSystemDirectoryHandle>) => {
+  if (typeof window === 'undefined' || typeof window.showDirectoryPicker !== 'function') {
+    throw new Error('File System Access API not supported')
+  }
+  return window.showDirectoryPicker
+}
+
 const hasFileSystemAccess = (): boolean => {
   if (typeof window === 'undefined') return false
   if (typeof import.meta !== 'undefined' && 'client' in import.meta && !import.meta.client) {
     return false
   }
-  return 'showDirectoryPicker' in window
+  return typeof window.showDirectoryPicker === 'function'
 }
 
 class BrowserFileSystemRepository implements FileSystemRepository {
@@ -68,11 +86,9 @@ class BrowserFileSystemRepository implements FileSystemRepository {
   private handleCache = new Map<string, FileSystemHandle>()
 
   async requestAccess(): Promise<boolean> {
-    if (!hasFileSystemAccess()) return false
     try {
-      const picker = window.showDirectoryPicker
-      if (!picker) return false
-      this.rootHandle = await picker.call(window)
+      const picker = getDirectoryPicker()
+      this.rootHandle = await picker()
       this.handleCache.clear()
       this.handleCache.set('/', this.rootHandle)
       return true
@@ -105,7 +121,7 @@ class BrowserFileSystemRepository implements FileSystemRepository {
       }
       if (!nextHandle) return null
       this.handleCache.set(nextPath, nextHandle)
-      if (nextHandle.kind === 'directory') {
+      if (isDirectoryHandle(nextHandle)) {
         current = nextHandle
       } else {
         current = null
@@ -117,13 +133,13 @@ class BrowserFileSystemRepository implements FileSystemRepository {
 
   private async resolveDirectoryHandle(path: string): Promise<FileSystemDirectoryHandle | null> {
     const handle = await this.resolveHandle(path)
-    if (handle?.kind === 'directory') return handle
+    if (handle && isDirectoryHandle(handle)) return handle
     return null
   }
 
   private async resolveFileHandle(path: string): Promise<FileSystemFileHandle | null> {
     const handle = await this.resolveHandle(path)
-    if (handle?.kind === 'file') return handle
+    if (handle && isFileHandle(handle)) return handle
     return null
   }
 
@@ -138,9 +154,9 @@ class BrowserFileSystemRepository implements FileSystemRepository {
     const files: FileEntry[] = []
     for await (const [name, handle] of dirHandle.entries()) {
       const entryPath = buildPath(normalizePath(path), name)
-      if (handle.kind === 'directory') {
+      if (isDirectoryHandle(handle)) {
         dirs.push({ name, path: entryPath })
-      } else {
+      } else if (isFileHandle(handle)) {
         files.push({ name, path: entryPath })
       }
       this.handleCache.set(entryPath, handle)
