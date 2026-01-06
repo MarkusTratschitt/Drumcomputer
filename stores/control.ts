@@ -127,6 +127,15 @@ const parseFieldValueForFilter = (field: EncoderField): BrowserFilters[keyof Bro
   return field.value as BrowserFilters[keyof BrowserFilters]
 }
 
+const parseSortMode = (value: EncoderField['value']): 'name-asc' | 'name-desc' | 'date-asc' | 'date-desc' | 'relevance' => {
+  const label = String(value)
+  if (label.includes('Name ↑')) return 'name-asc'
+  if (label.includes('Name ↓')) return 'name-desc'
+  if (label.includes('Date ↑')) return 'date-asc'
+  if (label.includes('Date ↓')) return 'date-desc'
+  return 'relevance'
+}
+
 const buildSoftButtons = (buttons: Partial<SoftButton>[]): SoftButton[] => {
   const defaults: SoftButton = {
     label: '',
@@ -832,6 +841,11 @@ export const useControlStore = defineStore('control', {
       const browser = useBrowserStore()
       const field = this.encoder4D.activeField.value
       if (!field) return
+      if (field.id === 'sort') {
+        browser.setSortMode(parseSortMode(field.value))
+        this.refreshEncoderFields()
+        return
+      }
       const value = parseFieldValueForFilter(field)
       browser.setFilter(field.id as keyof BrowserFilters, value as BrowserFilters[keyof BrowserFilters])
       this.refreshEncoderFields()

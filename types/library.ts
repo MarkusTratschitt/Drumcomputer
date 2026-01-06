@@ -14,6 +14,8 @@ export type BrowserResultItem = {
   subBank?: string
   character?: string
   favorites?: boolean
+  importedAt?: number
+  timestamp?: number
 }
 
 export type BrowserFileEntry = {

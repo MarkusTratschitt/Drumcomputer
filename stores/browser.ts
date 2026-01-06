@@ -24,16 +24,20 @@ type DisplayPanelModel = {
 type LibraryState = {
   query: string
   results: BrowserResultItem[]
+  rawResults: BrowserResultItem[]
   selectedId: string | null
 }
 
 type FilesState = {
   currentPath: string
   entries: DirectoryListing
+  rawEntries: DirectoryListing
   selectedPath: string | null
 }
 
 const emptyListing: DirectoryListing = { dirs: [], files: [] }
+
+export type SortMode = 'name-asc' | 'name-desc' | 'date-asc' | 'date-desc' | 'relevance'
 
 export type BrowserFilters = {
   fileType?: 'sample' | 'kit' | 'pattern' | 'preset' | 'all'
@@ -103,6 +107,7 @@ const mapLibraryItemToResult = (item: LibraryItem, isFavorite: boolean): Browser
   title: item.name,
   ...(item.tags && item.tags.length > 0 ? { subtitle: item.tags.join(', '), tags: item.tags } : {}),
   ...(item.path ? { path: item.path } : {}),
+  ...(item.importedAt ? { importedAt: item.importedAt } : {}),
   ...(item.fileType ? { fileType: item.fileType } : {}),
   ...(item.contentType ? { contentType: item.contentType } : {}),
   ...(item.category ? { category: item.category } : {}),
@@ -122,6 +127,53 @@ const mapRecentType = (extension?: string): RecentFileEntry['type'] => {
   return 'sample'
 }
 
+const sortStorageKey = 'drumcomputer_sort_mode_v1'
+
+const hasClientStorage = (): boolean => {
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') return false
+  if (typeof import.meta !== 'undefined' && 'client' in import.meta && !import.meta.client) return false
+  return true
+}
+
+const loadSortMode = (): SortMode => {
+  if (!hasClientStorage()) return 'relevance'
+  try {
+    const raw = localStorage.getItem(sortStorageKey)
+    if (!raw) return 'relevance'
+    const value = raw as SortMode
+    if (['name-asc', 'name-desc', 'date-asc', 'date-desc', 'relevance'].includes(value)) {
+      return value
+    }
+  } catch {
+    // ignore
+  }
+  return 'relevance'
+}
+
+const persistSortMode = (mode: SortMode) => {
+  if (!hasClientStorage()) return
+  try {
+    localStorage.setItem(sortStorageKey, mode)
+  } catch {
+    // ignore
+  }
+}
+
+const sortLabel = (mode: SortMode): string => {
+  switch (mode) {
+    case 'name-asc':
+      return 'Name ↑'
+    case 'name-desc':
+      return 'Name ↓'
+    case 'date-asc':
+      return 'Date ↑'
+    case 'date-desc':
+      return 'Date ↓'
+    default:
+      return 'Relevance'
+  }
+}
+
 const emptyPreviewState: PreviewState = {
   isPlaying: false,
   currentFile: null,
@@ -135,11 +187,13 @@ export const useBrowserStore = defineStore('browser', {
     library: {
       query: '',
       results: [],
+      rawResults: [],
       selectedId: null
     } as LibraryState,
     files: {
       currentPath: '/',
       entries: emptyListing,
+      rawEntries: emptyListing,
       selectedPath: null
     } as FilesState,
     filters: createInitialFilters() as BrowserFilters,
@@ -147,6 +201,7 @@ export const useBrowserStore = defineStore('browser', {
     availableProducts: [] as string[],
     availableBanks: [] as string[],
     recentEntries: [] as RecentFileEntry[],
+    sortMode: loadSortMode(),
     preview: null as ReturnType<typeof useSamplePreview> | null
   }),
   getters: {
@@ -187,10 +242,12 @@ export const useBrowserStore = defineStore('browser', {
       this.availableProducts = uniqueNonEmpty(mapped.map((item) => item.product))
       this.availableBanks = uniqueNonEmpty(mapped.map((item) => item.bank))
       const filtered = mapped.filter((item) => matchesFilters(item, this.filters))
+      this.library.rawResults = filtered
       this.library.results = filtered
       if (this.library.selectedId && !filtered.find((entry) => entry.id === this.library.selectedId)) {
         this.library.selectedId = null
       }
+      this.sortResults()
     },
     setFilter<K extends keyof BrowserFilters>(key: K, value: BrowserFilters[K]) {
       const nextValue = Array.isArray(value) ? [...value] : value
@@ -221,7 +278,7 @@ export const useBrowserStore = defineStore('browser', {
       }
     },
     getEncoderFields(): EncoderField[] {
-      return [
+      const fields: EncoderField[] = [
         {
           id: 'fileType',
           label: 'Type',
@@ -264,6 +321,15 @@ export const useBrowserStore = defineStore('browser', {
           options: ['off', 'on']
         }
       ]
+      if (this.mode === 'FILES') {
+        fields.push({
+          id: 'sort',
+          label: 'Sort',
+          value: sortLabel(this.sortMode),
+          options: ['Name ↑', 'Name ↓', 'Date ↑', 'Date ↓']
+        })
+      }
+      return fields
     },
     async selectResult(id: string | null) {
       this.library.selectedId = id
@@ -272,12 +338,16 @@ export const useBrowserStore = defineStore('browser', {
       const recent = useRecentFiles()
       const entries = recent.getRecent()
       this.recentEntries = entries
-      this.library.results = entries.map((entry) => ({
+      const mapped = entries.map((entry) => ({
         id: entry.id,
         title: entry.name,
         subtitle: entry.path,
-        path: entry.path
+        path: entry.path,
+        timestamp: entry.timestamp
       }))
+      this.library.rawResults = mapped
+      this.library.results = mapped
+      this.sortResults()
     },
     async addTag(tag: string) {
       if (!this.library.selectedId) return
@@ -295,6 +365,48 @@ export const useBrowserStore = defineStore('browser', {
       }
       await this.search()
     },
+    setSortMode(mode: SortMode) {
+      this.sortMode = mode
+      persistSortMode(mode)
+      this.sortResults()
+    },
+    sortResults() {
+      const mode = this.sortMode
+      if (mode === 'relevance') {
+        this.library.results = [...this.library.rawResults]
+        this.files.entries = {
+          dirs: [...this.files.rawEntries.dirs],
+          files: [...this.files.rawEntries.files]
+        }
+        return
+      }
+      const nameSort = (a: string, b: string) => a.localeCompare(b, undefined, { sensitivity: 'base' })
+      const dateValue = (value?: number) => (typeof value === 'number' ? value : 0)
+      const sortedResults = [...this.library.rawResults].sort((a, b) => {
+        if (mode === 'name-asc') return nameSort(a.title, b.title)
+        if (mode === 'name-desc') return nameSort(b.title, a.title)
+        const dateA = dateValue(a.importedAt ?? a.timestamp)
+        const dateB = dateValue(b.importedAt ?? b.timestamp)
+        return mode === 'date-asc' ? dateA - dateB : dateB - dateA
+      })
+      const sortedDirs = [...this.files.rawEntries.dirs].sort((a, b) => {
+        if (mode === 'name-asc') return nameSort(a.name, b.name)
+        if (mode === 'name-desc') return nameSort(b.name, a.name)
+        return 0
+      })
+      const sortedFiles = [...this.files.rawEntries.files].sort((a, b) => {
+        if (mode === 'name-asc') return nameSort(a.name, b.name)
+        if (mode === 'name-desc') return nameSort(b.name, a.name)
+        return 0
+      })
+      if (mode === 'date-asc' || mode === 'date-desc') {
+        const fallback = mode === 'date-asc' ? 1 : -1
+        sortedDirs.sort((a, b) => nameSort(a.name, b.name) * fallback)
+        sortedFiles.sort((a, b) => nameSort(a.name, b.name) * fallback)
+      }
+      this.library.results = sortedResults
+      this.files.entries = { dirs: sortedDirs, files: sortedFiles }
+    },
     async removeTag(tag: string) {
       if (!this.library.selectedId) return
       const repo = getLibraryRepository()
@@ -305,9 +417,11 @@ export const useBrowserStore = defineStore('browser', {
       const repo = getFileSystemRepository()
       this.files.currentPath = path || '/'
       this.files.entries = await repo.listDir(this.files.currentPath)
+      this.files.rawEntries = this.files.entries
       if (this.files.selectedPath && !this.files.entries.files.find((file) => file.path === this.files.selectedPath)) {
         this.files.selectedPath = null
       }
+      this.sortResults()
     },
     selectPath(path: string | null) {
       this.files.selectedPath = path
@@ -349,6 +463,7 @@ export const useBrowserStore = defineStore('browser', {
       this.preview?.stop()
     },
     toDisplayModels(): { leftModel: DisplayPanelModel; rightModel: DisplayPanelModel } {
+      const sortSummary = this.sortMode === 'relevance' ? '' : `Sorted by ${sortLabel(this.sortMode)}`
       if (this.mode === 'FILES') {
         const leftItems: DisplayListItem[] = this.files.entries.dirs.map((dir) => ({
           title: dir.name,
@@ -369,7 +484,7 @@ export const useBrowserStore = defineStore('browser', {
           rightModel: {
             view: 'FILE',
             title: 'Files',
-            summary: 'Select a file to import',
+            summary: [sortSummary || null, 'Select a file to import'].filter(Boolean).join(' • '),
             items: rightItems
           }
         }
@@ -393,7 +508,9 @@ export const useBrowserStore = defineStore('browser', {
         }
         return entry
       })
-      const leftSummary = [this.library.query || 'All', describeFilters(this.filters)].filter(Boolean).join(' • ')
+      const leftSummary = [this.library.query || 'All', describeFilters(this.filters), sortSummary || null]
+        .filter(Boolean)
+        .join(' • ')
       return {
         leftModel: {
           view: 'BROWSER',
