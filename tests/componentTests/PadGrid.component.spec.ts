@@ -24,7 +24,7 @@ describe('PadGrid', () => {
       .vm.$emit('pad:select', 'pad1')
 
     const emitted = wrapper.emitted('pad:select') as unknown[][]
-    const payload = emitted
+    const payload = emitted?.[0]?.[0]
     expect(emitted).to.be.an('array')
     expect(emitted!.length).to.equal(1)
     expect(payload).to.equal('pad1')
