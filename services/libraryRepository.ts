@@ -4,9 +4,17 @@ export type LibraryItem = {
   path?: string
   tags: string[]
   importedAt?: number
+  fileType?: string
+  contentType?: string
+  category?: string
+  product?: string
+  bank?: string
+  subBank?: string
+  character?: string
+  favorites?: boolean
 }
 
-export type LibrarySearchFilters = Record<string, string | string[] | undefined>
+export type LibrarySearchFilters = Record<string, string | string[] | boolean | undefined>
 
 export interface LibraryRepository {
   search(query: string, filters?: LibrarySearchFilters): Promise<LibraryItem[]>

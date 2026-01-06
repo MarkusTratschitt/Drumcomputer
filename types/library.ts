@@ -6,6 +6,14 @@ export type BrowserResultItem = {
   subtitle?: string
   path?: string
   tags?: string[]
+  fileType?: string
+  contentType?: string
+  category?: string
+  product?: string
+  bank?: string
+  subBank?: string
+  character?: string
+  favorites?: boolean
 }
 
 export type BrowserFileEntry = {

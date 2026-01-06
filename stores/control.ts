@@ -1,5 +1,7 @@
 import { defineStore } from 'pinia'
-import { useBrowserStore } from './browser'
+import { markRaw } from 'vue'
+import { use4DEncoder, type EncoderField } from '@/composables/use4DEncoder'
+import { useBrowserStore, type BrowserFilters } from './browser'
 
 export type ControlMode =
   | 'CHANNEL'
@@ -83,6 +85,24 @@ const MODES: ControlMode[] = [
 
 const clamp = (value: number, min: number, max: number): number =>
   Math.max(min, Math.min(max, value))
+
+const parseFieldValueForFilter = (field: EncoderField): BrowserFilters[keyof BrowserFilters] => {
+  if (field.id === 'favorites') {
+    return String(field.value) === 'on'
+  }
+  if (field.id === 'tags') {
+    if (typeof field.value !== 'string') return []
+    const tags = field.value
+      .split(',')
+      .map((tag) => tag.trim())
+      .filter((tag) => tag.length > 0)
+    return tags
+  }
+  if (typeof field.value === 'number') {
+    return String(field.value)
+  }
+  return field.value as BrowserFilters[keyof BrowserFilters]
+}
 
 const buildSoftButtons = (buttons: Partial<SoftButton>[]): SoftButton[] => {
   const defaults: SoftButton = {
@@ -651,6 +671,7 @@ export const useControlStore = defineStore('control', {
       countIn: true,
       automationArmed: false
     },
+    encoder4D: null as ReturnType<typeof use4DEncoder> | null,
     browserDisplay: null as { leftModel: DisplayPanelModel; rightModel: DisplayPanelModel } | null
   }),
   getters: {
@@ -694,12 +715,82 @@ export const useControlStore = defineStore('control', {
     }
   },
   actions: {
+    initEncoderForBrowser() {
+      const browser = useBrowserStore()
+      if (!this.encoder4D) {
+        this.encoder4D = markRaw(use4DEncoder())
+      }
+      const fields = browser.getEncoderFields()
+      this.encoder4D.setFields(fields)
+      this.encoder4D.setMode('field-select')
+      this.encoder4D.activeListIndex.value = 0
+    },
+    refreshEncoderFields() {
+      if (!this.encoder4D) return
+      const browser = useBrowserStore()
+      this.encoder4D.setFields(browser.getEncoderFields())
+    },
+    syncBrowserDisplay() {
+      const browser = useBrowserStore()
+      const models = browser.toDisplayModels()
+      if (this.encoder4D) {
+        const activeField = this.encoder4D.activeField.value
+        if (activeField) {
+          const summary = models.leftModel.summary ?? ''
+          const highlight = `(${activeField.label})`
+          models.leftModel = {
+            ...models.leftModel,
+            summary: [summary, highlight].filter((value) => value && value.length > 0).join(' ')
+          }
+        }
+      }
+      this.setBrowserDisplay(models)
+    },
+    syncListSelection() {
+      if (!this.encoder4D) return
+      const browser = useBrowserStore()
+      if (this.activeMode === 'FILE') {
+        const files = browser.files.entries.files
+        if (files.length === 0) {
+          browser.selectPath(null)
+          this.encoder4D.activeListIndex.value = 0
+        } else {
+          const index = clamp(this.encoder4D.activeListIndex.value, 0, files.length - 1)
+          this.encoder4D.activeListIndex.value = index
+          browser.selectPath(files[index]?.path ?? null)
+        }
+      } else {
+        const results = browser.library.results
+        if (results.length === 0) {
+          browser.selectResult(null)
+          this.encoder4D.activeListIndex.value = 0
+        } else {
+          const index = clamp(this.encoder4D.activeListIndex.value, 0, results.length - 1)
+          this.encoder4D.activeListIndex.value = index
+          browser.selectResult(results[index]?.id ?? null)
+        }
+      }
+      this.syncBrowserDisplay()
+    },
+    applyEncoderFieldFilter() {
+      if (!this.encoder4D) return
+      const browser = useBrowserStore()
+      const field = this.encoder4D.activeField.value
+      if (!field) return
+      const value = parseFieldValueForFilter(field)
+      browser.setFilter(field.id as keyof BrowserFilters, value as BrowserFilters[keyof BrowserFilters])
+      this.refreshEncoderFields()
+    },
     setMode(mode: ControlMode) {
       this.activeMode = mode
       if (this.pageIndexByMode[mode] == null) {
         this.pageIndexByMode[mode] = 0
       }
       this.lastAction = `${mode} selected`
+      if (mode === 'BROWSER' || mode === 'FILE') {
+        this.initEncoderForBrowser()
+        this.syncBrowserDisplay()
+      }
     },
     setShiftHeld(value: boolean) {
       this.shiftHeld = value
@@ -770,6 +861,47 @@ export const useControlStore = defineStore('control', {
           break
         default:
           this.lastAction = label ? `${label} triggered` : actionId
+      }
+    },
+    tiltEncoder4D(direction: 'left' | 'right' | 'up' | 'down') {
+      if (!this.encoder4D) return
+      if (direction === 'left' || direction === 'right') {
+        this.encoder4D.tiltHorizontal(direction)
+        this.syncBrowserDisplay()
+        return
+      }
+      this.encoder4D.tiltVertical(direction)
+      this.syncListSelection()
+    },
+    turnEncoder4D(delta: number) {
+      if (!this.encoder4D) return
+      const mode = this.encoder4D.mode.value
+      this.encoder4D.turn(delta)
+      if (mode === 'value-adjust') {
+        this.applyEncoderFieldFilter()
+      } else if (mode === 'list-navigate') {
+        this.syncListSelection()
+      }
+    },
+    async pressEncoder4D() {
+      if (!this.encoder4D) return
+      const browser = useBrowserStore()
+      const previousMode = this.encoder4D.mode.value
+      if (previousMode === 'value-adjust') {
+        this.applyEncoderFieldFilter()
+      }
+      this.encoder4D.press()
+      if (previousMode === 'list-navigate') {
+        if (this.activeMode === 'FILE') {
+          await browser.importSelected()
+        } else {
+          this.syncListSelection()
+        }
+      }
+      if (this.encoder4D.mode.value === 'list-navigate') {
+        this.syncListSelection()
+      } else {
+        this.syncBrowserDisplay()
       }
     },
     turnEncoder(index: number, delta: number, options?: { fine?: boolean }) {

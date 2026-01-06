@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
-import { useBrowserStore } from '@/stores/browser'
+import { useBrowserStore, type BrowserFilters } from '@/stores/browser'
 import {
   __setLibraryRepositoryForTests,
   type LibraryRepository,
@@ -16,10 +16,28 @@ class MemoryLibraryRepo implements LibraryRepository {
   constructor(public items: LibraryItem[] = []) {}
 
   async search(query: string): Promise<LibraryItem[]>
-  async search(query: string, _filters?: unknown): Promise<LibraryItem[]> {
+  async search(query: string, filters?: BrowserFilters): Promise<LibraryItem[]> {
     const term = query.trim().toLowerCase()
-    if (!term) return [...this.items]
-    return this.items.filter((item) => item.name.toLowerCase().includes(term))
+    const matchesQuery = (item: LibraryItem) => {
+      if (!term) return true
+      return item.name.toLowerCase().includes(term)
+    }
+    const matchesFilters = (item: LibraryItem) => {
+      if (!filters) return true
+      if (filters.fileType && filters.fileType !== 'all' && item.fileType !== filters.fileType) return false
+      if (filters.contentType && filters.contentType !== 'all' && item.contentType !== filters.contentType) return false
+      if (filters.category && item.category !== filters.category) return false
+      if (filters.product && item.product !== filters.product) return false
+      if (filters.bank && item.bank !== filters.bank) return false
+      if (filters.tags && filters.tags.length > 0) {
+        const normalizedTags = filters.tags.map((tag) => tag.trim().toLowerCase()).filter((tag) => tag.length > 0)
+        const itemTags = (item.tags ?? []).map((tag) => tag.trim().toLowerCase())
+        if (!normalizedTags.every((tag) => itemTags.includes(tag))) return false
+      }
+      if (filters.favorites && item.favorites !== true) return false
+      return true
+    }
+    return this.items.filter((item) => matchesQuery(item) && matchesFilters(item))
   }
 
   async getItem(id: string): Promise<LibraryItem | undefined> {
@@ -85,8 +103,39 @@ describe('browser store', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
     libraryRepo = new MemoryLibraryRepo([
-      { id: '1', name: 'Kick One', tags: ['drum'] },
-      { id: '2', name: 'Snare Tight', tags: ['snare'] }
+      {
+        id: '1',
+        name: 'Kick One',
+        tags: ['drum'],
+        fileType: 'sample',
+        contentType: 'factory',
+        category: 'drums',
+        product: 'Kit A',
+        bank: 'A',
+        favorites: false
+      },
+      {
+        id: '2',
+        name: 'Snare Tight',
+        tags: ['snare', 'tight'],
+        fileType: 'sample',
+        contentType: 'factory',
+        category: 'drums',
+        product: 'Kit A',
+        bank: 'B',
+        favorites: true
+      },
+      {
+        id: '3',
+        name: 'Pad Warm',
+        tags: ['pad'],
+        fileType: 'preset',
+        contentType: 'user',
+        category: 'synth',
+        product: 'Pads',
+        bank: 'Main',
+        favorites: false
+      }
     ])
     fileRepo = new MemoryFileRepo({
       dirs: [{ name: 'kits', path: '/kits' }],
@@ -139,5 +188,41 @@ describe('browser store', () => {
     await store.search()
     expect(libraryRepo.importCalls).toContain('/kits/new.wav')
     expect(store.library.results.find((item) => item.title.includes('new.wav'))).toBeDefined()
+  })
+
+  it('applies filters to search results', async () => {
+    const store = useBrowserStore()
+    await store.search()
+    store.setFilter('fileType', 'preset')
+    await store.applyFilters()
+    expect(store.library.results).toHaveLength(1)
+    expect(store.library.results[0]?.title).toBe('Pad Warm')
+  })
+
+  it('combines multiple filters when searching', async () => {
+    const store = useBrowserStore()
+    await store.search()
+    store.setFilter('fileType', 'sample')
+    store.setFilter('favorites', true)
+    store.setFilter('category', 'drums')
+    await store.applyFilters()
+    expect(store.library.results).toHaveLength(1)
+    expect(store.library.results[0]?.title).toBe('Snare Tight')
+  })
+
+  it('builds encoder fields in the expected order', () => {
+    const store = useBrowserStore()
+    const fields = store.getEncoderFields()
+    expect(fields.map((field) => field.id)).toEqual([
+      'fileType',
+      'contentType',
+      'category',
+      'product',
+      'bank',
+      'tags',
+      'favorites'
+    ])
+    expect(fields[0]?.options).toContain('sample')
+    expect(fields[6]?.value).toBe('off')
   })
 })
