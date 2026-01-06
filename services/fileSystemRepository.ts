@@ -82,11 +82,15 @@ const createMemoryFs = (root: FsNode = defaultTree): FileSystemRepository => {
       const node = findNode(path)
       return { isDir: !!node?.children }
     },
-    async readFileMeta(path: string) {
+    async readFileMeta(path: string): Promise<{ name: string; extension?: string }> {
       const name = path.split('/').pop() ?? path
       const parts = name.split('.')
       const extension = parts.length > 1 ? parts.pop() : undefined
-      return { name, extension }
+      const meta: { name: string; extension?: string } = { name }
+      if (extension) {
+        meta.extension = extension
+      }
+      return meta
     }
   }
 }

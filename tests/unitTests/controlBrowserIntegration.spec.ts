@@ -1,9 +1,9 @@
 import { describe, it, beforeEach, expect } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
-import { useControlStore } from '@/stores/control'
-import { useBrowserStore } from '@/stores/browser'
-import { __setLibraryRepositoryForTests, type LibraryRepository } from '@/services/libraryRepository'
-import { __setFileSystemRepositoryForTests } from '@/services/fileSystemRepository'
+import { useControlStore } from '../../stores/control'
+import { useBrowserStore } from '../../stores/browser'
+import { __setLibraryRepositoryForTests, type LibraryRepository } from '../../services/libraryRepository'
+import { __setFileSystemRepositoryForTests } from '../../services/fileSystemRepository'
 
 class ImportTrackingRepo implements LibraryRepository {
   imports: string[] = []
@@ -87,10 +87,12 @@ describe('control to browser wiring', () => {
       async stat() {
         return { isDir: false }
       },
-      async readFileMeta(path: string) {
+      async readFileMeta(path: string): Promise<{ name: string; extension?: string }> {
         const name = path.split('/').pop() ?? path
-        const extension = name.split('.').pop()
-        return { name, extension }
+        const ext = name.includes('.') ? name.split('.').pop() : undefined
+        const meta: { name: string; extension?: string } = { name }
+        if (ext) meta.extension = ext
+        return meta
       }
     })
     await browser.setMode('FILES')

@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { markRaw } from 'vue'
-import { use4DEncoder, type EncoderField } from '@/composables/use4DEncoder'
+import { use4DEncoder, type EncoderField } from '../composables/use4DEncoder'
 import { useBrowserStore, type BrowserFilters } from './browser'
 
 export type ControlMode =

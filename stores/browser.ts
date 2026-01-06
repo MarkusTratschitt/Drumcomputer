@@ -1,8 +1,8 @@
 import { defineStore } from 'pinia'
-import { getFileSystemRepository, type DirectoryListing } from '@/services/fileSystemRepository'
-import { getLibraryRepository, type LibraryItem } from '@/services/libraryRepository'
-import type { EncoderField } from '@/composables/use4DEncoder'
-import type { BrowserMode, BrowserResultItem, BrowserFileEntry } from '@/types/library'
+import { getFileSystemRepository, type DirectoryListing } from '../services/fileSystemRepository'
+import { getLibraryRepository, type LibraryItem } from '../services/libraryRepository'
+import type { EncoderField } from '../composables/use4DEncoder'
+import type { BrowserMode, BrowserResultItem, BrowserFileEntry } from '../types/library'
 
 type DisplayListItem = {
   title: string
@@ -47,11 +47,6 @@ export type BrowserFilters = {
 const createInitialFilters = (): BrowserFilters => ({
   fileType: 'all',
   contentType: 'all',
-  category: undefined,
-  product: undefined,
-  bank: undefined,
-  subBank: undefined,
-  character: undefined,
   tags: [],
   favorites: false
 })
@@ -103,17 +98,16 @@ const describeFilters = (filters: BrowserFilters): string => {
 const mapLibraryItemToResult = (item: LibraryItem): BrowserResultItem => ({
   id: item.id,
   title: item.name,
-  subtitle: item.tags?.join(', ') ?? '',
-  path: item.path,
-  tags: item.tags,
-  fileType: item.fileType,
-  contentType: item.contentType,
-  category: item.category,
-  product: item.product,
-  bank: item.bank,
-  subBank: item.subBank,
-  character: item.character,
-  favorites: item.favorites
+  ...(item.tags && item.tags.length > 0 ? { subtitle: item.tags.join(', '), tags: item.tags } : {}),
+  ...(item.path ? { path: item.path } : {}),
+  ...(item.fileType ? { fileType: item.fileType } : {}),
+  ...(item.contentType ? { contentType: item.contentType } : {}),
+  ...(item.category ? { category: item.category } : {}),
+  ...(item.product ? { product: item.product } : {}),
+  ...(item.bank ? { bank: item.bank } : {}),
+  ...(item.subBank ? { subBank: item.subBank } : {}),
+  ...(item.character ? { character: item.character } : {}),
+  ...(item.favorites ? { favorites: item.favorites } : {})
 })
 
 export const useBrowserStore = defineStore('browser', {
@@ -298,12 +292,17 @@ export const useBrowserStore = defineStore('browser', {
           subtitle: [this.library.query || 'All', describeFilters(this.filters)].filter(Boolean).join(' • ')
         }
       ]
-      const rightItems: DisplayListItem[] = this.library.results.map((result) => ({
-        title: result.title,
-        subtitle: result.subtitle,
-        active: result.id === this.library.selectedId,
-        value: result.id
-      }))
+      const rightItems: DisplayListItem[] = this.library.results.map((result) => {
+        const entry: DisplayListItem = {
+          title: result.title,
+          active: result.id === this.library.selectedId,
+          value: result.id
+        }
+        if (result.subtitle) {
+          entry.subtitle = result.subtitle
+        }
+        return entry
+      })
       const leftSummary = [this.library.query || 'All', describeFilters(this.filters)].filter(Boolean).join(' • ')
       return {
         leftModel: {

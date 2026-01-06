@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
-import PadCell from '@/components/PadCell.vue'
+import PadCell from '../../components/PadCell.vue'
 
 describe('PadCell', () => {
   it('renders label', () => {

@@ -1,16 +1,16 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
-import { useBrowserStore, type BrowserFilters } from '@/stores/browser'
+import { useBrowserStore, type BrowserFilters } from '../../stores/browser'
 import {
   __setLibraryRepositoryForTests,
   type LibraryRepository,
   type LibraryItem
-} from '@/services/libraryRepository'
+} from '../../services/libraryRepository'
 import {
   __setFileSystemRepositoryForTests,
   type FileSystemRepository,
   type DirectoryListing
-} from '@/services/fileSystemRepository'
+} from '../../services/fileSystemRepository'
 
 class MemoryLibraryRepo implements LibraryRepository {
   constructor(public items: LibraryItem[] = []) {}
@@ -89,10 +89,14 @@ class MemoryFileRepo implements FileSystemRepository {
   async stat(_path: string) {
     return { isDir: false }
   }
-  async readFileMeta(path: string) {
+  async readFileMeta(path: string): Promise<{ name: string; extension?: string }> {
     const name = path.split('/').pop() ?? path
     const ext = name.includes('.') ? name.split('.').pop() : undefined
-    return { name, extension: ext }
+    const meta: { name: string; extension?: string } = { name }
+    if (ext) {
+      meta.extension = ext
+    }
+    return meta
   }
 }
 
