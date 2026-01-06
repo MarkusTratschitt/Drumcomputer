@@ -32,6 +32,9 @@ class ImportTrackingRepo implements LibraryRepository {
   async refreshIndex() {
     return
   }
+  async importDirectory(): Promise<void> {
+    return
+  }
 }
 
 describe('control to browser wiring', () => {

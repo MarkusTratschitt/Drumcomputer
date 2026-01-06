@@ -79,6 +79,10 @@ class MemoryLibraryRepo implements LibraryRepository {
   async refreshIndex(): Promise<void> {
     // no-op for in-memory
   }
+
+  async importDirectory(): Promise<void> {
+    return
+  }
 }
 
 class MemoryFileRepo implements FileSystemRepository {
