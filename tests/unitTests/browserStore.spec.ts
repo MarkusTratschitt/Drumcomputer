@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useBrowserStore, type BrowserFilters } from '../../stores/browser'
 import {
@@ -127,6 +127,7 @@ describe('browser store', () => {
 
   beforeEach(() => {
     setActivePinia(createPinia())
+    vi.useFakeTimers()
     libraryRepo = new MemoryLibraryRepo([
       {
         id: '1',
@@ -170,9 +171,16 @@ describe('browser store', () => {
     __setFileSystemRepositoryForTests(fileRepo)
   })
 
+  afterEach(() => {
+    vi.runOnlyPendingTimers()
+    vi.useRealTimers()
+  })
+
   it('keeps library and files state separated on mode switch', async () => {
     const store = useBrowserStore()
     await store.setQuery('Kick')
+    vi.advanceTimersByTime(350)
+    await Promise.resolve()
     expect(store.library.results).toHaveLength(1)
     await store.setMode('FILES')
     expect(store.files.entries.files).toHaveLength(1)
@@ -184,6 +192,8 @@ describe('browser store', () => {
   it('updates search results when query changes', async () => {
     const store = useBrowserStore()
     await store.setQuery('snare')
+    vi.advanceTimersByTime(350)
+    await Promise.resolve()
     expect(store.library.results[0]?.title).toContain('Snare')
   })
 

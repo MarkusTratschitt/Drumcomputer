@@ -36,6 +36,14 @@ type FilesState = {
   selectedPath: string | null
 }
 
+type HierarchyCache = {
+  version: number
+  categories: string[] | null
+  products: Record<string, string[]>
+  banks: Record<string, string[]>
+  subBanks: Record<string, string[]>
+}
+
 const emptyListing: DirectoryListing = { dirs: [], files: [] }
 
 export type SortMode = 'name-asc' | 'name-desc' | 'date-asc' | 'date-desc' | 'relevance'
@@ -167,6 +175,8 @@ const sortLabel = (mode: SortMode): string => {
   }
 }
 
+const searchDebounceMs = 300
+
 const emptyPreviewState: PreviewState = {
   isPlaying: false,
   currentFile: null,
@@ -210,6 +220,15 @@ export const useBrowserStore = defineStore('browser', {
     tagDialogOpen: false,
     tagDialogItemId: null as string | null,
     sortMode: loadSortMode(),
+    hierarchyCacheVersion: 0,
+    hierarchyCache: {
+      version: 0,
+      categories: null,
+      products: {},
+      banks: {},
+      subBanks: {}
+    } as HierarchyCache,
+    searchDebounceId: null as ReturnType<typeof setTimeout> | null,
     preview: null as ReturnType<typeof useSamplePreview> | null
   }),
   getters: {
@@ -238,7 +257,12 @@ export const useBrowserStore = defineStore('browser', {
     },
     async setQuery(query: string) {
       this.library.query = query
-      await this.search()
+      if (this.searchDebounceId) {
+        clearTimeout(this.searchDebounceId)
+      }
+      this.searchDebounceId = setTimeout(() => {
+        void this.search()
+      }, searchDebounceMs)
     },
     async search() {
       const repo = getLibraryRepository()
@@ -301,10 +325,38 @@ export const useBrowserStore = defineStore('browser', {
     },
     async refreshHierarchyOptions() {
       const repo = getLibraryRepository()
-      this.availableCategories = (await repo.getCategories?.()) ?? []
-      this.availableProducts = (await repo.getProducts?.(this.filters.category)) ?? []
-      this.availableBanks = (await repo.getBanks?.(this.filters.product)) ?? []
-      this.availableSubBanks = (await repo.getSubBanks?.(this.filters.bank)) ?? []
+      const version = this.hierarchyCacheVersion
+      if (this.hierarchyCache.version !== version) {
+        this.hierarchyCache = {
+          version,
+          categories: null,
+          products: {},
+          banks: {},
+          subBanks: {}
+        }
+      }
+      if (!this.hierarchyCache.categories) {
+        this.hierarchyCache.categories = (await repo.getCategories?.()) ?? []
+      }
+      const productKey = this.filters.category ?? ''
+      if (!this.hierarchyCache.products[productKey]) {
+        this.hierarchyCache.products[productKey] = (await repo.getProducts?.(this.filters.category)) ?? []
+      }
+      const bankKey = this.filters.product ?? ''
+      if (!this.hierarchyCache.banks[bankKey]) {
+        this.hierarchyCache.banks[bankKey] = (await repo.getBanks?.(this.filters.product)) ?? []
+      }
+      const subBankKey = this.filters.bank ?? ''
+      if (!this.hierarchyCache.subBanks[subBankKey]) {
+        this.hierarchyCache.subBanks[subBankKey] = (await repo.getSubBanks?.(this.filters.bank)) ?? []
+      }
+      this.availableCategories = this.hierarchyCache.categories
+      this.availableProducts = this.hierarchyCache.products[productKey] ?? []
+      this.availableBanks = this.hierarchyCache.banks[bankKey] ?? []
+      this.availableSubBanks = this.hierarchyCache.subBanks[subBankKey] ?? []
+    },
+    invalidateHierarchyCache() {
+      this.hierarchyCacheVersion += 1
     },
     getEncoderFields(): EncoderField[] {
       if (this.tagDialogOpen) {
@@ -528,6 +580,7 @@ export const useBrowserStore = defineStore('browser', {
         contextId: context?.contextId ?? 'global'
       })
       this.loadRecentFiles()
+      this.invalidateHierarchyCache()
       await this.loadAvailableTags()
       await repo.refreshIndex()
       await this.search()
@@ -618,7 +671,16 @@ export const useBrowserStore = defineStore('browser', {
           subtitle: [this.library.query || 'All', describeFilters(this.filters)].filter(Boolean).join(' • ')
         }
       ]
-      const rightItems: DisplayListItem[] = this.library.results.map((result) => {
+      const results = this.library.results
+      const selectedIndex = results.findIndex((result) => result.id === this.library.selectedId)
+      const maxItems = 100
+      let start = 0
+      if (results.length > maxItems) {
+        const targetIndex = selectedIndex >= 0 ? selectedIndex : 0
+        start = Math.max(0, Math.min(results.length - maxItems, targetIndex - Math.floor(maxItems / 3)))
+      }
+      const windowedResults = results.slice(start, start + maxItems)
+      const rightItems: DisplayListItem[] = windowedResults.map((result) => {
         const subtitle = result.subtitle
         const decoratedSubtitle = result.favorites ? `${subtitle ? `${subtitle} ` : ''}★` : subtitle
         const entry: DisplayListItem = {
