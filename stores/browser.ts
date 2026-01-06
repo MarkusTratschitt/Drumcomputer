@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { getFileSystemRepository, type DirectoryListing } from '../services/fileSystemRepository'
 import { getLibraryRepository, type LibraryItem } from '../services/libraryRepository'
+import { useRecentFiles, type RecentFileEntry } from '../composables/useRecentFiles'
 import type { EncoderField } from '../composables/use4DEncoder'
 import type { BrowserMode, BrowserResultItem, BrowserFileEntry } from '../types/library'
 
@@ -110,6 +111,15 @@ const mapLibraryItemToResult = (item: LibraryItem): BrowserResultItem => ({
   ...(item.favorites ? { favorites: item.favorites } : {})
 })
 
+const mapRecentType = (extension?: string): RecentFileEntry['type'] => {
+  if (!extension) return 'sample'
+  const normalized = extension.toLowerCase()
+  if (normalized === 'kit') return 'kit'
+  if (normalized === 'pattern') return 'pattern'
+  if (normalized === 'preset') return 'preset'
+  return 'sample'
+}
+
 export const useBrowserStore = defineStore('browser', {
   state: () => ({
     mode: 'LIBRARY' as BrowserMode,
@@ -126,8 +136,14 @@ export const useBrowserStore = defineStore('browser', {
     filters: createInitialFilters() as BrowserFilters,
     availableCategories: [] as string[],
     availableProducts: [] as string[],
-    availableBanks: [] as string[]
+    availableBanks: [] as string[],
+    recentFiles: [] as RecentFileEntry[]
   }),
+  getters: {
+    recentFiles(state): RecentFileEntry[] {
+      return state.recentFiles
+    }
+  },
   actions: {
     async setMode(mode: BrowserMode) {
       this.mode = mode
@@ -230,6 +246,17 @@ export const useBrowserStore = defineStore('browser', {
     async selectResult(id: string | null) {
       this.library.selectedId = id
     },
+    loadRecentFiles() {
+      const recent = useRecentFiles()
+      const entries = recent.getRecent()
+      this.recentFiles = entries
+      this.library.results = entries.map((entry) => ({
+        id: entry.id,
+        title: entry.name,
+        subtitle: entry.path,
+        path: entry.path
+      }))
+    },
     async addTag(tag: string) {
       if (!this.library.selectedId) return
       const repo = getLibraryRepository()
@@ -255,8 +282,18 @@ export const useBrowserStore = defineStore('browser', {
     },
     async importSelected() {
       if (!this.files.selectedPath) return
+      const fileRepo = getFileSystemRepository()
+      const recent = useRecentFiles()
       const repo = getLibraryRepository()
-      await repo.importFile(this.files.selectedPath)
+      const meta = await fileRepo.readFileMeta(this.files.selectedPath)
+      await repo.importFile(this.files.selectedPath, { name: meta.name })
+      recent.addRecent({
+        id: this.files.selectedPath,
+        path: this.files.selectedPath,
+        name: meta.name,
+        type: mapRecentType(meta.extension)
+      })
+      this.loadRecentFiles()
       await repo.refreshIndex()
       await this.search()
     },

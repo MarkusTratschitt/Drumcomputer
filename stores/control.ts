@@ -86,6 +86,29 @@ const MODES: ControlMode[] = [
 const clamp = (value: number, min: number, max: number): number =>
   Math.max(min, Math.min(max, value))
 
+const formatRelativeTimestamp = (timestamp: number): string => {
+  const now = Date.now()
+  const diffMs = Math.max(0, now - timestamp)
+  const minuteMs = 60 * 1000
+  const hourMs = 60 * minuteMs
+  const dayMs = 24 * hourMs
+  if (diffMs < minuteMs) return 'gerade'
+  if (diffMs < hourMs) {
+    const minutes = Math.floor(diffMs / minuteMs)
+    return `vor ${minutes} Minute${minutes === 1 ? '' : 'n'}`
+  }
+  const nowDate = new Date(now)
+  const entryDate = new Date(timestamp)
+  const sameDay =
+    nowDate.getFullYear() === entryDate.getFullYear() &&
+    nowDate.getMonth() === entryDate.getMonth() &&
+    nowDate.getDate() === entryDate.getDate()
+  if (sameDay) return 'heute'
+  const days = Math.floor(diffMs / dayMs)
+  if (days === 1) return 'gestern'
+  return `vor ${Math.max(2, days)} Tagen`
+}
+
 const parseFieldValueForFilter = (field: EncoderField): BrowserFilters[keyof BrowserFilters] => {
   if (field.id === 'favorites') {
     return String(field.value) === 'on'
@@ -732,6 +755,24 @@ export const useControlStore = defineStore('control', {
     },
     syncBrowserDisplay() {
       const browser = useBrowserStore()
+      if (this.activeMode === 'BROWSER' && this.activePage?.label === 'Recent') {
+        browser.loadRecentFiles()
+        const recentItems = browser.recentFiles.map((entry) => ({
+          title: entry.name,
+          subtitle: formatRelativeTimestamp(entry.timestamp),
+          value: entry.id
+        }))
+        this.setBrowserDisplay({
+          leftModel: {
+            view: 'BROWSER',
+            title: 'Recent Files',
+            summary: `${recentItems.length} items`,
+            items: recentItems
+          },
+          rightModel: this.activePage?.rightModel ?? { view: 'BROWSER', title: 'Preview' }
+        })
+        return
+      }
       const models = browser.toDisplayModels()
       if (this.encoder4D) {
         const activeField = this.encoder4D.activeField.value
@@ -804,6 +845,9 @@ export const useControlStore = defineStore('control', {
       const nextIndex = Math.min(pages.length - 1, (this.pageIndexByMode[this.activeMode] ?? 0) + 1)
       this.pageIndexByMode[this.activeMode] = nextIndex
       this.lastAction = `${this.activeMode} page: ${pages[nextIndex]?.label ?? ''}`
+      if (this.activeMode === 'BROWSER') {
+        this.syncBrowserDisplay()
+      }
     },
     prevPage() {
       const pages = this.pagesByMode[this.activeMode] ?? []
@@ -811,6 +855,9 @@ export const useControlStore = defineStore('control', {
       const nextIndex = Math.max(0, (this.pageIndexByMode[this.activeMode] ?? 0) - 1)
       this.pageIndexByMode[this.activeMode] = nextIndex
       this.lastAction = `${this.activeMode} page: ${pages[nextIndex]?.label ?? ''}`
+      if (this.activeMode === 'BROWSER') {
+        this.syncBrowserDisplay()
+      }
     },
     pressSoftButton(index: number) {
       const btn = this.activeSoftButtons[index]
