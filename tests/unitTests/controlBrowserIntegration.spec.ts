@@ -45,6 +45,18 @@ class ImportTrackingRepo implements LibraryRepository {
   async isFavorite(itemId: string) {
     return this.favorites.has(itemId)
   }
+  async getCategories() {
+    return []
+  }
+  async getProducts() {
+    return []
+  }
+  async getBanks() {
+    return []
+  }
+  async getSubBanks() {
+    return []
+  }
   async importDirectory(): Promise<void> {
     return
   }
@@ -118,5 +130,183 @@ describe('control to browser wiring', () => {
     await control.pressEncoder4D()
     expect(repo.imports.length).toBeGreaterThan(0)
     expect(repo.imports[0]).toBe(browser.files.selectedPath)
+  })
+
+  it('runs a browser workflow: filter, search, load', async () => {
+    const control = useControlStore()
+    const browser = useBrowserStore()
+    const repo = new ImportTrackingRepo()
+    repo.items = [{ id: '1', name: 'Kick', tags: [], fileType: 'sample' }]
+    __setLibraryRepositoryForTests(repo)
+    __setFileSystemRepositoryForTests({
+      async listDir() {
+        return { dirs: [], files: [{ name: 'kick.wav', path: '/kick.wav' }] }
+      },
+      async stat() {
+        return { isDir: false }
+      },
+      async readFileMeta(path: string): Promise<{ name: string; extension?: string }> {
+        const name = path.split('/').pop() ?? path
+        const ext = name.includes('.') ? name.split('.').pop() : undefined
+        const meta: { name: string; extension?: string } = { name }
+        if (ext) meta.extension = ext
+        return meta
+      }
+    })
+    control.setMode('BROWSER')
+    browser.setFilter('fileType', 'sample')
+    await browser.search()
+    await browser.setMode('FILES')
+    browser.selectPath('/kick.wav')
+    control.setMode('FILE')
+    control.applyAction('BROWSER_LOAD')
+    expect(repo.imports).toContain('/kick.wav')
+  })
+
+  it('runs recent → quick browse restore → load workflow', async () => {
+    const control = useControlStore()
+    const browser = useBrowserStore()
+    const repo = new ImportTrackingRepo()
+    __setLibraryRepositoryForTests(repo)
+    __setFileSystemRepositoryForTests({
+      async listDir() {
+        return { dirs: [], files: [{ name: 'hat.wav', path: '/hat.wav' }] }
+      },
+      async stat() {
+        return { isDir: false }
+      },
+      async readFileMeta(path: string): Promise<{ name: string; extension?: string }> {
+        const name = path.split('/').pop() ?? path
+        const ext = name.includes('.') ? name.split('.').pop() : undefined
+        const meta: { name: string; extension?: string } = { name }
+        if (ext) meta.extension = ext
+        return meta
+      }
+    })
+    await browser.setMode('FILES')
+    browser.selectPath('/hat.wav')
+    await browser.importSelected({ contextId: 'pad-0', contextType: 'sample' })
+    browser.openQuickBrowse('pad-0')
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    browser.selectPath('/hat.wav')
+    control.setMode('FILE')
+    control.applyAction('BROWSER_LOAD')
+    expect(repo.imports).toContain('/hat.wav')
+  })
+
+  it('runs favorites → filter → load workflow', async () => {
+    const control = useControlStore()
+    const browser = useBrowserStore()
+    const repo = new ImportTrackingRepo()
+    repo.items = [
+      { id: '1', name: 'Kick', tags: [], fileType: 'sample' },
+      { id: '2', name: 'Snare', tags: [], fileType: 'sample' }
+    ]
+    __setLibraryRepositoryForTests(repo)
+    __setFileSystemRepositoryForTests({
+      async listDir() {
+        return { dirs: [], files: [{ name: 'snare.wav', path: '/snare.wav' }] }
+      },
+      async stat() {
+        return { isDir: false }
+      },
+      async readFileMeta(path: string): Promise<{ name: string; extension?: string }> {
+        const name = path.split('/').pop() ?? path
+        const ext = name.includes('.') ? name.split('.').pop() : undefined
+        const meta: { name: string; extension?: string } = { name }
+        if (ext) meta.extension = ext
+        return meta
+      }
+    })
+    control.setMode('BROWSER')
+    await browser.search()
+    await browser.toggleFavorite('2')
+    browser.setFilter('favorites', true)
+    await browser.applyFilters()
+    expect(browser.library.results.map((item) => item.id)).toEqual(['2'])
+    await browser.setMode('FILES')
+    browser.selectPath('/snare.wav')
+    control.setMode('FILE')
+    control.applyAction('BROWSER_LOAD')
+    expect(repo.imports).toContain('/snare.wav')
+  })
+
+  it('runs preview → stop → load workflow', async () => {
+    const control = useControlStore()
+    const browser = useBrowserStore()
+    const repo = new ImportTrackingRepo()
+    __setLibraryRepositoryForTests(repo)
+    __setFileSystemRepositoryForTests({
+      async listDir() {
+        return { dirs: [], files: [{ name: 'tone.wav', path: '/tone.wav' }] }
+      },
+      async stat() {
+        return { isDir: false }
+      },
+      async readFileMeta(path: string): Promise<{ name: string; extension?: string }> {
+        const name = path.split('/').pop() ?? path
+        const ext = name.includes('.') ? name.split('.').pop() : undefined
+        const meta: { name: string; extension?: string } = { name }
+        if (ext) meta.extension = ext
+        return meta
+      },
+      async readFileBlob() {
+        return new Blob(['tone'], { type: 'audio/wav' })
+      }
+    })
+    await browser.setMode('FILES')
+    browser.selectPath('/tone.wav')
+    control.setMode('BROWSER')
+    control.applyAction('BROWSER_PREHEAR')
+    control.applyAction('BROWSER_STOP')
+    control.setMode('FILE')
+    control.applyAction('BROWSER_LOAD')
+    expect(repo.imports).toContain('/tone.wav')
+  })
+
+  it('handles empty results without selection', async () => {
+    const browser = useBrowserStore()
+    await browser.search()
+    expect(browser.library.results).toHaveLength(0)
+    expect(browser.library.selectedId).toBeNull()
+  })
+
+  it('surfaces permission denial on file system list', async () => {
+    const browser = useBrowserStore()
+    __setFileSystemRepositoryForTests({
+      async listDir() {
+        throw new Error('Permission denied')
+      },
+      async stat() {
+        return { isDir: false }
+      },
+      async readFileMeta(path: string): Promise<{ name: string; extension?: string }> {
+        return { name: path }
+      }
+    })
+    await expect(browser.setMode('FILES')).rejects.toThrow('Permission denied')
+  })
+
+  it('surfaces import errors', async () => {
+    const browser = useBrowserStore()
+    const repo = new ImportTrackingRepo()
+    repo.importFile = async () => {
+      throw new Error('Import failed')
+    }
+    __setLibraryRepositoryForTests(repo)
+    __setFileSystemRepositoryForTests({
+      async listDir() {
+        return { dirs: [], files: [{ name: 'broken.wav', path: '/broken.wav' }] }
+      },
+      async stat() {
+        return { isDir: false }
+      },
+      async readFileMeta(path: string): Promise<{ name: string; extension?: string }> {
+        return { name: path }
+      }
+    })
+    await browser.setMode('FILES')
+    browser.selectPath('/broken.wav')
+    await expect(browser.importSelected()).rejects.toThrow('Import failed')
   })
 })
