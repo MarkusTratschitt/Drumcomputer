@@ -158,7 +158,7 @@ export function createTransportEngine(
         const now = clock.audioTime()
         const dur = stepDurationSec()
         const steps = Math.max(totalSteps(), 1)
-        const current = ((lastStep % steps) + steps) % steps
+        const current = ((lastAbsoluteStep % steps) + steps) % steps
         startTimeSec = now - lastAbsoluteStep * dur - swingOffsetSec(current)
         lastAbsoluteStep = computeAbsoluteStepAt(now)
         lastStep = normalizeStep(lastAbsoluteStep)
