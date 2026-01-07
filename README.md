@@ -2,7 +2,7 @@
 
 Nuxt 4 drum machine using Vue 3 Options API + TypeScript strict, Vuetify 3 (Pug + Less), Web Audio lookahead scheduling, Web MIDI capability checks, and IndexedDB stubs for soundbanks.
 
-![UI screenshot](assets/screenshots/Video%20Screen1766291171020.png)
+![UI screenshot](assets/screenshots/screenshot.png)
 
 ## Maschine MK3 UI Parity Plan (2026-01-04)
 
@@ -47,6 +47,14 @@ PORT=3001 HMR_PORT=24679 npm run dev
 - Configurable step grid divisions (1/2/4/8/16/32/64) with responsive layout for larger sequences and stable transport start/stop handling.
 - Import/Export helpers for patterns, MIDI (@tonejs/midi), soundbank manifests + sample blobs, and WAV bounce via OfflineAudioContext.
 - Scene chains with bar-boundary pattern switching, per-step velocity/accent cycling, and an FX chain (filter/drive/reverb) routed through the WebAudio graph.
+
+## Integrated Browser
+
+- Local file access via the File System Access API (with a safe memory fallback when unsupported or denied).
+- Hierarchical filters (Category → Product → Bank → SubBank), favorites, recents, and quick-browse restore.
+- 4D encoder integration for field navigation, filter edits, and tag management without new UI controls.
+- Preview (prehear) playback for selected items using the shared AudioContext.
+- Sort modes, import progress tracking, and list virtualization for large libraries.
 
 ## Control Area (MK3)
 
@@ -125,6 +133,17 @@ Copy the exported seed from the metadata panel (or the JSON blob) and supply it 
 - UI sequencer flow: `diagrams/ui-sequencer.md`
 - Persistence + audio pipeline: `diagrams/persistence-and-audio.md`
 - Control area mapping: `diagrams/control-area-mapping.md`
+- Browser 4D encoder wiring: `diagrams/control-4d-encoder-browser.md`
+- Browser file system access: `diagrams/browser-file-system-access.md`
+- Browser import progress: `diagrams/library-import-progress.md`
+- Browser recent files: `diagrams/recent-files.md`
+- Browser favorites: `diagrams/favorites-flow.md`
+- Browser sample preview: `diagrams/sample-preview.md`
+- Browser sorting: `diagrams/browser-sorting.md`
+- Browser quick-browse: `diagrams/quick-browse.md`
+- Browser tag dialog: `diagrams/tag-dialog.md`
+- Browser hierarchy: `diagrams/library-hierarchy.md`
+- Browser performance: `diagrams/browser-performance.md`
 
 ## Current UI / Editing State
 
