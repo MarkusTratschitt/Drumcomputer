@@ -2,10 +2,10 @@
 
 ```mermaid
 flowchart LR
-    UI[User Toggle] --> Browser[toggleFavorite(id)]
+    UI[User Toggle] --> Browser[toggleFavorite id]
     Browser --> Repo[LibraryRepository]
     Repo --> Store[localStorage set of ids]
-    Browser --> Search[search(filters)]
+    Browser --> Search[search filters]
     Search --> Results[filtered items]
     Results --> Display[subtitle with star]
 ```

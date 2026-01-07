@@ -3,10 +3,10 @@
 ```mermaid
 flowchart LR
     Query[setQuery text] --> Debounce[300ms debounce]
-    Debounce --> Search[search()]
+    Debounce --> Search[search]
     Search --> Results[store results]
-    Results --> Window[toDisplayModels()]
-    Window --> View[windowed list (<=100 items)]
+    Results --> Window[toDisplayModels]
+    Window --> View[windowed list <=100 items]
     Search --> Cache[cache hierarchy options]
 ```
 
