@@ -2,7 +2,7 @@
 
 ```mermaid
 flowchart TD
-    Mode[setSortMode(mode)] --> Sort[sortResults()]
+    Mode[setSortMode mode] --> Sort[sortResults]
     Sort --> Library[library.results sorted]
     Sort --> Files[files.entries sorted]
     Sort --> Display[subtitle: Sorted by ...]

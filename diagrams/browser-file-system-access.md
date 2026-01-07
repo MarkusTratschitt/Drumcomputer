@@ -2,7 +2,7 @@
 
 ```mermaid
 flowchart LR
-    UI[User Action] -->|requestAccess()| Repo[BrowserFileSystemRepository]
+    UI[User Action] -->|requestAccess| Repo[BrowserFileSystemRepository]
     Repo --> Guard{showDirectoryPicker?}
     Guard -- No --> Fallback[MemoryFileSystemRepository]
     Guard -- Yes --> Picker[window.showDirectoryPicker()]

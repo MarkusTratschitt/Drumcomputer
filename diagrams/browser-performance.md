@@ -2,7 +2,7 @@
 
 ```mermaid
 flowchart LR
-    Query[setQuery(text)] --> Debounce[300ms debounce]
+    Query[setQuery text] --> Debounce[300ms debounce]
     Debounce --> Search[search()]
     Search --> Results[store results]
     Results --> Window[toDisplayModels()]
