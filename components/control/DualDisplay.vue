@@ -29,12 +29,21 @@
           </template>
           <template v-else-if="leftModel.view === 'FILE'">
             <div class="panel-header">{{ leftModel.title || 'Files' }}</div>
-            <ul class="item-list">
-              <li v-for="item in leftModel.items" :key="item.title">
-                <div class="item-title">{{ item.title }}</div>
-                <div class="item-subtitle">{{ item.subtitle }}</div>
-              </li>
-            </ul>
+            <input
+              v-model="fileQuery"
+              type="search"
+              class="browser-search"
+              placeholder="Filter files"
+              aria-label="File search"
+            />
+            <div class="file-list-wrapper">
+              <ul class="item-list">
+                <li v-for="item in filteredItems(leftModel)" :key="item.title">
+                  <div class="item-title">{{ item.title }}</div>
+                  <div class="item-subtitle">{{ item.subtitle }}</div>
+                </li>
+              </ul>
+            </div>
             <div v-if="leftModel.summary" class="panel-hint">{{ leftModel.summary }}</div>
           </template>
           <template v-else-if="leftModel.view === 'SAMPLING'">
@@ -96,15 +105,37 @@
           </template>
           <template v-else-if="rightModel.view === 'MIXER' || rightModel.view === 'ARRANGER' || rightModel.view === 'SETTINGS' || rightModel.view === 'INFO' || rightModel.view === 'FILE'">
             <div class="panel-header">{{ rightModel.title || 'Details' }}</div>
-            <ul class="item-list">
-              <li v-for="item in rightModel.items" :key="item.title" :class="{ active: item.active }">
-                <div class="item-title">
-                  {{ item.title }}
-                  <span v-if="item.value" class="item-value">{{ item.value }}</span>
-                </div>
-                <div class="item-subtitle">{{ item.subtitle }}</div>
-              </li>
-            </ul>
+            <template v-if="rightModel.view === 'FILE'">
+              <input
+                v-model="fileQuery"
+                type="search"
+                class="browser-search"
+                placeholder="Filter files"
+                aria-label="File search"
+              />
+              <div class="file-list-wrapper">
+                <ul class="item-list">
+                  <li v-for="item in filteredItems(rightModel)" :key="item.title" :class="{ active: item.active }">
+                    <div class="item-title">
+                      {{ item.title }}
+                      <span v-if="item.value" class="item-value">{{ item.value }}</span>
+                    </div>
+                    <div class="item-subtitle">{{ item.subtitle }}</div>
+                  </li>
+                </ul>
+              </div>
+            </template>
+            <template v-else>
+              <ul class="item-list">
+                <li v-for="item in rightModel.items" :key="item.title" :class="{ active: item.active }">
+                  <div class="item-title">
+                    {{ item.title }}
+                    <span v-if="item.value" class="item-value">{{ item.value }}</span>
+                  </div>
+                  <div class="item-subtitle">{{ item.subtitle }}</div>
+                </li>
+              </ul>
+            </template>
             <div v-if="rightModel.summary" class="panel-hint">{{ rightModel.summary }}</div>
           </template>
           <template v-else-if="rightModel.view === 'SAMPLING'">
@@ -188,6 +219,7 @@ export default defineComponent({
   data() {
     return {
       browserQuery: '',
+      fileQuery: '',
       browserStore: useBrowserStore(),
       controlStore: useControlStore()
     }
@@ -216,12 +248,13 @@ export default defineComponent({
     },
     filteredItems(model: DisplayPanelModel) {
       if (!model?.items || !Array.isArray(model.items)) return []
-      if (!this.browserQuery) return model.items
-      const query = this.browserQuery.toLowerCase()
+      const query = model.view === 'FILE' ? this.fileQuery : this.browserQuery
+      if (!query) return model.items
+      const lowerQuery = query.toLowerCase()
       return model.items.filter((item) => {
         return (
-          item.title?.toLowerCase().includes(query) ||
-          item.subtitle?.toLowerCase().includes(query)
+          item.title?.toLowerCase().includes(lowerQuery) ||
+          item.subtitle?.toLowerCase().includes(lowerQuery)
         )
       })
     }
@@ -291,6 +324,19 @@ export default defineComponent({
   border-radius: @radius-xs;
   padding: @space-xs;
   box-shadow: inset 0 0 8px rgba(0,0,0,0.35);
+  // Allow flex child to shrink below content size for scroll container
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.file-list-wrapper {
+  // Scrollable container for FILE view lists
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  margin-bottom: @space-xxs;
 }
 
 .panel-header {
