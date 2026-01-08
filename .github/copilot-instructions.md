@@ -1,54 +1,69 @@
-# Copilot Instructions for Drumcomputer
+## Role
 
-## Projektüberblick
-- Nuxt 4 Drumcomputer mit Vue 3 Options API, TypeScript (strict), Vuetify 3 (Pug + Less), Web Audio, Web MIDI und IndexedDB.
-- Hauptkomponenten: PadGrid, PadCell, DrumMachine, TransportBar, FxPopup, Panels (Sound, FX, Patterns, Export).
-- Audio-Engine: Lookahead-Scheduler, quantisierte Aufnahme, 16-Pad-Sequencer, FX-Chain (Filter/Drive/Reverb), deterministische Exporte mit Seed.
-- Persistenz: Soundbanks, Patterns und Samples werden in IndexedDB gespeichert und beim Laden rehydriert.
-- MIDI: Mapping, Clock (Master/Slave), WebMIDI-Capabilities, Sync-Panel.
+- Software engineering copilot for a Nuxt 4 + Vue 3 (Options API) + TypeScript (strict) + Vuetify 3 project using Pug templates and Less.
+- Web Audio / Web MIDI drum machine with IndexedDB + LocalStorage persistence.
+- `DrumMachine.vue` stays the central UI component and primary integration point; do not move core orchestration away from it.
 
-## Wichtige Workflows
-- **Entwicklung:**
-  - `npm install` – Abhängigkeiten installieren
-  - `npm run dev` – Entwicklungsserver starten
-  - `npm run lint` – Linting
-  - `npm run typecheck` – TypeScript-Checks
-- **Port/HMR anpassen:**
-  - Beispiel: `PORT=3001 HMR_PORT=24679 npm run dev`
-- **Tests:**
-  - Komponententests: `tests/componentTests/`
-  - Unittests: `tests/unitTests/`
-- **Export:**
-  - Audio-Export via ExportPanel, deterministisch mit Seed und Metadaten (siehe `useImportExport` und `exportAudio`).
+## Non-negotiable Global Rules
 
-## Architektur & Patterns
-- **Stores:** Pinia für Transport, Patterns, Session, Soundbanks (`stores/`)
-- **Composables:** Audio, Scheduler, Sequencer, MIDI, Sync, Import/Export, Soundbank-Storage (`composables/`)
-- **Domain-Logik:** Timing, Quantisierung, Velocity, Transport, Clock, FX (`domain/`)
-- **Diagrams:** Architektur, Transport, UI, Persistenz (`diagrams/`)
-- **Persistenz:** IndexedDB für Soundbanks/Samples/Patterns, LocalStorage für Patterns/Scenes (v2 Schema)
-- **UI:** Responsive, 16-Pad-Grid, Transport, FX, Panels (Pattern, Export, Sound, FX)
-- **Export:** Mixdown + Stems, Metadaten-Blob, deterministische Reproduktion via Seed
+- Options API only; do not convert to Composition API. Use data/computed/methods/watch and lifecycle hooks.
+- UI stability: no redesign/rearrange/restyle unless explicitly requested. Only minimal markup changes to wire functionality.
+- Clean code: small focused functions, predictable state flow via stores/composables, avoid ad-hoc state and side-effects. Prefer domain helpers and scheduler utilities for timing/quantization.
+- Stack compliance: Nuxt 4 conventions, Vuetify 3 components, Pug templates, Less styles. No new external UI libraries.
+- English-only for comments/docs/diagrams.
+- Clock authority: `AudioContext` is the single time source; route BPM/division changes through shared scheduler helpers.
+- Deterministic export: preserve FX snapshot + seeded RNG reproducibility for render/export.
+- Persistence discipline: IndexedDB for large/structured assets (soundbanks/samples); LocalStorage v2 for patterns/scenes/undo. Revoke old blob URLs when replacing samples; persist manifest + blob; avoid storing large blobs unnecessarily.
 
-## Konventionen & Besonderheiten
-- **AudioContext** ist die einzige Zeitquelle (auch für MIDI-Clock).
-- **Undo/Redo:** 50 Schritte für Pattern/Scene-Edits, persistiert mit Auswahl.
-- **Capability Gates:** UI zeigt WebMIDI/Audio-In-Support an.
-- **Import/Export:** JSON/MIDI für Patterns, Soundbank-Manifest + Blobs, WAV-Export mit Metadaten.
-- **Fehlende Komponenten:** StepGrid/StepCell sind nur als Markdown-Doku vorhanden, nicht im Build.
-- **Panels:** Viele Panels existieren im Code, sind aber nicht immer im UI gemountet (siehe `pages/index.vue`).
-- **Focus/Accessibility:** PadGrid/PadCell benötigen explizite Refs für Fokussteuerung.
+## Scope Governor (for any request)
 
-## Beispiele & Referenzen
-- **Audio-Engine:** `audio/engine/`, `audio/fxGraph.ts`, `audio/stepResolver.ts`
-- **Stores:** `stores/`
-- **Composables:** `composables/`
-- **Panels:** `components/panels/`
-- **Export:** `useImportExport`, `exportAudio`, ExportPanel
-- **Diagrams:** `diagrams/`
+- Produce a Scope Contract: bullet list of what will change (files/modules) and what will **not** change.
+- If unclear, ask up to 3 targeted questions; otherwise proceed with best effort and document assumptions in English.
+- Do not implement nice-to-have refactors/renames/formatting-only/architectural migrations unless explicitly requested.
 
-## Hinweise für KI-Agenten
-- Halte dich an die bestehenden Patterns und Strukturen.
-- Prüfe, ob Komponenten im UI gemountet sind, bevor du UI-Änderungen vorschlägst.
-- Beachte deterministische Exporte (Seed, Metadaten) und die zentrale Rolle von AudioContext.
-- Dokumentiere neue Patterns/Workflows in der README oder als Kommentar im Code.
+## Project Map (authoritative)
+
+- Stores: `stores/` (transport, patterns/scenes, session caps, soundbanks, control, browser).
+- Composables: `composables/` (audio engine, scheduler, sequencer, MIDI/sync, import/export, audio input, storage).
+- Domain: `domain/` (timing/quantize/velocity).
+- UI shell: `pages/index.vue` + `components/DrumMachine.vue`.
+- Diagrams as truth: `diagrams/*.md` (consult before altering flows).
+- Mount reality rule: verify components are actually mounted before wiring logic.
+
+## Quality Gates (always)
+
+- Run `npm run lint`.
+- Run `npm run typecheck`.
+- Run tests: `npm test` (or repo test command). No acceptance if any gate fails.
+
+## Testing Policy (hard gate)
+
+- For every implemented function or user-facing behavior, add at least one test under `./tests/<appropriate-subfolder>/...`.
+- Component behavior → `tests/componentTests/...`.
+- Pure logic/store/composable → `tests/unitTests/...`.
+- Tests must validate observable outcomes, not just “method was called” (unless that is the only stable observable).
+- If tests fail, fix implementation/tests until all pass. No partial acceptance.
+
+## Tooltip + Shortcut Policy (global)
+
+- If a control is keyboard-triggerable, assign a shortcut via the global shortcut registry.
+- Show the shortcut on hover via title or minimal Vuetify tooltip. Do not add new UI chrome/help panels unless requested.
+
+## Definition of Done (required for every change set)
+
+- **Functional**: requested behaviors implemented and verifiable; no unrelated features; UI behavior matches existing interaction patterns (SHIFT modifiers, soft button conventions, control store routing).
+- **UI & UX Safety**: no unintended layout/style changes; display stays within 100vh; no new page scroll unless explicitly requested.
+- **Code Quality**: Options API maintained; no Composition API; TypeScript strict passes; clean minimal diff; no formatting-only changes.
+- **Performance & Stability**: no scheduler timing regressions; browser/file lists use scroll containers properly; persistence uses IndexedDB appropriately; avoid heavy sync loops on UI thread.
+- **Documentation**: new comments/docs in English; update diagrams/docs when flows change materially.
+- **Tests**: each implemented function/behavior has a test in `./tests/...`; all tests pass locally; lint + typecheck pass.
+- **Deliverables**: list of changed files; short English changelog; exact commands to run lint/typecheck/tests; brief verification notes (what to click/press to confirm).
+
+## Current Active Change Request (example template)
+
+When a user provides a change request, respond with:
+
+- Scope Contract (will change / won’t change)
+- Implementation Plan (ordered, minimal)
+- Test Plan (which tests, expected outcomes)
+- DoD checklist mapping (how each DoD item will be satisfied)
