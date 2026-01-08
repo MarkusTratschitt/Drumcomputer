@@ -579,11 +579,11 @@ export const useBrowserStore = defineStore('browser', {
       this.files.selectedPath = path
     },
     async importSelected(context?: { contextId?: string; contextType?: BrowseHistoryEntry['contextType'] }) {
-      if (!this.files.selectedPath) return
+      if (!this.files.selectedPath) return null
       const recent = useRecentFiles()
       const repo = getLibraryRepository()
       const meta = parsePathMeta(this.files.selectedPath)
-      const importPromise = repo.importFile(this.files.selectedPath, { name: meta.name })
+      const importedItem = await repo.importFile(this.files.selectedPath, { name: meta.name })
       recent.addRecent({
         id: this.files.selectedPath,
         path: this.files.selectedPath,
@@ -601,10 +601,10 @@ export const useBrowserStore = defineStore('browser', {
       })
       this.loadRecentFiles()
       this.invalidateHierarchyCache()
-      await importPromise
       await this.loadAvailableTags()
       await repo.refreshIndex()
       await this.search()
+      return importedItem
     },
     openQuickBrowse(contextId: string) {
       const quickBrowse = useQuickBrowse()

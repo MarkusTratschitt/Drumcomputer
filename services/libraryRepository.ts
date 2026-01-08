@@ -1,4 +1,5 @@
 import { getFileSystemRepository } from './fileSystemRepository'
+import * as sampleDb from './sampleDb'
 
 export type LibraryItem = {
   id: string
@@ -6,6 +7,7 @@ export type LibraryItem = {
   path?: string
   tags: string[]
   importedAt?: number
+  lastUsedAtMs?: number
   fileType?: string
   contentType?: string
   category?: string
@@ -77,6 +79,19 @@ const extractMetadataFromPath = (path: string): Partial<LibraryItem> => {
 const createLocalRepository = (): LibraryRepository => {
   let items: LibraryItem[] = loadPersisted()
   let favorites = loadFavorites()
+  let migrationTriggered = false
+  const DB_SEARCH_THRESHOLD = 50
+
+  // Trigger migration on first access
+  async function ensureMigration() {
+    if (migrationTriggered) return
+    migrationTriggered = true
+    try {
+      await sampleDb.migrateFromLocalStorage()
+    } catch (error) {
+      console.error('IndexedDB migration failed:', error)
+    }
+  }
 
   function persist() {
     try {
@@ -133,7 +148,41 @@ const createLocalRepository = (): LibraryRepository => {
 
   return {
     async search(query: string, _filters?: LibrarySearchFilters): Promise<LibraryItem[]> {
+      await ensureMigration()
+
       const text = query.trim().toLowerCase()
+
+      // Use IndexedDB search if item count exceeds threshold
+      if (items.length > DB_SEARCH_THRESHOLD) {
+        try {
+          const dbResults = await sampleDb.search(text)
+          return dbResults.map((entry): LibraryItem => {
+            const item: LibraryItem = {
+              id: entry.path,
+              name: entry.name,
+              path: entry.path,
+              tags: entry.tags
+            }
+            if (entry.importedAt !== undefined) item.importedAt = entry.importedAt
+            if (entry.lastUsedAtMs !== undefined) item.lastUsedAtMs = entry.lastUsedAtMs
+            if (entry.fileType !== undefined) item.fileType = entry.fileType
+            if (entry.contentType !== undefined) item.contentType = entry.contentType
+            if (entry.category !== undefined) item.category = entry.category
+            if (entry.product !== undefined) item.product = entry.product
+            if (entry.bank !== undefined) item.bank = entry.bank
+            if (entry.subBank !== undefined) item.subBank = entry.subBank
+            if (entry.character !== undefined) item.character = entry.character
+            if (entry.vendor !== undefined) item.vendor = entry.vendor
+            if (entry.favorites !== undefined) item.favorites = entry.favorites
+            return item
+          })
+        } catch (error) {
+          console.error('IndexedDB search failed, fallback to localStorage:', error)
+          // Fallback to in-memory search
+        }
+      }
+
+      // Fallback: in-memory search (for small collections or DB errors)
       if (!text) return [...items]
       return items.filter((item) => {
         const haystack = `${item.name} ${item.tags.join(' ')}`.toLowerCase()
@@ -167,15 +216,19 @@ const createLocalRepository = (): LibraryRepository => {
       return (await this.getTags(itemId)) ?? []
     },
     async importFile(path: string, meta?: Partial<LibraryItem>) {
+      await ensureMigration()
+
       const id = meta?.id ?? path
       const existing = items.find((item) => item.id === id)
       const name = meta?.name ?? path.split('/').pop() ?? 'Sample'
+      const now = Date.now()
       const next: LibraryItem = {
         id,
         name,
         path,
         tags: existing?.tags ?? [],
-        importedAt: Date.now(),
+        importedAt: existing?.importedAt ?? now,
+        lastUsedAtMs: now,
         ...meta
       }
       if (existing) {
@@ -184,6 +237,33 @@ const createLocalRepository = (): LibraryRepository => {
         items = [...items, next]
       }
       persist()
+
+      // Write to IndexedDB (only if we have guaranteed path)
+      if (path && next.lastUsedAtMs !== undefined) {
+        try {
+          const dbEntry: sampleDb.SampleDbEntry = {
+            path,
+            name,
+            tags: next.tags,
+            lastUsedAtMs: next.lastUsedAtMs
+          }
+          if (next.importedAt !== undefined) dbEntry.importedAt = next.importedAt
+          if (next.fileType !== undefined) dbEntry.fileType = next.fileType
+          if (next.contentType !== undefined) dbEntry.contentType = next.contentType
+          if (next.category !== undefined) dbEntry.category = next.category
+          if (next.product !== undefined) dbEntry.product = next.product
+          if (next.bank !== undefined) dbEntry.bank = next.bank
+          if (next.subBank !== undefined) dbEntry.subBank = next.subBank
+          if (next.character !== undefined) dbEntry.character = next.character
+          if (next.vendor !== undefined) dbEntry.vendor = next.vendor
+          if (next.favorites !== undefined) dbEntry.favorites = next.favorites
+
+          await sampleDb.upsertFromPath(dbEntry)
+        } catch (error) {
+          console.error('Failed to write to IndexedDB:', error)
+        }
+      }
+
       return next
     },
     async addToFavorites(itemId: string) {

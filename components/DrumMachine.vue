@@ -414,6 +414,7 @@ import { useCapabilities } from '@/composables/useCapabilities.client'
 import { useMidiLearn } from '@/composables/useMidiLearn'
 import { useShortcuts } from '@/composables/useShortcuts'
 import { SHORTCUT_COMMANDS } from '@/composables/shortcutCommands'
+import { getFileSystemRepository } from '@/services/fileSystemRepository'
 import TransportBar from './TransportBar.vue'
 import PadGrid from './PadGrid.vue'
 import TabPanel from './TabPanel.vue'
@@ -1150,6 +1151,11 @@ computed: {
         handler: () => void this.browser.setMode('FILES'),
         description: 'Browser: Files Mode'
       })
+      shortcuts.register('BROWSER_IMPORT_TO_PAD', {
+        keys: SHORTCUT_COMMANDS.BROWSER_IMPORT_TO_PAD,
+        handler: () => void this.importSelectedToPad(),
+        description: 'Import selected file to current pad'
+      })
       // Pads
       const padMap: Record<string, DrumPadId> = {
         '1': 'pad1', '2': 'pad2', '3': 'pad3', '4': 'pad4',
@@ -1234,6 +1240,12 @@ computed: {
       this.control.nextPage()
     },
     pressSoftButton(index: number) {
+      const btn = this.control.activeSoftButtons[index]
+      const actionId = this.control.shiftHeld && btn?.shiftActionId ? btn.shiftActionId : btn?.actionId
+      if (actionId === 'BROWSER_IMPORT_TO_PAD') {
+        void this.importSelectedToPad()
+        return
+      }
       this.control.pressSoftButton(index)
     },
     onShiftDown(event: PointerEvent) {
@@ -1642,6 +1654,19 @@ computed: {
       await this.soundbankStorage.saveSample(sample as SampleRef & { blob: Blob })
       await this.sequencer.setSampleForPad(payload.padId, sample)
       await this.sequencer.applySoundbank(updatedBank)
+    },
+    async importSelectedToPad() {
+      if (!this.browser.files.selectedPath) return
+      const importedItem = await this.browser.importSelected({
+        contextId: this.selectedPadId,
+        contextType: 'sample'
+      })
+      if (!importedItem?.path) return
+      const fileRepo = getFileSystemRepository()
+      const blob = await fileRepo.readFileBlob?.(importedItem.path)
+      if (!blob) return
+      const file = new File([blob], importedItem.name, { type: blob.type || 'audio/wav' })
+      await this.replacePadSample({ padId: this.selectedPadId, file })
     },
     async hydrateSamplesForBank(bank: Soundbank): Promise<Soundbank> {
       const hydratedPads: Partial<Record<DrumPadId, SampleRef>> = {}

@@ -13,7 +13,7 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
-    setupFiles: ['tests/setup/atobShim.ts'],
+    setupFiles: ['tests/setup/atobShim.ts', 'tests/setup/indexedDBShim.ts'],
     threads: false,
 
     // ✅ NUR deine Tests einsammeln

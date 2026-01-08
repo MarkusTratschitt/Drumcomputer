@@ -46,14 +46,14 @@ type ListItem = {
 
 type DisplayPanelModel = {
   view:
-    | 'BROWSER'
-    | 'FILE'
-    | 'SETTINGS'
-    | 'SAMPLING'
-    | 'MIXER'
-    | 'ARRANGER'
-    | 'INFO'
-    | 'EMPTY'
+  | 'BROWSER'
+  | 'FILE'
+  | 'SETTINGS'
+  | 'SAMPLING'
+  | 'MIXER'
+  | 'ARRANGER'
+  | 'INFO'
+  | 'EMPTY'
   title?: string
   summary?: string
   items?: ListItem[]
@@ -195,7 +195,7 @@ const browserPages: ControlPage[] = [
       { label: 'Favorites', actionId: 'BROWSER_FAVORITES' },
       { label: 'Prehear', actionId: 'BROWSER_PREHEAR', shiftLabel: 'Stop', shiftActionId: 'BROWSER_STOP' },
       { label: 'Load', actionId: 'BROWSER_LOAD' },
-      { label: 'Replace', actionId: 'BROWSER_REPLACE' },
+      { label: 'Import', actionId: 'BROWSER_IMPORT_TO_PAD', description: 'Import to selected pad (Ctrl+Enter)' },
       { label: 'Clear', actionId: 'BROWSER_CLEAR' }
     ]),
     params: buildParams([
@@ -933,6 +933,9 @@ export const useControlStore = defineStore('control', {
         case 'BROWSER_REPLACE':
           void browser.importSelected()
           this.lastAction = 'Import triggered'
+          break
+        case 'BROWSER_IMPORT_TO_PAD':
+          this.lastAction = 'Import to pad triggered'
           break
         case 'BROWSER_FAVORITES':
           if (browser.library.selectedId) {
