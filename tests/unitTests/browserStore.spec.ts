@@ -13,7 +13,7 @@ import {
 } from '../../services/fileSystemRepository'
 
 class MemoryLibraryRepo implements LibraryRepository {
-  constructor(public items: LibraryItem[] = []) {}
+  constructor(public items: LibraryItem[] = []) { }
   favorites = new Set<string>()
 
   async search(query: string): Promise<LibraryItem[]>
@@ -103,7 +103,7 @@ class MemoryLibraryRepo implements LibraryRepository {
 }
 
 class MemoryFileRepo implements FileSystemRepository {
-  constructor(private listing: DirectoryListing) {}
+  constructor(private listing: DirectoryListing) { }
   async listDir(_path: string): Promise<DirectoryListing> {
     return this.listing
   }
@@ -163,6 +163,10 @@ describe('browser store', () => {
         favorites: false
       }
     ])
+    // Initialize favorites set based on items with favorites: true
+    libraryRepo.favorites = new Set(
+      libraryRepo.items.filter(item => item.favorites).map(item => item.id)
+    )
     fileRepo = new MemoryFileRepo({
       dirs: [{ name: 'kits', path: '/kits' }],
       files: [{ name: 'new.wav', path: '/kits/new.wav' }]
@@ -181,6 +185,7 @@ describe('browser store', () => {
     await store.setQuery('Kick')
     vi.advanceTimersByTime(350)
     await Promise.resolve()
+    await Promise.resolve()
     expect(store.library.results).toHaveLength(1)
     await store.setMode('FILES')
     expect(store.files.entries.files).toHaveLength(1)
@@ -193,6 +198,7 @@ describe('browser store', () => {
     const store = useBrowserStore()
     await store.setQuery('snare')
     vi.advanceTimersByTime(350)
+    await Promise.resolve()
     await Promise.resolve()
     expect(store.library.results[0]?.title).toContain('Snare')
   })
@@ -238,9 +244,13 @@ describe('browser store', () => {
     const store = useBrowserStore()
     await store.search()
     store.setFilter('fileType', 'sample')
+    await Promise.resolve()
     store.setFilter('favorites', true)
+    await Promise.resolve()
     store.setFilter('category', 'drums')
+    await Promise.resolve()
     await store.applyFilters()
+    await Promise.resolve()
     expect(store.library.results).toHaveLength(1)
     expect(store.library.results[0]?.title).toBe('Snare Tight')
   })

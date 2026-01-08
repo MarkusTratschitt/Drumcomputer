@@ -263,11 +263,8 @@ export const useBrowserStore = defineStore('browser', {
     },
     async setQuery(query: string) {
       this.library.query = query
-      const timerHost = typeof global !== 'undefined' ? global : globalThis
-      const primarySetTimeout = timerHost.setTimeout ?? setTimeout
-      const primaryClearTimeout = timerHost.clearTimeout ?? clearTimeout
       if (this.searchDebounceId) {
-        primaryClearTimeout(this.searchDebounceId)
+        clearTimeout(this.searchDebounceId)
       }
       const token = this.searchDebounceToken + 1
       this.searchDebounceToken = token
@@ -275,25 +272,30 @@ export const useBrowserStore = defineStore('browser', {
         if (this.searchDebounceToken !== token) return
         void this.search()
       }
-      this.searchDebounceId = primarySetTimeout(runSearch, searchDebounceMs)
+      this.searchDebounceId = setTimeout(runSearch, searchDebounceMs) as any
     },
-    async search() {
+    search() {
       const repo = getLibraryRepository()
-      const [favorites, results] = await Promise.all([
+      const searchPromise = Promise.all([
         repo.getFavorites(),
         this.filters.favorites === true ? Promise.resolve<LibraryItem[]>([]) : repo.search(this.library.query ?? '', this.filters)
-      ])
-      const favoriteIds = new Set(favorites.map((item) => item.id))
-      const items = this.filters.favorites === true ? favorites : results
-      const mapped = items.map((item) => mapLibraryItemToResult(item, favoriteIds.has(item.id)))
-      const filtered = mapped.filter((item) => matchesFilters(item, this.filters))
-      this.library.rawResults = filtered
-      this.library.results = filtered
-      if (this.library.selectedId && !filtered.find((entry) => entry.id === this.library.selectedId)) {
-        this.library.selectedId = null
-      }
-      void this.refreshHierarchyOptions()
-      this.sortResults()
+      ]).then(([favorites, results]) => {
+        const favoriteIds = new Set(favorites.map((item) => item.id))
+        const items = this.filters.favorites === true ? favorites : results
+        const mapped = items.map((item) => mapLibraryItemToResult(item, favoriteIds.has(item.id)))
+        const filtered = mapped.filter((item) => matchesFilters(item, this.filters))
+        this.library.rawResults = filtered
+        this.library.results = filtered
+        if (this.library.selectedId && !filtered.find((entry) => entry.id === this.library.selectedId)) {
+          this.library.selectedId = null
+        }
+        return filtered
+      })
+      void searchPromise.then(() => {
+        void this.refreshHierarchyOptions()
+        this.sortResults()
+      })
+      return searchPromise
     },
     setFilter<K extends keyof BrowserFilters>(key: K, value: BrowserFilters[K]) {
       const nextValue = Array.isArray(value) ? [...value] : value

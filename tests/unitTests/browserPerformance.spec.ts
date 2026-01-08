@@ -8,7 +8,7 @@ import {
 } from '../../services/libraryRepository'
 
 class MemoryLibraryRepo implements LibraryRepository {
-  constructor(public items: LibraryItem[] = []) {}
+  constructor(public items: LibraryItem[] = []) { }
   favorites = new Set<string>()
   async search(query: string): Promise<LibraryItem[]>
   async search(query: string, _filters?: unknown): Promise<LibraryItem[]> {
@@ -98,6 +98,7 @@ describe('browser performance helpers', () => {
     await store.setQuery('Kick')
     expect(store.library.results.length).toBe(0)
     vi.advanceTimersByTime(310)
+    await Promise.resolve()
     await Promise.resolve()
     expect(store.library.results.length).toBeGreaterThan(0)
   })
