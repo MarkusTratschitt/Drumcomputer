@@ -52927,3 +52927,423 @@ export default defineConfig({
 })
 
 
+
+## Repository File Tree
+.
+|-- .github/
+|   `-- copilot-instructions.md
+|-- .nuxt/
+|   |-- dev/
+|   |   |-- index.mjs
+|   |   `-- index.mjs.map
+|   |-- dist/
+|   |   `-- server/
+|   |       |-- client.manifest.mjs
+|   |       `-- client.precomputed.mjs
+|   |-- manifest/
+|   |   |-- meta/
+|   |   |   `-- dev.json
+|   |   `-- latest.json
+|   |-- schema/
+|   |   |-- nuxt.schema.d.ts
+|   |   `-- nuxt.schema.json
+|   |-- types/
+|   |   |-- app.config.d.ts
+|   |   |-- build.d.ts
+|   |   |-- builder-env.d.ts
+|   |   |-- components.d.ts
+|   |   |-- imports.d.ts
+|   |   |-- layouts.d.ts
+|   |   |-- middleware.d.ts
+|   |   |-- modules.d.ts
+|   |   |-- nitro-config.d.ts
+|   |   |-- nitro-imports.d.ts
+|   |   |-- nitro-middleware.d.ts
+|   |   |-- nitro-nuxt.d.ts
+|   |   |-- nitro-routes.d.ts
+|   |   |-- nitro.d.ts
+|   |   |-- plugins.d.ts
+|   |   |-- runtime-config.d.ts
+|   |   `-- vue-shim.d.ts
+|   |-- app.config.mjs
+|   |-- components.d.ts
+|   |-- imports.d.ts
+|   |-- nitro.json
+|   |-- nuxt.d.ts
+|   |-- nuxt.json
+|   |-- nuxt.node.d.ts
+|   |-- nuxt.shared.d.ts
+|   |-- tsconfig.app.json
+|   |-- tsconfig.json
+|   |-- tsconfig.node.json
+|   |-- tsconfig.server.json
+|   `-- tsconfig.shared.json
+|-- .vscode/
+|   `-- settings.json
+|-- _archive/
+|   |-- composables_dupes/
+|   |   |-- useAudioEngine.client 2.ts
+|   |   |-- useImportExport.client 2.ts
+|   |   |-- useMidi.client 2.ts
+|   |   |-- useSequencer 2.ts
+|   |   `-- useSync.client 2.ts
+|   `-- patches/
+|       |-- useAudioEngine.patch
+|       |-- useImportExport.patch
+|       |-- useMidi.patch
+|       |-- useSequencer.patch
+|       `-- useSync.patch
+|-- assets/
+|   |-- screenshots/
+|   |   |-- screenshot.png
+|   |   `-- Video Screen1766291171020.png
+|   |-- .DS_Store
+|   |-- browser-implementation-prompts.md
+|   |-- browserplan.md
+|   `-- MASCHINE_2.0_MK3_Manual_German_2_8.pdf
+|-- audio/
+|   |-- engine/
+|   |   |-- play/
+|   |   |   `-- playStep.ts
+|   |   |-- stepResolver.ts
+|   |   `-- transportAudioHooks.ts
+|   `-- fxGraph.ts
+|-- components/
+|   |-- control/
+|   |   |-- DualDisplay.vue
+|   |   |-- FourDEncoder.vue
+|   |   `-- SoftButtonStrip.vue
+|   |-- panels/
+|   |   |-- ChannelPanel.vue
+|   |   |-- ExportPanel.vue
+|   |   |-- FxPanel.vue
+|   |   |-- PatternsPanel.vue
+|   |   `-- SoundPanel.vue
+|   |-- placeholders/
+|   |   |-- DualDisplayPlaceholder.vue
+|   |   |-- FourDEncoderPlaceholder.vue
+|   |   |-- ModeColumnPlaceholder.vue
+|   |   |-- ScreenKnobRingPlaceholder.vue
+|   |   |-- SoftButtonStripPlaceholder.vue
+|   |   `-- TouchStripPlaceholder.vue
+|   |-- .DS_Store
+|   |-- DrumMachine.vue
+|   |-- FxPopup.vue
+|   |-- KnobControl.vue
+|   |-- MidiPanel.vue
+|   |-- PadCell.vue
+|   |-- PadGrid.vue
+|   |-- PlayheadOverlay.vue
+|   |-- SampleBrowser.vue
+|   |-- SoundbankManager.vue
+|   |-- StepCell.vue
+|   |-- StepGrid.vue
+|   |-- SyncPanel.vue
+|   |-- TabPanel.vue
+|   `-- TransportBar.vue
+|-- composables/
+|   |-- shortcutCommands.ts
+|   |-- use4DEncoder.ts
+|   |-- useAudioEngine.client.ts
+|   |-- useAudioInput.client.ts
+|   |-- useCapabilities.client.ts
+|   |-- useImportExport.client.ts
+|   |-- useMidi.client.ts
+|   |-- useMidiLearn.ts
+|   |-- usePatternStorage.client.ts
+|   |-- useQuickBrowse.ts
+|   |-- useRecentFiles.ts
+|   |-- useSamplePreview.client.ts
+|   |-- useScheduler.ts
+|   |-- useSequencer.ts
+|   |-- useShortcuts.ts
+|   |-- useSoundbankStorage.client.ts
+|   `-- useSync.client.ts
+|-- config/
+|   `-- pwa.ts
+|-- diagrams/
+|   |-- browser-file-system-access.md
+|   |-- browser-performance.md
+|   |-- browser-sorting.md
+|   |-- class-diagram.md
+|   |-- control-4d-encoder-browser.md
+|   |-- control-area-mapping.md
+|   |-- favorites-flow.md
+|   |-- library-hierarchy.md
+|   |-- library-import-progress.md
+|   |-- padgrid-modus-layout.md
+|   |-- persistence-and-audio.md
+|   |-- quick-browse.md
+|   |-- recent-files.md
+|   |-- sample-preview.md
+|   |-- tag-dialog.md
+|   |-- transport-engine.md
+|   |-- ui-sequencer.md
+|   `-- use-cases.md
+|-- dist/
+|-- dist-test/
+|   |-- audio/
+|   |   |-- fxGraph.js
+|   |   `-- fxGraph.js.map
+|   |-- composables/
+|   |   |-- use4DEncoder.js
+|   |   |-- use4DEncoder.js.map
+|   |   |-- useAudioEngine.client.js
+|   |   |-- useAudioEngine.client.js.map
+|   |   |-- useAudioInput.client.js
+|   |   |-- useAudioInput.client.js.map
+|   |   |-- useCapabilities.client.js
+|   |   |-- useCapabilities.client.js.map
+|   |   |-- useImportExport.client.js
+|   |   |-- useImportExport.client.js.map
+|   |   |-- useMidi.client.js
+|   |   |-- useMidi.client.js.map
+|   |   |-- useMidiLearn.js
+|   |   |-- useMidiLearn.js.map
+|   |   |-- usePatternStorage.client.js
+|   |   |-- usePatternStorage.client.js.map
+|   |   |-- useQuickBrowse.js
+|   |   |-- useQuickBrowse.js.map
+|   |   |-- useRecentFiles.js
+|   |   |-- useRecentFiles.js.map
+|   |   |-- useSamplePreview.client.js
+|   |   |-- useSamplePreview.client.js.map
+|   |   |-- useScheduler.js
+|   |   |-- useScheduler.js.map
+|   |   |-- useSequencer.js
+|   |   |-- useSequencer.js.map
+|   |   |-- useSoundbankStorage.client.js
+|   |   |-- useSoundbankStorage.client.js.map
+|   |   |-- useSync.client.js
+|   |   `-- useSync.client.js.map
+|   |-- domain/
+|   |   |-- clock/
+|   |   |   |-- renderClock.js
+|   |   |   |-- renderClock.js.map
+|   |   |   |-- scheduler.js
+|   |   |   `-- scheduler.js.map
+|   |   |-- transport/
+|   |   |   |-- audioHooks.js
+|   |   |   |-- audioHooks.js.map
+|   |   |   |-- transportEngine.js
+|   |   |   |-- transportEngine.js.map
+|   |   |   |-- types.js
+|   |   |   `-- types.js.map
+|   |   |-- midiMapping.js
+|   |   |-- midiMapping.js.map
+|   |   |-- quantize.js
+|   |   |-- quantize.js.map
+|   |   |-- timing.js
+|   |   |-- timing.js.map
+|   |   |-- velocity.js
+|   |   `-- velocity.js.map
+|   |-- services/
+|   |   |-- fileSystemRepository.js
+|   |   |-- fileSystemRepository.js.map
+|   |   |-- libraryRepository.js
+|   |   `-- libraryRepository.js.map
+|   |-- stores/
+|   |   |-- browser.js
+|   |   |-- browser.js.map
+|   |   |-- control.js
+|   |   |-- control.js.map
+|   |   |-- patterns.js
+|   |   |-- patterns.js.map
+|   |   |-- session.js
+|   |   |-- session.js.map
+|   |   |-- soundbanks.js
+|   |   |-- soundbanks.js.map
+|   |   |-- transport.js
+|   |   `-- transport.js.map
+|   |-- tests/
+|   |   |-- componentTests/
+|   |   |   |-- PadCell.component.spec.js
+|   |   |   |-- PadCell.component.spec.js.map
+|   |   |   |-- PadGrid.component.spec.js
+|   |   |   `-- PadGrid.component.spec.js.map
+|   |   `-- unitTests/
+|   |       |-- browserPerformance.spec.js
+|   |       |-- browserPerformance.spec.js.map
+|   |       |-- browserSort.spec.js
+|   |       |-- browserSort.spec.js.map
+|   |       |-- browserStore.spec.js
+|   |       |-- browserStore.spec.js.map
+|   |       |-- controlBrowserIntegration.spec.js
+|   |       |-- controlBrowserIntegration.spec.js.map
+|   |       |-- favorites.spec.js
+|   |       |-- favorites.spec.js.map
+|   |       |-- fileSystemRepository.spec.js
+|   |       |-- fileSystemRepository.spec.js.map
+|   |       |-- libraryHierarchy.spec.js
+|   |       |-- libraryHierarchy.spec.js.map
+|   |       |-- libraryImport.spec.js
+|   |       |-- libraryImport.spec.js.map
+|   |       |-- quickBrowse.spec.js
+|   |       |-- quickBrowse.spec.js.map
+|   |       |-- recentFiles.spec.js
+|   |       |-- recentFiles.spec.js.map
+|   |       |-- samplePreview.spec.js
+|   |       |-- samplePreview.spec.js.map
+|   |       |-- tagManagement.spec.js
+|   |       |-- tagManagement.spec.js.map
+|   |       |-- transportEngine.spec.js
+|   |       |-- transportEngine.spec.js.map
+|   |       |-- use4DEncoder.spec.js
+|   |       `-- use4DEncoder.spec.js.map
+|   |-- types/
+|   |   |-- audio.js
+|   |   |-- audio.js.map
+|   |   |-- drums.js
+|   |   |-- drums.js.map
+|   |   |-- library.js
+|   |   |-- library.js.map
+|   |   |-- midi.js
+|   |   |-- midi.js.map
+|   |   |-- persistence.js
+|   |   |-- persistence.js.map
+|   |   |-- render.js
+|   |   |-- render.js.map
+|   |   |-- sync.js
+|   |   |-- sync.js.map
+|   |   |-- time.js
+|   |   `-- time.js.map
+|   `-- utils/
+|       |-- seededRandom.js
+|       |-- seededRandom.js.map
+|       |-- zip.js
+|       `-- zip.js.map
+|-- domain/
+|   |-- clock/
+|   |   |-- renderClock.ts
+|   |   `-- scheduler.ts
+|   |-- transport/
+|   |   |-- audioHooks.ts
+|   |   |-- transportEngine.ts
+|   |   `-- types.ts
+|   |-- velocity/
+|   |   `-- velocityToGain.ts
+|   |-- .DS_Store
+|   |-- midiMapping.ts
+|   |-- quantize.ts
+|   |-- timing.ts
+|   |-- validators.ts
+|   `-- velocity.ts
+|-- Flashpost-tests/
+|   |-- flashpost.db
+|   |-- flashpostCollections.db
+|   |-- flashpostCookies.db
+|   |-- flashpostHistory.db
+|   |-- flashpostUserPreference.db
+|   `-- flashpostVariable.db
+|-- iMac/
+|   `-- Repositories/
+|       `-- FullStackDeveloperCourse/
+|           `-- JavaScriptAdvanced/
+|               `-- CertificationProjects/
+|                   `-- Drumcomputer/
+|-- layouts/
+|   `-- default.vue
+|-- pages/
+|   `-- index.vue
+|-- plugins/
+|   |-- vuetify.client.ts
+|   `-- vuetify.ts
+|-- public/
+|   |-- samples/
+|   |   |-- clap.wav
+|   |   |-- hihat.wav
+|   |   |-- kick.wav
+|   |   `-- snare.wav
+|   `-- .DS_Store
+|-- scripts/
+|   `-- dev.mjs
+|-- services/
+|   |-- fileSystemRepository.ts
+|   |-- libraryRepository.ts
+|   `-- sampleDb.ts
+|-- stores/
+|   |-- browser.ts
+|   |-- control.ts
+|   |-- patterns.ts
+|   |-- session.ts
+|   |-- soundbanks.ts
+|   `-- transport.ts
+|-- styles/
+|   |-- drum-machine.less
+|   |-- globals.less
+|   |-- variables.less
+|   `-- vuetify-overrides.less
+|-- tests/
+|   |-- componentTests/
+|   |   |-- DualDisplay.component.spec.ts
+|   |   |-- FourDEncoder.component.spec.ts
+|   |   |-- KnobControl.component.spec.ts
+|   |   |-- PadCell.component.spec.ts
+|   |   `-- PadGrid.component.spec.ts
+|   |-- setup/
+|   |   |-- atobShim.ts
+|   |   `-- indexedDBShim.ts
+|   `-- unitTests/
+|       |-- browserPerformance.spec.ts
+|       |-- browserSort.spec.ts
+|       |-- browserStore.spec.ts
+|       |-- controlBrowserIntegration.spec.ts
+|       |-- favorites.spec.ts
+|       |-- fileSystemRepository.spec.ts
+|       |-- libraryHierarchy.spec.ts
+|       |-- libraryImport.spec.ts
+|       |-- quickBrowse.spec.ts
+|       |-- recentFiles.spec.ts
+|       |-- sampleDb.spec.ts
+|       |-- sampleImportToPad.spec.ts
+|       |-- samplePreview.spec.ts
+|       |-- tagManagement.spec.ts
+|       |-- transportEngine.spec.ts
+|       |-- use4DEncoder.spec.ts
+|       `-- useShortcuts.spec.ts
+|-- types/
+|   |-- audio.ts
+|   |-- drums.ts
+|   |-- file-saver.d.ts
+|   |-- import-meta.d.ts
+|   |-- library.ts
+|   |-- midi.ts
+|   |-- persistence.ts
+|   |-- process.d.ts
+|   |-- render.ts
+|   |-- shims-vue.d.ts
+|   |-- sync.ts
+|   |-- time.ts
+|   `-- window.d.ts
+|-- utils/
+|   |-- seededRandom.ts
+|   `-- zip.ts
+|-- .DS_Store
+|-- .editorconfig
+|-- .eslintrc.cjs
+|-- .gitattributes
+|-- .gitignore
+|-- .gitignore 2
+|-- .mocharc.json
+|-- alleDateien.md
+|-- app.vue
+|-- Components.md
+|-- Composables.md
+|-- control-review.md
+|-- Domain.md
+|-- eslint.config.cjs
+|-- eslint.config.js
+|-- implementationPlan.json
+|-- LICENSE
+|-- nuxt.config.ts
+|-- package-lock.json
+|-- package.json
+|-- ProjectCode.txt
+|-- promptingAgentInstructions.json
+|-- README 2.md
+|-- README.md
+|-- StepCell.md
+|-- StepGrid.md
+|-- tsconfig.json
+|-- tsconfig.test.json
+`-- vitest.config.ts
