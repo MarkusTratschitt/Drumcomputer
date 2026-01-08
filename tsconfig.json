@@ -30,6 +30,7 @@
     "stores/**/*.ts",
     "./tests/*.spec.ts",
     "./components/**/*.vue",
-    "./types/**/*.d.ts"
+    "./types/**/*.d.ts",
+    "./types/**/*.ts"
   ]
 }

@@ -1,0 +1,1 @@
+{"version":3,"file":"renderClock.js","sourceRoot":"","sources":["../../../domain/clock/renderClock.ts"],"names":[],"mappings":"AAqBA,MAAM,UAAU,iBAAiB,CAG/B,GAAqB,EACrB,SAAS,GAAG,KAAK;IAEjB,OAAO;QACL,GAAG;QACH,SAAS;QACT,SAAS,EAAE,GAAG,EAAE,CAAC,GAAG,CAAC,WAAW;QAChC,GAAG,EAAE,GAAG,EAAE,CAAC,GAAG,CAAC,WAAW;KAC3B,CAAA;AACH,CAAC"}

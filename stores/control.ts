@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
-import { markRaw } from 'vue'
-import { use4DEncoder, type EncoderField } from '../composables/use4DEncoder'
+import { markRaw, type Raw } from 'vue'
+import { use4DEncoder, type EncoderField, type Use4DEncoderReturn } from '../composables/use4DEncoder'
 import { useBrowserStore, type BrowserFilters } from './browser'
 
 export type ControlMode =
@@ -711,7 +711,7 @@ export const useControlStore = defineStore('control', {
       countIn: true,
       automationArmed: false
     },
-    encoder4D: null as ReturnType<typeof use4DEncoder> | null,
+    encoder4D: null as Raw<Use4DEncoderReturn> | null,
     browserDisplay: null as { leftModel: DisplayPanelModel; rightModel: DisplayPanelModel } | null
   }),
   getters: {
@@ -763,13 +763,12 @@ export const useControlStore = defineStore('control', {
   actions: {
     initEncoderForBrowser() {
       const browser = useBrowserStore()
-      if (!this.encoder4D) {
-        this.encoder4D = markRaw(use4DEncoder())
-      }
+      const encoder = this.encoder4D ?? markRaw(use4DEncoder())
+      this.encoder4D = encoder
       const fields = browser.getEncoderFields()
-      this.encoder4D.setFields(fields)
-      this.encoder4D.setMode('field-select')
-      this.encoder4D.activeListIndex.value = 0
+      encoder.setFields(fields)
+      encoder.setMode('field-select')
+      encoder.activeListIndex.value = 0
     },
     refreshEncoderFields() {
       if (!this.encoder4D) return
@@ -1027,9 +1026,7 @@ export const useControlStore = defineStore('control', {
           const selectedId = browser.tagDialogItemId ?? browser.library.selectedId
           const selected = browser.library.results.find((item) => item.id === selectedId)
           const assigned = selected?.tags?.includes(tag) ?? false
-          if (assigned) {
-            await browser.removeTagFromSelected(tag)
-          } else {
+          if (!assigned) {
             await browser.addTagToSelected(tag)
           }
           this.syncBrowserDisplay()

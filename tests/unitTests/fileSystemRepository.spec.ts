@@ -57,7 +57,7 @@ const createDirHandle = (node: MockDirNode): FileSystemDirectoryHandle => {
     entries,
     getDirectoryHandle,
     getFileHandle
-  } as FileSystemDirectoryHandle
+  } as unknown as FileSystemDirectoryHandle
 }
 
 describe('file system repository', () => {
@@ -73,7 +73,6 @@ describe('file system repository', () => {
       if (originalPicker) {
         originalWindow.showDirectoryPicker = originalPicker
       } else if ('showDirectoryPicker' in originalWindow) {
-        // @ts-expect-error: cleanup mocked picker
         delete originalWindow.showDirectoryPicker
       }
       globalThis.window = originalWindow
@@ -98,7 +97,7 @@ describe('file system repository', () => {
       ]
     }
     const picker = vi.fn(async () => createDirHandle(root))
-    globalThis.window = { showDirectoryPicker: picker } as Window & typeof globalThis
+    globalThis.window = { showDirectoryPicker: picker } as unknown as Window & typeof globalThis
 
     const repo = getFileSystemRepository()
     const listing: DirectoryListing = await repo.listDir('/')
@@ -115,7 +114,7 @@ describe('file system repository', () => {
       children: [{ name: 'clip.txt', kind: 'file', content: 'clip' }]
     }
     const picker = vi.fn(async () => createDirHandle(root))
-    globalThis.window = { showDirectoryPicker: picker } as Window & typeof globalThis
+    globalThis.window = { showDirectoryPicker: picker } as unknown as Window & typeof globalThis
 
     const repo = getFileSystemRepository()
     const blob = await repo.readFileBlob?.('/clip.txt')
@@ -126,7 +125,6 @@ describe('file system repository', () => {
 
   it('falls back to the in-memory file system when the API is unavailable', async () => {
     if (globalThis.window) {
-      // @ts-expect-error: ensure no file system access API for this test
       delete globalThis.window.showDirectoryPicker
     }
 

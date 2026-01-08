@@ -2,12 +2,12 @@ import { describe, it, beforeEach, expect } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useControlStore } from '../../stores/control'
 import { useBrowserStore } from '../../stores/browser'
-import { __setLibraryRepositoryForTests, type LibraryRepository } from '../../services/libraryRepository'
+import { __setLibraryRepositoryForTests, type LibraryItem, type LibraryRepository } from '../../services/libraryRepository'
 import { __setFileSystemRepositoryForTests } from '../../services/fileSystemRepository'
 
 class ImportTrackingRepo implements LibraryRepository {
   imports: string[] = []
-  items = []
+  items: LibraryItem[] = []
   favorites = new Set<string>()
   async search(_query: string, _filters?: unknown) {
     return this.items

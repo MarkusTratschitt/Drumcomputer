@@ -128,6 +128,12 @@ const mapRecentType = (extension?: string): RecentFileEntry['type'] => {
   return 'sample'
 }
 
+const parsePathMeta = (path: string): { name: string; extension?: string } => {
+  const name = path.split('/').pop() ?? path
+  const extension = name.includes('.') ? name.split('.').pop() : undefined
+  return { name, extension }
+}
+
 const sortStorageKey = 'drumcomputer_sort_mode_v1'
 
 const hasClientStorage = (): boolean => {
@@ -228,6 +234,7 @@ export const useBrowserStore = defineStore('browser', {
       subBanks: {}
     } as HierarchyCache,
     searchDebounceId: null as ReturnType<typeof setTimeout> | null,
+    searchDebounceToken: 0,
     preview: null as ReturnType<typeof useSamplePreview> | null
   }),
   getters: {
@@ -256,27 +263,36 @@ export const useBrowserStore = defineStore('browser', {
     },
     async setQuery(query: string) {
       this.library.query = query
+      const timerHost = typeof global !== 'undefined' ? global : globalThis
+      const primarySetTimeout = timerHost.setTimeout ?? setTimeout
+      const primaryClearTimeout = timerHost.clearTimeout ?? clearTimeout
       if (this.searchDebounceId) {
-        clearTimeout(this.searchDebounceId)
+        primaryClearTimeout(this.searchDebounceId)
       }
-      this.searchDebounceId = setTimeout(() => {
+      const token = this.searchDebounceToken + 1
+      this.searchDebounceToken = token
+      const runSearch = () => {
+        if (this.searchDebounceToken !== token) return
         void this.search()
-      }, searchDebounceMs)
+      }
+      this.searchDebounceId = primarySetTimeout(runSearch, searchDebounceMs)
     },
     async search() {
       const repo = getLibraryRepository()
-      const favorites = await repo.getFavorites()
+      const [favorites, results] = await Promise.all([
+        repo.getFavorites(),
+        this.filters.favorites === true ? Promise.resolve<LibraryItem[]>([]) : repo.search(this.library.query ?? '', this.filters)
+      ])
       const favoriteIds = new Set(favorites.map((item) => item.id))
-      const results =
-        this.filters.favorites === true ? favorites : await repo.search(this.library.query ?? '', this.filters)
-      const mapped = results.map((item) => mapLibraryItemToResult(item, favoriteIds.has(item.id)))
+      const items = this.filters.favorites === true ? favorites : results
+      const mapped = items.map((item) => mapLibraryItemToResult(item, favoriteIds.has(item.id)))
       const filtered = mapped.filter((item) => matchesFilters(item, this.filters))
       this.library.rawResults = filtered
       this.library.results = filtered
       if (this.library.selectedId && !filtered.find((entry) => entry.id === this.library.selectedId)) {
         this.library.selectedId = null
       }
-      await this.refreshHierarchyOptions()
+      void this.refreshHierarchyOptions()
       this.sortResults()
     },
     setFilter<K extends keyof BrowserFilters>(key: K, value: BrowserFilters[K]) {
@@ -351,7 +367,7 @@ export const useBrowserStore = defineStore('browser', {
       if (!this.hierarchyCache.subBanks[subBankKey]) {
         this.hierarchyCache.subBanks[subBankKey] = (await repo.getSubBanks?.(this.filters.bank)) ?? []
       }
-      this.availableCategories = this.hierarchyCache.categories
+      this.availableCategories = this.hierarchyCache.categories ?? []
       this.availableProducts = this.hierarchyCache.products[productKey] ?? []
       this.availableBanks = this.hierarchyCache.banks[bankKey] ?? []
       this.availableSubBanks = this.hierarchyCache.subBanks[subBankKey] ?? []
@@ -399,12 +415,6 @@ export const useBrowserStore = defineStore('browser', {
           options: this.getAvailableOptions('bank')
         },
         {
-          id: 'subBank',
-          label: 'Sub Bank',
-          value: this.filters.subBank ?? '',
-          options: this.getAvailableOptions('subBank')
-        },
-        {
           id: 'tags',
           label: 'Tags',
           value: (this.filters.tags ?? []).join(', ')
@@ -416,6 +426,14 @@ export const useBrowserStore = defineStore('browser', {
           options: ['off', 'on']
         }
       ]
+      if (this.availableSubBanks.length > 0 || this.filters.subBank) {
+        fields.splice(5, 0, {
+          id: 'subBank',
+          label: 'Sub Bank',
+          value: this.filters.subBank ?? '',
+          options: this.getAvailableOptions('subBank')
+        })
+      }
       if (this.mode === 'FILES') {
         fields.push({
           id: 'sort',
@@ -563,8 +581,8 @@ export const useBrowserStore = defineStore('browser', {
       const fileRepo = getFileSystemRepository()
       const recent = useRecentFiles()
       const repo = getLibraryRepository()
-      const meta = await fileRepo.readFileMeta(this.files.selectedPath)
-      await repo.importFile(this.files.selectedPath, { name: meta.name })
+      const meta = parsePathMeta(this.files.selectedPath)
+      const importPromise = repo.importFile(this.files.selectedPath, { name: meta.name })
       recent.addRecent({
         id: this.files.selectedPath,
         path: this.files.selectedPath,
@@ -582,6 +600,7 @@ export const useBrowserStore = defineStore('browser', {
       })
       this.loadRecentFiles()
       this.invalidateHierarchyCache()
+      await importPromise
       await this.loadAvailableTags()
       await repo.refreshIndex()
       await this.search()

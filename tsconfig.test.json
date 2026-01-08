@@ -2,9 +2,9 @@
   "extends": "./tsconfig.json",
   "compilerOptions": {
     "outDir": "dist-test",
-    "module": "NodeNext",
+    "module": "ESNext",
     "target": "ES2022",
-    "moduleResolution": "NodeNext",
+    "moduleResolution": "Bundler",
     "skipLibCheck": true,
     "types": ["node", "mocha",  "vite/client", "wicg-file-system-access"],
     "sourceMap": true,
@@ -23,7 +23,8 @@
     "stores/**/*.ts",
     "./tests/*.spec.ts",
     "./components/**/*.vue",
-    "./types/**/*.d.ts"
+    "./types/**/*.d.ts",
+    "./types/**/*.ts"
 
   ]
 }

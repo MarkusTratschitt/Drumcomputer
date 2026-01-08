@@ -13,6 +13,8 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
+    setupFiles: ['tests/setup/atobShim.ts'],
+    threads: false,
 
     // ✅ NUR deine Tests einsammeln
     include: [

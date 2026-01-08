@@ -10,6 +10,18 @@ export interface PreviewState {
 
 const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value))
 
+const readBlobArrayBuffer = async (blob: Blob): Promise<ArrayBuffer> => {
+  if (typeof blob.arrayBuffer === 'function') {
+    return blob.arrayBuffer()
+  }
+  return new Promise<ArrayBuffer>((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result as ArrayBuffer)
+    reader.onerror = () => reject(reader.error ?? new Error('Failed to read blob'))
+    reader.readAsArrayBuffer(blob)
+  })
+}
+
 export function useSamplePreview() {
   const audioContext = inject<AudioContext | null>('audioContext', null)
   const state = reactive<PreviewState>({
@@ -80,7 +92,7 @@ export function useSamplePreview() {
     const repo = getFileSystemRepository()
     const fileBlob = blob ?? (await repo.readFileBlob?.(path))
     if (!fileBlob) return
-    const arrayBuffer = await fileBlob.arrayBuffer()
+    const arrayBuffer = await readBlobArrayBuffer(fileBlob)
     buffer = await audioContext.decodeAudioData(arrayBuffer.slice(0))
     state.duration = buffer?.duration ?? 0
     state.currentFile = path
