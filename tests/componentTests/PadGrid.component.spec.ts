@@ -1,10 +1,11 @@
 import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
 import PadGrid from '@/components/PadGrid.vue'
+import type { DrumPadId } from '@/types/drums'
 
 
 describe('PadGrid', () => {
-  const pads = ['pad1', 'pad2']
+  const pads: DrumPadId[] = ['pad1', 'pad2']
 
   it('renders PadCell components', () => {
     const wrapper = mount(PadGrid, {

@@ -131,7 +131,7 @@ const mapRecentType = (extension?: string): RecentFileEntry['type'] => {
 const parsePathMeta = (path: string): { name: string; extension?: string } => {
   const name = path.split('/').pop() ?? path
   const extension = name.includes('.') ? name.split('.').pop() : undefined
-  return { name, extension }
+  return extension !== undefined ? { name, extension } : { name }
 }
 
 const sortStorageKey = 'drumcomputer_sort_mode_v1'
