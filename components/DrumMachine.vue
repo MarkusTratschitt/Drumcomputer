@@ -175,70 +175,19 @@
                   </div>
                 </div>
                 <div class="knob-row" aria-label="8 encoders">
-                  <div
-                    class="knob"
-                    role="presentation"
-                    tabindex="0"
-                    :aria-label="`Encoder 1: ${getParamName(0)}`"
-                    @wheel.prevent="onKnobWheel(0, $event)"
-                    @keydown="onKnobKey(0, $event)"
-                  ></div>
-                  <div
-                    class="knob"
-                    role="presentation"
-                    tabindex="0"
-                    :aria-label="`Encoder 2: ${getParamName(1)}`"
-                    @wheel.prevent="onKnobWheel(1, $event)"
-                    @keydown="onKnobKey(1, $event)"
-                  ></div>
-                  <div
-                    class="knob"
-                    role="presentation"
-                    tabindex="0"
-                    :aria-label="`Encoder 3: ${getParamName(2)}`"
-                    @wheel.prevent="onKnobWheel(2, $event)"
-                    @keydown="onKnobKey(2, $event)"
-                  ></div>
-                  <div
-                    class="knob"
-                    role="presentation"
-                    tabindex="0"
-                    :aria-label="`Encoder 4: ${getParamName(3)}`"
-                    @wheel.prevent="onKnobWheel(3, $event)"
-                    @keydown="onKnobKey(3, $event)"
-                  ></div>
-                  <div
-                    class="knob"
-                    role="presentation"
-                    tabindex="0"
-                    :aria-label="`Encoder 5: ${getParamName(4)}`"
-                    @wheel.prevent="onKnobWheel(4, $event)"
-                    @keydown="onKnobKey(4, $event)"
-                  ></div>
-                  <div
-                    class="knob"
-                    role="presentation"
-                    tabindex="0"
-                    :aria-label="`Encoder 6: ${getParamName(5)}`"
-                    @wheel.prevent="onKnobWheel(5, $event)"
-                    @keydown="onKnobKey(5, $event)"
-                  ></div>
-                  <div
-                    class="knob"
-                    role="presentation"
-                    tabindex="0"
-                    :aria-label="`Encoder 7: ${getParamName(6)}`"
-                    @wheel.prevent="onKnobWheel(6, $event)"
-                    @keydown="onKnobKey(6, $event)"
-                  ></div>
-                  <div
-                    class="knob"
-                    role="presentation"
-                    tabindex="0"
-                    :aria-label="`Encoder 8: ${getParamName(7)}`"
-                    @wheel.prevent="onKnobWheel(7, $event)"
-                    @keydown="onKnobKey(7, $event)"
-                  ></div>
+                  <KnobControl
+                    v-for="(param, index) in encoderParams"
+                    :key="param.id || `encoder-${index}`"
+                    :index="index"
+                    :label="getParamName(index)"
+                    :value="param.value"
+                    :min="param.min"
+                    :max="param.max"
+                    :step="param.step"
+                    :fine-step="param.fineStep"
+                    :shift-held="shiftHeld"
+                    @turn="onKnobTurn(index, $event)"
+                  />
                 </div>
               </div>
             </div>
@@ -478,6 +427,7 @@ import type { RenderEvent, RenderMetadata } from '@/types/render'
 import type { StepGrid } from '@/types/drums'
 import DualDisplay from './control/DualDisplay.vue'
 import SoftButtonStrip from './control/SoftButtonStrip.vue'
+import KnobControl from './KnobControl.vue'
 import FourDEncoderPlaceholder from './placeholders/FourDEncoderPlaceholder.vue'
 import ModeColumnPlaceholder from './placeholders/ModeColumnPlaceholder.vue'
 import TouchStripPlaceholder from './placeholders/TouchStripPlaceholder.vue'
@@ -541,6 +491,7 @@ export default defineComponent({
     ExportPanel,
     DualDisplay,
     SoftButtonStrip,
+    KnobControl,
     FourDEncoderPlaceholder,
     ModeColumnPlaceholder,
     TouchStripPlaceholder
@@ -711,7 +662,7 @@ computed: {
   },
 
   encoderParams() {
-    return this.control.activeParams
+    return this.control.activeParams ?? []
   },
 
   gridSpec() {
@@ -1196,20 +1147,10 @@ computed: {
         this.control.setShiftHeld(false)
       }
     },
-    onKnobWheel(index: number, event: WheelEvent) {
-      const direction = event.deltaY < 0 ? 1 : -1
-      const magnitude = Math.abs(event.deltaY)
-      const step = magnitude > 60 ? 2 : 1
-      this.control.turnEncoder(index, direction * step, { fine: this.shiftHeld })
-    },
-    onKnobKey(index: number, event: KeyboardEvent) {
-      if (event.key === 'ArrowUp' || event.key === 'ArrowRight') {
-        this.control.turnEncoder(index, 1, { fine: this.shiftHeld })
-        event.preventDefault()
-      } else if (event.key === 'ArrowDown' || event.key === 'ArrowLeft') {
-        this.control.turnEncoder(index, -1, { fine: this.shiftHeld })
-        event.preventDefault()
-      }
+    onKnobTurn(index: number, payload: { delta: number; fine?: boolean }) {
+      const delta = payload?.delta ?? 0
+      if (!delta) return
+      this.control.turnEncoder(index, delta, { fine: payload?.fine ?? this.shiftHeld })
     },
     getParamName(index: number) {
       return this.encoderParams?.[index]?.name ?? `Encoder ${index + 1}`
@@ -2021,6 +1962,7 @@ computed: {
   width: var(--control-row-h);
   height: var(--control-row-h);
   transform: translateY(var(--knob-y));
+   --knob-angle: 0deg;
   border-radius: 999px;
   background: radial-gradient(circle at 30% 30%, #3a4150, #151a24 70%);
   border: 1px solid rgba(255,255,255,0.1);
@@ -2037,7 +1979,7 @@ computed: {
   left: 50%;
   width: 2px;
   height: 38%;
-  transform: translateX(-50%);
+  transform: translateX(-50%) rotate(var(--knob-angle));
   border-radius: 2px;
   background: rgba(246, 139, 30, 0.9);
   box-shadow: 0 0 6px rgba(246, 139, 30, 0.35);
