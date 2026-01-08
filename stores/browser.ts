@@ -272,7 +272,7 @@ export const useBrowserStore = defineStore('browser', {
         if (this.searchDebounceToken !== token) return
         void this.search()
       }
-      this.searchDebounceId = setTimeout(runSearch, searchDebounceMs) as any
+      this.searchDebounceId = setTimeout(runSearch, searchDebounceMs) as unknown as number
     },
     search() {
       const repo = getLibraryRepository()
@@ -580,7 +580,6 @@ export const useBrowserStore = defineStore('browser', {
     },
     async importSelected(context?: { contextId?: string; contextType?: BrowseHistoryEntry['contextType'] }) {
       if (!this.files.selectedPath) return
-      const fileRepo = getFileSystemRepository()
       const recent = useRecentFiles()
       const repo = getLibraryRepository()
       const meta = parsePathMeta(this.files.selectedPath)
