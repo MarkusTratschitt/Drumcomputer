@@ -184,7 +184,7 @@
                     :min="param.min"
                     :max="param.max"
                     :step="param.step"
-                    :fine-step="param.fineStep"
+                    :fine-step="param.fineStep ?? param.step"
                     :shift-held="shiftHeld"
                     @turn="onKnobTurn(index, $event)"
                   />
@@ -193,7 +193,7 @@
             </div>
             <div class="edit-area">
               <div class="encoder-slot">
-                <FourDEncoderPlaceholder class="four-d-encoder" />
+                <FourDEncoder class="four-d-encoder" />
               </div>
               <div class="quick-edit-buttons" aria-label="Quick edit controls">
                 <button class="quick-edit-btn control-btn" type="button">
@@ -412,6 +412,8 @@ import { useSoundbankStorage } from '@/composables/useSoundbankStorage.client'
 import { useImportExport } from '@/composables/useImportExport.client'
 import { useCapabilities } from '@/composables/useCapabilities.client'
 import { useMidiLearn } from '@/composables/useMidiLearn'
+import { useShortcuts } from '@/composables/useShortcuts'
+import { SHORTCUT_COMMANDS } from '@/composables/shortcutCommands'
 import TransportBar from './TransportBar.vue'
 import PadGrid from './PadGrid.vue'
 import TabPanel from './TabPanel.vue'
@@ -428,7 +430,7 @@ import type { StepGrid } from '@/types/drums'
 import DualDisplay from './control/DualDisplay.vue'
 import SoftButtonStrip from './control/SoftButtonStrip.vue'
 import KnobControl from './KnobControl.vue'
-import FourDEncoderPlaceholder from './placeholders/FourDEncoderPlaceholder.vue'
+import FourDEncoder from './control/FourDEncoder.vue'
 import ModeColumnPlaceholder from './placeholders/ModeColumnPlaceholder.vue'
 import TouchStripPlaceholder from './placeholders/TouchStripPlaceholder.vue'
 
@@ -492,7 +494,7 @@ export default defineComponent({
     DualDisplay,
     SoftButtonStrip,
     KnobControl,
-    FourDEncoderPlaceholder,
+    FourDEncoder,
     ModeColumnPlaceholder,
     TouchStripPlaceholder
   },
@@ -976,6 +978,8 @@ computed: {
 
 
   mounted() {
+    this.registerShortcuts()
+    window.addEventListener('keydown', this.handleGlobalShortcut)
     window.addEventListener('keydown', this.handleGridKeys)
     window.addEventListener('keydown', this.handleShiftKeyDown)
     window.addEventListener('keyup', this.handleShiftKeyUp)
@@ -1077,6 +1081,7 @@ computed: {
     this.unwatchers.push(() => stopMidiListener?.())
   },
   beforeUnmount() {
+    window.removeEventListener('keydown', this.handleGlobalShortcut)
     window.removeEventListener('keydown', this.handleGridKeys)
     window.removeEventListener('keydown', this.handleShiftKeyDown)
     window.removeEventListener('keyup', this.handleShiftKeyUp)
@@ -1085,8 +1090,106 @@ computed: {
     this.unwatchers.forEach((stop) => stop())
   },
 
-  
   methods: {
+    registerShortcuts() {
+      const shortcuts = useShortcuts()
+      // Transport
+      shortcuts.register('TRANSPORT_PLAY', {
+        keys: SHORTCUT_COMMANDS.TRANSPORT_PLAY,
+        handler: () => void this.start(),
+        description: 'Play'
+      })
+      shortcuts.register('TRANSPORT_STOP', {
+        keys: SHORTCUT_COMMANDS.TRANSPORT_STOP,
+        handler: () => this.stop(),
+        description: 'Stop'
+      })
+      shortcuts.register('TRANSPORT_RECORD', {
+        keys: SHORTCUT_COMMANDS.TRANSPORT_RECORD,
+        handler: () => this.toggleRecord(),
+        description: 'Record'
+      })
+      shortcuts.register('TRANSPORT_TAP_TEMPO', {
+        keys: SHORTCUT_COMMANDS.TRANSPORT_TAP_TEMPO,
+        handler: () => this.tapTempo(),
+        description: 'Tap Tempo'
+      })
+      shortcuts.register('TRANSPORT_METRONOME', {
+        keys: SHORTCUT_COMMANDS.TRANSPORT_METRONOME,
+        handler: () => this.toggleMetronome(),
+        description: 'Toggle Metronome'
+      })
+      shortcuts.register('TRANSPORT_COUNT_IN', {
+        keys: SHORTCUT_COMMANDS.TRANSPORT_COUNT_IN,
+        handler: () => this.toggleCountIn(),
+        description: 'Toggle Count-In'
+      })
+      shortcuts.register('TRANSPORT_LOOP', {
+        keys: SHORTCUT_COMMANDS.TRANSPORT_LOOP,
+        handler: () => this.transport.setLoop(!this.transport.loop),
+        description: 'Toggle Loop'
+      })
+      shortcuts.register('TRANSPORT_FOLLOW', {
+        keys: SHORTCUT_COMMANDS.TRANSPORT_FOLLOW,
+        handler: () => this.toggleFollow(),
+        description: 'Toggle Follow'
+      })
+      // Browser
+      shortcuts.register('BROWSER_OPEN', {
+        keys: SHORTCUT_COMMANDS.BROWSER_OPEN,
+        handler: () => this.handleModePress('BROWSER'),
+        description: 'Open Browser'
+      })
+      shortcuts.register('BROWSER_MODE_LIBRARY', {
+        keys: SHORTCUT_COMMANDS.BROWSER_MODE_LIBRARY,
+        handler: () => void this.browser.setMode('LIBRARY'),
+        description: 'Browser: Library Mode'
+      })
+      shortcuts.register('BROWSER_MODE_FILES', {
+        keys: SHORTCUT_COMMANDS.BROWSER_MODE_FILES,
+        handler: () => void this.browser.setMode('FILES'),
+        description: 'Browser: Files Mode'
+      })
+      // Pads
+      const padMap: Record<string, DrumPadId> = {
+        '1': 'pad1', '2': 'pad2', '3': 'pad3', '4': 'pad4',
+        'q': 'pad5', 'w': 'pad6', 'e': 'pad7', 'r': 'pad8',
+        'a': 'pad9', 's': 'pad10', 'd': 'pad11', 'f': 'pad12',
+        'z': 'pad13', 'x': 'pad14', 'c': 'pad15', 'v': 'pad16'
+      }
+      Object.entries(padMap).forEach(([_key, padId], index) => {
+        shortcuts.register(`PAD_SELECT_${index + 1}`, {
+          keys: SHORTCUT_COMMANDS[`PAD_SELECT_${index + 1}` as keyof typeof SHORTCUT_COMMANDS],
+          handler: () => void this.handlePad(padId),
+          description: `Select Pad ${index + 1}`
+        })
+      })
+      // Modes
+      shortcuts.register('MODE_BROWSER', {
+        keys: SHORTCUT_COMMANDS.MODE_BROWSER,
+        handler: () => this.handleModePress('BROWSER'),
+        description: 'Browser Mode'
+      })
+      // Undo/Redo
+      shortcuts.register('UNDO', {
+        keys: SHORTCUT_COMMANDS.UNDO,
+        handler: () => this.undoPattern(),
+        description: 'Undo'
+      })
+      shortcuts.register('REDO', {
+        keys: SHORTCUT_COMMANDS.REDO,
+        handler: () => this.redoPattern(),
+        description: 'Redo'
+      })
+    },
+    handleGlobalShortcut(event: KeyboardEvent) {
+      // Skip if typing in input/textarea
+      const target = event.target as HTMLElement
+      if (target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA') return
+
+      const shortcuts = useShortcuts()
+      shortcuts.dispatch(event)
+    },
     handleModePress(mode: ControlMode, shiftActionId?: string) {
       this.control.setMode(mode)
       if (mode === 'BROWSER') {
@@ -1103,8 +1206,23 @@ computed: {
     isActiveMode(mode: ControlMode): boolean {
       return this.control.activeMode === mode
     },
+    shortcutTitle(commandId: string, label: string): string {
+      const shortcuts = useShortcuts()
+      return shortcuts.title(commandId, label)
+    },
     modeTooltip(mode: ControlMode, primary: string, secondary?: string) {
-      return secondary ? `${primary} (SHIFT: ${secondary})` : primary
+      const shortcuts = useShortcuts()
+      const commandMap: Record<string, string> = {
+        BROWSER: 'MODE_BROWSER',
+        CHANNEL: 'MODE_CHANNEL',
+        PLUGIN: 'MODE_PLUGIN',
+        ARRANGER: 'MODE_ARRANGER',
+        MIXER: 'MODE_MIXER',
+        SAMPLING: 'MODE_SAMPLING'
+      }
+      const commandId = commandMap[mode]
+      const base = secondary ? `${primary} (SHIFT: ${secondary})` : primary
+      return commandId ? shortcuts.title(commandId, base) : base
     },
     pageButtonTitle(direction: 'prev' | 'next') {
       return `${direction === 'prev' ? 'Previous' : 'Next'} page (${this.pageLabel})`

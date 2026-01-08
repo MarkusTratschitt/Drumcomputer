@@ -272,7 +272,7 @@ export const useBrowserStore = defineStore('browser', {
         if (this.searchDebounceToken !== token) return
         void this.search()
       }
-      this.searchDebounceId = setTimeout(runSearch, searchDebounceMs) as unknown as number
+      this.searchDebounceId = setTimeout(runSearch, searchDebounceMs)
     },
     search() {
       const repo = getLibraryRepository()

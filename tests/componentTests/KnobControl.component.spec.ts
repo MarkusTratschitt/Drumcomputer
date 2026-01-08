@@ -30,8 +30,9 @@ describe('KnobControl', () => {
 
   it('emits turn on pointer drag', async () => {
     const wrapper = mount(KnobControl, { props: baseProps })
+    const el = wrapper.element as HTMLElement
 
-    await wrapper.trigger('pointerdown', { clientY: 100, pointerId: 1 })
+    el.dispatchEvent(new PointerEvent('pointerdown', { clientY: 100, pointerId: 1, bubbles: true }))
     window.dispatchEvent(new PointerEvent('pointermove', { clientY: 88, pointerId: 1 }))
     window.dispatchEvent(new PointerEvent('pointerup', { clientY: 88, pointerId: 1 }))
     await nextTick()
