@@ -1941,6 +1941,7 @@ computed: {
       const firstPad = this.activePadGrid[0]
       if (firstPad) {
         this.selectedPadId = firstPad
+        this.control.setImportContext(firstPad)
       }
     },
     toggleStep(payload: { barIndex: number; stepInBar: number; padId: DrumPadId }) {

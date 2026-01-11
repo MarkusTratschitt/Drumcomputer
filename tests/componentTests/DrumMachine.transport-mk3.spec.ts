@@ -96,4 +96,23 @@ describe('DrumMachine MK3 transport buttons', () => {
     expect(stopSpy).toHaveBeenCalledTimes(1)
     expect(followSpy).toHaveBeenCalledTimes(1)
   })
+
+  it('invokes restartLoop and tapTempo when RESTART and TAP are clicked', async () => {
+    const wrapper = mount(DrumMachine)
+    await nextTick()
+
+    const vm = wrapper.vm as unknown as { restartLoop: () => void; tapTempo: () => void }
+    const restartSpy = vi.spyOn(vm, 'restartLoop')
+    const tapSpy = vi.spyOn(vm, 'tapTempo')
+
+    const buttons = wrapper.findAll('.transport-grid .control-btn')
+    const restartBtn = buttons.find((btn) => btn.text().includes('RESTART'))
+    const tapBtn = buttons.find((btn) => btn.text().includes('TAP'))
+
+    await restartBtn?.trigger('click')
+    await tapBtn?.trigger('click')
+
+    expect(restartSpy).toHaveBeenCalledTimes(1)
+    expect(tapSpy).toHaveBeenCalledTimes(1)
+  })
 })

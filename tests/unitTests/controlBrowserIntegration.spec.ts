@@ -438,4 +438,33 @@ describe('control to browser wiring', () => {
       })
     )
   })
+
+  it('imports library result on encoder press in browser mode with pad context', async () => {
+    const control = useControlStore()
+    const browser = useBrowserStore()
+    const repo = new ImportTrackingRepo()
+    repo.items = [
+      { id: '/kits/kick.wav', name: 'Kick', path: '/kits/kick.wav', tags: [] }
+    ]
+    __setLibraryRepositoryForTests(repo)
+
+    control.setMode('BROWSER')
+    await browser.search()
+    await browser.selectResult('/kits/kick.wav')
+    control.setImportContext('pad12')
+    control.encoder4D?.setMode('list-navigate')
+    control.syncListSelection()
+
+    const importSpy = vi.spyOn(browser, 'importSelected')
+
+    await control.pressEncoder4D()
+
+    expect(importSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contextId: 'pad12',
+        contextType: 'sample'
+      })
+    )
+    expect(repo.imports).toContain('/kits/kick.wav')
+  })
 })

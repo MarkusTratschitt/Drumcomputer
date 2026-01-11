@@ -609,46 +609,79 @@ export const useBrowserStore = defineStore('browser', {
       this.files.selectedPath = path
     },
     async importSelected(context?: { contextId?: string; contextType?: BrowseHistoryEntry['contextType'] }) {
-      if (!this.files.selectedPath) return null
-
-      // Check if selected path is a directory
-      const fsRepo = getFileSystemRepository()
-      try {
-        const stats = await fsRepo.stat(this.files.selectedPath)
-        if (stats.isDir) {
-          // Open import dialog for directories
-          this.openImportDialog(this.files.selectedPath)
-          return null
-        }
-      } catch {
-        // If stat fails, assume it's a file and proceed
-      }
-
-      // Import single file
+      const contextId = context?.contextId ?? 'global'
+      const contextType: BrowseHistoryEntry['contextType'] = context?.contextType ?? 'sample'
+      const quickBrowse = useQuickBrowse()
       const recent = useRecentFiles()
       const repo = getLibraryRepository()
-      const meta = parsePathMeta(this.files.selectedPath)
-      const importedItem = await repo.importFile(this.files.selectedPath, { name: meta.name })
+
+      if (this.mode === 'FILES') {
+        if (!this.files.selectedPath) return null
+
+        // Check if selected path is a directory
+        const fsRepo = getFileSystemRepository()
+        try {
+          const stats = await fsRepo.stat(this.files.selectedPath)
+          if (stats.isDir) {
+            // Open import dialog for directories
+            this.openImportDialog(this.files.selectedPath)
+            return null
+          }
+        } catch {
+          // If stat fails, assume it's a file and proceed
+        }
+
+        // Import single file
+        const meta = parsePathMeta(this.files.selectedPath)
+        const importedItem = await repo.importFile(this.files.selectedPath, { name: meta.name })
+        recent.addRecent({
+          id: this.files.selectedPath,
+          path: this.files.selectedPath,
+          name: meta.name,
+          type: mapRecentType(meta.extension)
+        })
+        quickBrowse.recordBrowse({
+          mode: this.mode,
+          query: this.library.query,
+          filters: this.filters,
+          selectedId: this.library.selectedId,
+          contextType,
+          contextId
+        })
+        this.loadRecentFiles()
+        this.invalidateHierarchyCache()
+        await this.loadAvailableTags()
+        await repo.refreshIndex()
+        await this.search()
+        return importedItem
+      }
+
+      const selectedId = this.library.selectedId ?? this.library.results[0]?.id ?? null
+      if (!selectedId) return null
+      const selected = this.library.results.find((item) => item.id === selectedId)
+      const targetPath = selected?.path ?? selectedId
+      const meta = parsePathMeta(targetPath)
+      const name = (selected as { name?: string; title?: string } | undefined)?.name ?? selected?.title ?? meta.name
+      const importedItem = await repo.importFile(targetPath, { ...selected, name })
       recent.addRecent({
-        id: this.files.selectedPath,
-        path: this.files.selectedPath,
-        name: meta.name,
+        id: targetPath,
+        path: targetPath,
+        name,
         type: mapRecentType(meta.extension)
       })
-      const quickBrowse = useQuickBrowse()
       quickBrowse.recordBrowse({
         mode: this.mode,
         query: this.library.query,
         filters: this.filters,
-        selectedId: this.library.selectedId,
-        contextType: context?.contextType ?? 'sample',
-        contextId: context?.contextId ?? 'global'
+        selectedId,
+        contextType,
+        contextId
       })
       this.loadRecentFiles()
-      this.invalidateHierarchyCache()
       await this.loadAvailableTags()
       await repo.refreshIndex()
       await this.search()
+      await this.selectResult(importedItem?.id ?? selectedId)
       return importedItem
     },
     openQuickBrowse(contextId: string) {
@@ -707,10 +740,17 @@ export const useBrowserStore = defineStore('browser', {
         }
       }
       if (this.mode === 'FILES') {
+        const activeDirPath = (() => {
+          const selected = this.files.selectedPath
+          if (selected && this.files.entries.dirs.some((dir) => dir.path === selected)) {
+            return selected
+          }
+          return this.files.currentPath
+        })()
         const leftItems: DisplayListItem[] = this.files.entries.dirs.map((dir) => ({
           title: dir.name,
           subtitle: dir.path,
-          active: dir.path === this.files.currentPath
+          active: dir.path === activeDirPath
         }))
         const rightItems: DisplayListItem[] = this.files.entries.files.map((file) => ({
           title: file.name,

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { setActivePinia, createPinia } from 'pinia'
 import { nextTick } from 'vue'
@@ -70,5 +70,19 @@ describe('DrumMachine quick edit buttons', () => {
     // After clicking Volume, the focused encoder index should change to a Volume-related param
     // or at least onKnobFocus should have been called
     expect(vm.focusedEncoderIndex).toBeDefined()
+  })
+
+  it('maps quick edit labels to the expected parameter names before focusing encoder', async () => {
+    const wrapper = mount(DrumMachine)
+    await nextTick()
+    const vm = wrapper.vm as unknown as { findParamIndexByName: (namePart: string) => number }
+    const spy = vi.spyOn(vm, 'findParamIndexByName')
+
+    const quickEditButtons = wrapper.findAll('.quick-edit-btn')
+    const tempoBtn = quickEditButtons.find((btn) => btn.text().includes('TEMPO'))
+
+    await tempoBtn?.trigger('click')
+
+    expect(spy).toHaveBeenCalledWith('BPM')
   })
 })

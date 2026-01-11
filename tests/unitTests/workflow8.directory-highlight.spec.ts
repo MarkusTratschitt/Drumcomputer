@@ -69,6 +69,8 @@ describe('Workflow 8: directory highlight and 4D encoder import', () => {
     // First folder should be marked as active after selecting its path
     const firstFolder = leftItems[0]
     expect(firstFolder).toBeDefined()
+    expect(firstFolder?.active).toBe(true)
+    expect(leftItems.filter((item) => item?.active).length).toBe(1)
   })
 
   it('enables folder import when folder is selected in FILE mode', async () => {
