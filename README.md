@@ -129,21 +129,36 @@ Copy the exported seed from the metadata panel (or the JSON blob) and supply it 
 
 ## Diagrams
 
-- Transport timing: `diagrams/transport-engine.md`
-- UI sequencer flow: `diagrams/ui-sequencer.md`
-- Persistence + audio pipeline: `diagrams/persistence-and-audio.md`
-- Control area mapping: `diagrams/control-area-mapping.md`
-- Browser 4D encoder wiring: `diagrams/control-4d-encoder-browser.md`
-- Browser file system access: `diagrams/browser-file-system-access.md`
-- Browser import progress: `diagrams/library-import-progress.md`
-- Browser recent files: `diagrams/recent-files.md`
-- Browser favorites: `diagrams/favorites-flow.md`
-- Browser sample preview: `diagrams/sample-preview.md`
-- Browser sorting: `diagrams/browser-sorting.md`
-- Browser quick-browse: `diagrams/quick-browse.md`
-- Browser tag dialog: `diagrams/tag-dialog.md`
-- Browser hierarchy: `diagrams/library-hierarchy.md`
-- Browser performance: `diagrams/browser-performance.md`
+### Overview Diagrams
+- **Workflows overview**: `diagrams/workflows-overview.md` - Main user workflows and interconnections
+- **Shortcuts overview**: `diagrams/shortcuts-overview.md` - Keyboard shortcuts by category
+- **Use cases**: `diagrams/use-cases.md` - Sequence diagrams for documented use cases
+- **Class diagram**: `diagrams/class-diagram.md` - Core component relationships
+
+### Architecture & System
+- **Transport timing**: `diagrams/transport-engine.md` - Scheduler and AudioContext timing
+- **UI sequencer flow**: `diagrams/ui-sequencer.md` - Pattern editing and playback flow
+- **Persistence + audio pipeline**: `diagrams/persistence-and-audio.md` - Storage and audio architecture
+- **Storage architecture**: `diagrams/storage-architecture.md` - IndexedDB, LocalStorage, and persistence strategy
+- **FX chain**: `diagrams/fx-chain.md` - Audio FX pipeline and deterministic rendering
+- **MIDI sync**: `diagrams/midi-sync.md` - MIDI clock synchronization architecture
+
+### Control & UI
+- **Control area mapping**: `diagrams/control-area-mapping.md` - MK3 control surface layout
+- **PadGrid layout**: `diagrams/padgrid-modus-layout.md` - Pad grid and mode button alignment
+
+### Browser & Library
+- **Browser 4D encoder wiring**: `diagrams/control-4d-encoder-browser.md` - Encoder navigation in browser
+- **Browser file system access**: `diagrams/browser-file-system-access.md` - File System Access API integration
+- **Browser import progress**: `diagrams/library-import-progress.md` - Library import workflow
+- **Browser recent files**: `diagrams/recent-files.md` - Recent files tracking
+- **Browser favorites**: `diagrams/favorites-flow.md` - Favorites management
+- **Browser sample preview**: `diagrams/sample-preview.md` - Sample preview/prehear
+- **Browser sorting**: `diagrams/browser-sorting.md` - Sort modes and implementation
+- **Browser quick-browse**: `diagrams/quick-browse.md` - Context-based search history
+- **Browser tag dialog**: `diagrams/tag-dialog.md` - Tag management workflow
+- **Browser hierarchy**: `diagrams/library-hierarchy.md` - Category/Product/Bank structure
+- **Browser performance**: `diagrams/browser-performance.md` - Performance optimizations
 
 ## Current UI / Editing State
 
