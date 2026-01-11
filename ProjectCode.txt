@@ -1,5 +1,5 @@
 Project Code Export
-Date: Sun Jan 11 2026 18:46:23 GMT+0100 (Mitteleuropäische Normalzeit)
+Date: Sun Jan 11 2026 19:37:58 GMT+0100 (Mitteleuropäische Normalzeit)
 Exported Folder: Drumcomputer
 
 Project Structure:
@@ -10314,6 +10314,7 @@ computed: {
       const firstPad = this.activePadGrid[0]
       if (firstPad) {
         this.selectedPadId = firstPad
+        this.control.setImportContext(firstPad)
       }
     },
     toggleStep(payload: { barIndex: number; stepInBar: number; padId: DrumPadId }) {
@@ -50933,46 +50934,79 @@ export const useBrowserStore = defineStore('browser', {
       this.files.selectedPath = path
     },
     async importSelected(context?: { contextId?: string; contextType?: BrowseHistoryEntry['contextType'] }) {
-      if (!this.files.selectedPath) return null
-
-      // Check if selected path is a directory
-      const fsRepo = getFileSystemRepository()
-      try {
-        const stats = await fsRepo.stat(this.files.selectedPath)
-        if (stats.isDir) {
-          // Open import dialog for directories
-          this.openImportDialog(this.files.selectedPath)
-          return null
-        }
-      } catch {
-        // If stat fails, assume it's a file and proceed
-      }
-
-      // Import single file
+      const contextId = context?.contextId ?? 'global'
+      const contextType: BrowseHistoryEntry['contextType'] = context?.contextType ?? 'sample'
+      const quickBrowse = useQuickBrowse()
       const recent = useRecentFiles()
       const repo = getLibraryRepository()
-      const meta = parsePathMeta(this.files.selectedPath)
-      const importedItem = await repo.importFile(this.files.selectedPath, { name: meta.name })
+
+      if (this.mode === 'FILES') {
+        if (!this.files.selectedPath) return null
+
+        // Check if selected path is a directory
+        const fsRepo = getFileSystemRepository()
+        try {
+          const stats = await fsRepo.stat(this.files.selectedPath)
+          if (stats.isDir) {
+            // Open import dialog for directories
+            this.openImportDialog(this.files.selectedPath)
+            return null
+          }
+        } catch {
+          // If stat fails, assume it's a file and proceed
+        }
+
+        // Import single file
+        const meta = parsePathMeta(this.files.selectedPath)
+        const importedItem = await repo.importFile(this.files.selectedPath, { name: meta.name })
+        recent.addRecent({
+          id: this.files.selectedPath,
+          path: this.files.selectedPath,
+          name: meta.name,
+          type: mapRecentType(meta.extension)
+        })
+        quickBrowse.recordBrowse({
+          mode: this.mode,
+          query: this.library.query,
+          filters: this.filters,
+          selectedId: this.library.selectedId,
+          contextType,
+          contextId
+        })
+        this.loadRecentFiles()
+        this.invalidateHierarchyCache()
+        await this.loadAvailableTags()
+        await repo.refreshIndex()
+        await this.search()
+        return importedItem
+      }
+
+      const selectedId = this.library.selectedId ?? this.library.results[0]?.id ?? null
+      if (!selectedId) return null
+      const selected = this.library.results.find((item) => item.id === selectedId)
+      const targetPath = selected?.path ?? selectedId
+      const meta = parsePathMeta(targetPath)
+      const name = (selected as { name?: string; title?: string } | undefined)?.name ?? selected?.title ?? meta.name
+      const importedItem = await repo.importFile(targetPath, { ...selected, name })
       recent.addRecent({
-        id: this.files.selectedPath,
-        path: this.files.selectedPath,
-        name: meta.name,
+        id: targetPath,
+        path: targetPath,
+        name,
         type: mapRecentType(meta.extension)
       })
-      const quickBrowse = useQuickBrowse()
       quickBrowse.recordBrowse({
         mode: this.mode,
         query: this.library.query,
         filters: this.filters,
-        selectedId: this.library.selectedId,
-        contextType: context?.contextType ?? 'sample',
-        contextId: context?.contextId ?? 'global'
+        selectedId,
+        contextType,
+        contextId
       })
       this.loadRecentFiles()
-      this.invalidateHierarchyCache()
       await this.loadAvailableTags()
       await repo.refreshIndex()
       await this.search()
+      await this.selectResult(importedItem?.id ?? selectedId)
       return importedItem
     },
     openQuickBrowse(contextId: string) {
@@ -51031,10 +51065,17 @@ export const useBrowserStore = defineStore('browser', {
         }
       }
       if (this.mode === 'FILES') {
+        const activeDirPath = (() => {
+          const selected = this.files.selectedPath
+          if (selected && this.files.entries.dirs.some((dir) => dir.path === selected)) {
+            return selected
+          }
+          return this.files.currentPath
+        })()
         const leftItems: DisplayListItem[] = this.files.entries.dirs.map((dir) => ({
           title: dir.name,
           subtitle: dir.path,
-          active: dir.path === this.files.currentPath
+          active: dir.path === activeDirPath
         }))
         const rightItems: DisplayListItem[] = this.files.entries.files.map((file) => ({
           title: file.name,
@@ -52835,11 +52876,12 @@ describe('DrumMachine mode button tooltips', () => {
 File: tests/componentTests/DrumMachine.quick-edit.spec.ts
 =========================================
 
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { setActivePinia, createPinia } from 'pinia'
 import { nextTick } from 'vue'
 import DrumMachine from '../../components/DrumMachine.vue'
+import { SHORTCUT_COMMANDS } from '@/composables/shortcutCommands'
 
 describe('DrumMachine quick edit buttons', () => {
   beforeEach(() => {
@@ -52847,24 +52889,50 @@ describe('DrumMachine quick edit buttons', () => {
     global.AudioContext = class { } as typeof AudioContext
   })
 
-  it('renders quick edit buttons with shortcut titles', async () => {
+  it('renders quick edit buttons with shortcut titles containing expected shortcuts', async () => {
     const wrapper = mount(DrumMachine)
     await nextTick()
     const quickEditButtons = wrapper.findAll('.quick-edit-btn')
-    expect(quickEditButtons).toHaveLength(3)
+    const byLabel = (label: string) => quickEditButtons.find((btn) => btn.text().includes(label))
 
-    const volumeBtn = quickEditButtons[0]
-    const swingBtn = quickEditButtons[1]
-    const tempoBtn = quickEditButtons[2]
+    const volumeBtn = byLabel('VOLUME')
+    const swingBtn = byLabel('SWING')
+    const tempoBtn = byLabel('TEMPO')
 
-    expect(volumeBtn?.text()).toContain('VOLUME')
-    expect(volumeBtn?.attributes('title')).toContain('(Ctrl+Alt+V)')
+    // Assert title exists and contains expected shortcut
+    expect(volumeBtn).toBeDefined()
+    const volumeTitle = volumeBtn?.attributes('title')
+    expect(volumeTitle).toBeDefined()
+    expect(volumeTitle).toContain('VOLUME')
+    expect(volumeTitle).toContain(SHORTCUT_COMMANDS.QUICK_VOLUME)
 
-    expect(swingBtn?.text()).toContain('SWING')
-    expect(swingBtn?.attributes('title')).toContain('(Ctrl+Alt+S)')
+    expect(swingBtn).toBeDefined()
+    const swingTitle = swingBtn?.attributes('title')
+    expect(swingTitle).toBeDefined()
+    expect(swingTitle).toContain('SWING')
+    expect(swingTitle).toContain(SHORTCUT_COMMANDS.QUICK_SWING)
 
-    expect(tempoBtn?.text()).toContain('TEMPO')
-    expect(tempoBtn?.attributes('title')).toContain('(Ctrl+Alt+T)')
+    expect(tempoBtn).toBeDefined()
+    const tempoTitle = tempoBtn?.attributes('title')
+    expect(tempoTitle).toBeDefined()
+    expect(tempoTitle).toContain('TEMPO')
+    expect(tempoTitle).toContain(SHORTCUT_COMMANDS.QUICK_TEMPO)
+  })
+
+  it('quick edit button tooltips match expected format', async () => {
+    const wrapper = mount(DrumMachine)
+    await nextTick()
+    const quickEditButtons = wrapper.findAll('.quick-edit-btn')
+
+    // Verify all three buttons are present
+    expect(quickEditButtons.length).toBeGreaterThanOrEqual(3)
+
+    // Each button should have a title attribute with pattern "LABEL (SHORTCUT)"
+    for (const btn of quickEditButtons) {
+      const title = btn.attributes('title')
+      expect(title).toBeDefined()
+      expect(title).toMatch(/^.+\s\(.+\)$/) // Format: "LABEL (SHORTCUT)"
+    }
   })
 
   it('triggers focusedEncoderIndex change on quick edit click', async () => {
@@ -52881,6 +52949,20 @@ describe('DrumMachine quick edit buttons', () => {
     // or at least onKnobFocus should have been called
     expect(vm.focusedEncoderIndex).toBeDefined()
   })
+
+  it('maps quick edit labels to the expected parameter names before focusing encoder', async () => {
+    const wrapper = mount(DrumMachine)
+    await nextTick()
+    const vm = wrapper.vm as unknown as { findParamIndexByName: (namePart: string) => number }
+    const spy = vi.spyOn(vm, 'findParamIndexByName')
+
+    const quickEditButtons = wrapper.findAll('.quick-edit-btn')
+    const tempoBtn = quickEditButtons.find((btn) => btn.text().includes('TEMPO'))
+
+    await tempoBtn?.trigger('click')
+
+    expect(spy).toHaveBeenCalledWith('BPM')
+  })
 })
 
 
@@ -52894,6 +52976,7 @@ import { mount } from '@vue/test-utils'
 import { setActivePinia, createPinia } from 'pinia'
 import { nextTick } from 'vue'
 import DrumMachine from '../../components/DrumMachine.vue'
+import { SHORTCUT_COMMANDS } from '@/composables/shortcutCommands'
 
 describe('DrumMachine quick edit buttons', () => {
   beforeEach(() => {
@@ -52905,13 +52988,14 @@ describe('DrumMachine quick edit buttons', () => {
     const wrapper = mount(DrumMachine)
     await nextTick()
     const buttons = wrapper.findAll('.quick-edit-buttons .quick-edit-btn')
-    const volumeBtn = buttons[0]
-    const swingBtn = buttons[1]
-    const tempoBtn = buttons[2]
 
-    expect(volumeBtn.attributes('title')).toContain('(')
-    expect(swingBtn.attributes('title')).toContain('(')
-    expect(tempoBtn.attributes('title')).toContain('(')
+    const volumeBtn = buttons.find((btn) => btn.text().includes('VOLUME'))
+    const swingBtn = buttons.find((btn) => btn.text().includes('SWING'))
+    const tempoBtn = buttons.find((btn) => btn.text().includes('TEMPO'))
+
+    expect(volumeBtn?.attributes('title')).toBe(`VOLUME (${SHORTCUT_COMMANDS.QUICK_VOLUME})`)
+    expect(swingBtn?.attributes('title')).toBe(`SWING (${SHORTCUT_COMMANDS.QUICK_SWING})`)
+    expect(tempoBtn?.attributes('title')).toBe(`TEMPO (${SHORTCUT_COMMANDS.QUICK_TEMPO})`)
   })
 
   it('focuses appropriate encoder and adjusts on shortcut', async () => {
@@ -52943,6 +53027,7 @@ import { mount } from '@vue/test-utils'
 import { setActivePinia, createPinia } from 'pinia'
 import { nextTick } from 'vue'
 import DrumMachine from '@/components/DrumMachine.vue'
+import { SHORTCUT_COMMANDS } from '@/composables/shortcutCommands'
 
 describe('DrumMachine MK3 transport buttons', () => {
   beforeEach(() => {
@@ -52958,9 +53043,49 @@ describe('DrumMachine MK3 transport buttons', () => {
     const playBtn = buttons.find((btn) => btn.text().includes('PLAY'))
     const stopBtn = buttons.find((btn) => btn.text().includes('STOP'))
 
-    // Titles should include exact shortcut keys from registry
-    expect(playBtn?.attributes('title')).toContain('(Space)')
-    expect(stopBtn?.attributes('title')).toContain('(Shift+Space)')
+    expect(playBtn?.attributes('title')).toBe(`PLAY (${SHORTCUT_COMMANDS.TRANSPORT_PLAY})`)
+    expect(stopBtn?.attributes('title')).toBe(`STOP (${SHORTCUT_COMMANDS.TRANSPORT_STOP})`)
+  })
+
+  it('transport button tooltips contain expected shortcuts in DOM attributes', async () => {
+    const wrapper = mount(DrumMachine)
+    await nextTick()
+
+    const buttons = wrapper.findAll('.transport-grid .control-btn')
+    const playBtn = buttons.find((btn) => btn.text().includes('PLAY'))
+    const stopBtn = buttons.find((btn) => btn.text().includes('STOP'))
+    const restartBtn = buttons.find((btn) => btn.text().includes('RESTART'))
+    const followBtn = buttons.find((btn) => btn.text().includes('FOLLOW'))
+
+    // PLAY button - verify title contains 'Space'
+    expect(playBtn).toBeDefined()
+    const playTitle = playBtn?.attributes('title')
+    expect(playTitle).toBeDefined()
+    expect(playTitle).toContain('PLAY')
+    expect(playTitle).toContain(SHORTCUT_COMMANDS.TRANSPORT_PLAY)
+
+    // STOP button - verify title contains 'Shift+Space'
+    expect(stopBtn).toBeDefined()
+    const stopTitle = stopBtn?.attributes('title')
+    expect(stopTitle).toBeDefined()
+    expect(stopTitle).toContain('STOP')
+    expect(stopTitle).toContain(SHORTCUT_COMMANDS.TRANSPORT_STOP)
+
+    // RESTART button - verify title contains 'L'
+    if (restartBtn) {
+      const restartTitle = restartBtn.attributes('title')
+      expect(restartTitle).toBeDefined()
+      expect(restartTitle).toContain('RESTART')
+      expect(restartTitle).toContain(SHORTCUT_COMMANDS.TRANSPORT_LOOP)
+    }
+
+    // FOLLOW button - verify title contains 'F'
+    if (followBtn) {
+      const followTitle = followBtn.attributes('title')
+      expect(followTitle).toBeDefined()
+      expect(followTitle).toContain('FOLLOW')
+      expect(followTitle).toContain(SHORTCUT_COMMANDS.TRANSPORT_FOLLOW)
+    }
   })
 
   it('invokes play handler when PLAY is clicked', async () => {
@@ -52994,6 +53119,25 @@ describe('DrumMachine MK3 transport buttons', () => {
 
     expect(stopSpy).toHaveBeenCalledTimes(1)
     expect(followSpy).toHaveBeenCalledTimes(1)
+  })
+
+  it('invokes restartLoop and tapTempo when RESTART and TAP are clicked', async () => {
+    const wrapper = mount(DrumMachine)
+    await nextTick()
+
+    const vm = wrapper.vm as unknown as { restartLoop: () => void; tapTempo: () => void }
+    const restartSpy = vi.spyOn(vm, 'restartLoop')
+    const tapSpy = vi.spyOn(vm, 'tapTempo')
+
+    const buttons = wrapper.findAll('.transport-grid .control-btn')
+    const restartBtn = buttons.find((btn) => btn.text().includes('RESTART'))
+    const tapBtn = buttons.find((btn) => btn.text().includes('TAP'))
+
+    await restartBtn?.trigger('click')
+    await tapBtn?.trigger('click')
+
+    expect(restartSpy).toHaveBeenCalledTimes(1)
+    expect(tapSpy).toHaveBeenCalledTimes(1)
   })
 })
 
@@ -54810,6 +54954,35 @@ describe('control to browser wiring', () => {
         contextType: 'sample'
       })
     )
+  })
+
+  it('imports library result on encoder press in browser mode with pad context', async () => {
+    const control = useControlStore()
+    const browser = useBrowserStore()
+    const repo = new ImportTrackingRepo()
+    repo.items = [
+      { id: '/kits/kick.wav', name: 'Kick', path: '/kits/kick.wav', tags: [] }
+    ]
+    __setLibraryRepositoryForTests(repo)
+
+    control.setMode('BROWSER')
+    await browser.search()
+    await browser.selectResult('/kits/kick.wav')
+    control.setImportContext('pad12')
+    control.encoder4D?.setMode('list-navigate')
+    control.syncListSelection()
+
+    const importSpy = vi.spyOn(browser, 'importSelected')
+
+    await control.pressEncoder4D()
+
+    expect(importSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contextId: 'pad12',
+        contextType: 'sample'
+      })
+    )
+    expect(repo.imports).toContain('/kits/kick.wav')
   })
 })
 
@@ -57003,6 +57176,8 @@ describe('Workflow 8: directory highlight and 4D encoder import', () => {
     // First folder should be marked as active after selecting its path
     const firstFolder = leftItems[0]
     expect(firstFolder).toBeDefined()
+    expect(firstFolder?.active).toBe(true)
+    expect(leftItems.filter((item) => item?.active).length).toBe(1)
   })
 
   it('enables folder import when folder is selected in FILE mode', async () => {
