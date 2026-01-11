@@ -324,4 +324,75 @@ describe('control to browser wiring', () => {
     browser.selectPath('/broken.wav')
     await expect(browser.importSelected()).rejects.toThrow('Import failed')
   })
+
+  it('imports selected file when encoder press is used in FILE mode', async () => {
+    const control = useControlStore()
+    const browser = useBrowserStore()
+    const repo = new ImportTrackingRepo()
+    __setLibraryRepositoryForTests(repo)
+    __setFileSystemRepositoryForTests({
+      async listDir() {
+        return { dirs: [], files: [{ name: 'kick.wav', path: '/kick.wav' }] }
+      },
+      async stat() {
+        return { isDir: false }
+      },
+      async readFileMeta(path: string): Promise<{ name: string; extension?: string }> {
+        const name = path.split('/').pop() ?? path
+        const ext = name.includes('.') ? name.split('.').pop() : undefined
+        const meta: { name: string; extension?: string } = { name }
+        if (ext) meta.extension = ext
+        return meta
+      }
+    })
+
+    await browser.setMode('FILES')
+    browser.selectPath('/kick.wav')
+    control.setMode('FILE')
+    control.encoder4D?.setMode('list-navigate')
+    if (control.encoder4D) {
+      control.encoder4D.activeListIndex.value = 0
+    }
+
+    await control.pressEncoder4D()
+
+    expect(repo.imports).toContain('/kick.wav')
+  })
+
+  it('marks active tag item in display models when encoder selects tag', async () => {
+    const control = useControlStore()
+    const browser = useBrowserStore()
+    const repo = new ImportTrackingRepo()
+    repo.items = [
+      { id: '1', name: 'Kick', tags: ['dry', 'punch'] }
+    ]
+    __setLibraryRepositoryForTests(repo)
+    __setFileSystemRepositoryForTests({
+      async listDir() {
+        return { dirs: [], files: [] }
+      },
+      async stat() {
+        return { isDir: false }
+      },
+      async readFileMeta(path: string): Promise<{ name: string; extension?: string }> {
+        return { name: path }
+      }
+    })
+
+    control.setMode('BROWSER')
+    await browser.search()
+    await browser.selectResult('1')
+    await browser.openTagDialog('1')
+    control.initEncoderForBrowser()
+    control.encoder4D?.setMode('list-navigate')
+    if (control.encoder4D) {
+      control.encoder4D.activeListIndex.value = 1
+    }
+
+    control.syncBrowserDisplay()
+
+    const leftItems = control.browserDisplay?.leftModel.items ?? []
+    expect(leftItems[1]?.active).toBe(true)
+    expect(leftItems.filter((item) => item?.active).length).toBe(1)
+  })
 })

@@ -703,6 +703,7 @@ export const useControlStore = defineStore('control', {
   state: () => ({
     activeMode: 'BROWSER' as ControlMode,
     shiftHeld: false,
+    importContextId: 'pad1' as string | null,
     pageIndexByMode: createInitialPageIndex(),
     pagesByMode,
     lastAction: 'Ready',
@@ -789,7 +790,16 @@ export const useControlStore = defineStore('control', {
             this.encoder4D.activeListIndex.value = index
           }
         }
-        this.setBrowserDisplay(browser.toDisplayModels())
+        const models = browser.toDisplayModels()
+        if (this.encoder4D && this.encoder4D.mode.value === 'list-navigate') {
+          const index = this.encoder4D.activeListIndex.value
+          const leftItems = models.leftModel.items ?? []
+          models.leftModel = {
+            ...models.leftModel,
+            items: leftItems.map((item, itemIndex) => ({ ...item, active: item.active || itemIndex === index }))
+          }
+        }
+        this.setBrowserDisplay(models)
         return
       }
       if (this.activeMode === 'BROWSER' && this.activePage?.label === 'Recent') {
@@ -819,6 +829,15 @@ export const useControlStore = defineStore('control', {
           models.leftModel = {
             ...models.leftModel,
             summary: [summary, highlight].filter((value) => value && value.length > 0).join(' ')
+          }
+        }
+        if (this.encoder4D.mode.value === 'list-navigate') {
+          const index = this.encoder4D.activeListIndex.value
+          if (models.rightModel.items) {
+            models.rightModel = {
+              ...models.rightModel,
+              items: models.rightModel.items.map((item, itemIndex) => ({ ...item, active: item.active || itemIndex === index }))
+            }
           }
         }
       }
@@ -877,6 +896,9 @@ export const useControlStore = defineStore('control', {
     },
     setShiftHeld(value: boolean) {
       this.shiftHeld = value
+    },
+    setImportContext(contextId: string | null) {
+      this.importContextId = contextId
     },
     setBrowserDisplay(models: { leftModel: DisplayPanelModel; rightModel: DisplayPanelModel } | null) {
       this.browserDisplay = models
@@ -1041,12 +1063,12 @@ export const useControlStore = defineStore('control', {
         this.applyEncoderFieldFilter()
       }
       this.encoder4D.press()
+      const importContext = { contextId: this.importContextId ?? 'global', contextType: 'sample' as const }
       if (previousMode === 'list-navigate') {
-        if (this.activeMode === 'FILE') {
-          await browser.importSelected()
-        } else {
-          this.syncListSelection()
+        if (this.activeMode === 'FILE' || this.activeMode === 'BROWSER') {
+          await browser.importSelected(importContext)
         }
+        this.syncListSelection()
       }
       if (this.encoder4D.mode.value === 'list-navigate') {
         this.syncListSelection()

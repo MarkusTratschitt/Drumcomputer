@@ -277,30 +277,72 @@
           <div class="left-column">
             <div class="transport-area" title="Transport area (MK3-style)" aria-label="Transport area (MK3-style)">
               <div class="transport-grid">
-                <button class="control-btn" type="button">
+                <button
+                  class="control-btn"
+                  type="button"
+                  :title="shortcutTitle('TRANSPORT_LOOP', 'RESTART')"
+                  :aria-label="shortcutTitle('TRANSPORT_LOOP', 'RESTART')"
+                  @click="restartLoop"
+                >
                   <span class="control-btn__main">RESTART</span>
                   <span class="control-btn__sub">Loop</span>
                 </button>
-                <button class="control-btn" type="button">
+                <button
+                  class="control-btn"
+                  type="button"
+                  :title="shortcutTitle('PAD_ERASE', 'ERASE')"
+                  :aria-label="shortcutTitle('PAD_ERASE', 'ERASE')"
+                  @click="toggleLiveErase"
+                >
                   <span class="control-btn__main">ERASE</span>
                   <span class="control-btn__sub">Replace</span>
                 </button>
-                <button class="control-btn" type="button">
+                <button
+                  class="control-btn"
+                  type="button"
+                  :title="shortcutTitle('TRANSPORT_TAP_TEMPO', 'TAP')"
+                  :aria-label="shortcutTitle('TRANSPORT_TAP_TEMPO', 'TAP')"
+                  @click="tapTempo"
+                >
                   <span class="control-btn__main">TAP</span>
                   <span class="control-btn__sub">Metro</span>
                 </button>
-                <button class="control-btn" type="button">
+                <button
+                  class="control-btn"
+                  type="button"
+                  :title="shortcutTitle('TRANSPORT_FOLLOW', 'FOLLOW')"
+                  :aria-label="shortcutTitle('TRANSPORT_FOLLOW', 'FOLLOW')"
+                  @click="toggleFollow"
+                >
                   <span class="control-btn__main">FOLLOW</span>
                   <span class="control-btn__sub">Grid</span>
                 </button>
-                <button class="control-btn" type="button">
+                <button
+                  class="control-btn"
+                  type="button"
+                  :title="shortcutTitle('TRANSPORT_PLAY', 'PLAY')"
+                  :aria-label="shortcutTitle('TRANSPORT_PLAY', 'PLAY')"
+                  @click="start"
+                >
                   <span class="control-btn__main">PLAY</span>
                 </button>
-                <button class="control-btn" type="button">
+                <button
+                  class="control-btn"
+                  type="button"
+                  :title="shortcutTitle('TRANSPORT_RECORD', 'REC')"
+                  :aria-label="shortcutTitle('TRANSPORT_RECORD', 'REC')"
+                  @click="toggleRecord"
+                >
                   <span class="control-btn__main">REC</span>
                   <span class="control-btn__sub">Count In</span>
                 </button>
-                <button class="control-btn" type="button">
+                <button
+                  class="control-btn"
+                  type="button"
+                  :title="shortcutTitle('TRANSPORT_STOP', 'STOP')"
+                  :aria-label="shortcutTitle('TRANSPORT_STOP', 'STOP')"
+                  @click="stop"
+                >
                   <span class="control-btn__main">STOP</span>
                 </button>
                 <button
@@ -1035,6 +1077,7 @@ computed: {
     )
     void this.browser.setMode('LIBRARY')
     this.control.setBrowserDisplay(this.browser.toDisplayModels())
+    this.control.setImportContext(this.selectedPadId)
     const stopBrowserDisplayWatch = this.$watch(
       () => ({
         mode: this.browser.mode,
@@ -1887,6 +1930,7 @@ computed: {
     },
     selectPad(pad: DrumPadId) {
       this.selectedPadId = pad
+      this.control.setImportContext(pad)
       if (this.midiLearn.isLearning) {
         this.midiLearn.setTarget({ type: 'pad', padId: pad })
       }
