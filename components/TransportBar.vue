@@ -14,7 +14,7 @@ client-only(tag="div")
       button.control-btn(type="button")
         span.control-btn__main FOLLOW
         span.control-btn__sub Grid
-      button.control-btn(type="button")
+      button.control-btn(type="button" :title="shortcutTitle('TRANSPORT_PLAY', 'Play')")
         span.control-btn__main PLAY
       button.control-btn(type="button")
         span.control-btn__main REC
@@ -27,6 +27,7 @@ client-only(tag="div")
 
 <script lang="ts">
 import { defineComponent } from 'vue'
+import { useShortcuts } from '@/composables/useShortcuts'
 import type { TimeDivision } from '@/types/time'
 
 export default defineComponent({
@@ -92,6 +93,10 @@ export default defineComponent({
   },
 
   methods: {
+    shortcutTitle(commandId: string, label: string): string {
+      const shortcuts = useShortcuts()
+      return shortcuts.title(commandId, label)
+    },
     onBpm(value: number | string) {
       const numeric = Number(value)
       if (!Number.isNaN(numeric)) {

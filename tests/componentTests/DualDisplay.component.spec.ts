@@ -171,6 +171,42 @@ describe('DualDisplay.vue', () => {
     expect(searchInput.attributes('title')).toContain('(Ctrl+K)')
   })
 
+  it('shows browser search shortcut id when not registered', () => {
+    const wrapper = mount(DualDisplay, {
+      props: {
+        leftModel: { view: 'BROWSER', title: 'Browser', items: [] },
+        rightModel: { view: 'FILE', title: 'Files', items: [] },
+        modeTitle: 'Browser',
+        pageLabel: 'Page 1'
+      }
+    })
+    const searchInput = wrapper.find('.display.left input[type="search"]')
+    // When unregistered, the shortcutTitle method returns the label only
+    expect(searchInput.attributes('title')).toBe('Search browser')
+  })
+
+  it('renders load-to-pad control with shortcut and emits event', async () => {
+    registerShortcut('BROWSER_LOAD_SELECTED_TO_PAD', {
+      keys: 'Ctrl+Enter',
+      handler: () => { },
+      description: 'Load to pad'
+    })
+
+    const wrapper = mount(DualDisplay, {
+      props: {
+        leftModel: { view: 'BROWSER', title: 'Browser', items: [] },
+        rightModel: { view: 'FILE', title: 'Files', items: [] },
+        modeTitle: 'Browser',
+        pageLabel: 'Page 1'
+      }
+    })
+    const loadBtn = wrapper.find('button.browser-load-to-pad')
+    expect(loadBtn.exists()).toBe(true)
+    expect(loadBtn.attributes('title')).toContain('(Ctrl+Enter)')
+    await loadBtn.trigger('click')
+    expect(wrapper.emitted()['load-to-pad']).toBeTruthy()
+  })
+
   it('applies active class to selected FILE items', () => {
     const items = [
       { title: 'File 1', subtitle: 'path/file1', active: false },

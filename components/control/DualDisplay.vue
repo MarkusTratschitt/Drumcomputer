@@ -29,6 +29,14 @@
                 </li>
               </ul>
             </div>
+            <button
+              type="button"
+              class="browser-load-to-pad"
+              :title="shortcutTitle('BROWSER_LOAD_SELECTED_TO_PAD', 'Load to pad')"
+              @click="$emit('load-to-pad')"
+            >
+              Load to pad
+            </button>
           </template>
           <template v-else-if="leftModel.view === 'FILE'">
             <div class="panel-header">{{ leftModel.title || 'Files' }}</div>
@@ -223,6 +231,7 @@ export default defineComponent({
       default: () => []
     }
   },
+  emits: ['load-to-pad'],
   data() {
     return {
       browserQuery: '',

@@ -87,6 +87,7 @@ export const SHORTCUT_COMMANDS = {
   PATTERN_NEW: 'Ctrl+N',
   PATTERN_DUPLICATE: 'Ctrl+D',
   PATTERN_CLEAR: 'Ctrl+Delete',
+  SCENE_NEW: 'Ctrl+Shift+N',
   SCENE_PLAY: 'Ctrl+Space',
   SCENE_STOP: 'Ctrl+Shift+Space',
 

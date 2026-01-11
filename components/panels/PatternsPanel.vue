@@ -91,7 +91,7 @@
               color="secondary"
               block
               class="mt-1"
-              :title="shortcutTitle('SCENE_PLAY', 'Add Scene')"
+              :title="shortcutTitle('SCENE_NEW', 'Add Scene')"
               @click="addScene"
             ) Add Scene
         v-row(class="mt-2" dense)
@@ -138,8 +138,8 @@ export default defineComponent({
     patternItems(): Array<{ title: string; value: string }> {
       return this.patterns.map((pattern) => ({ title: pattern.name, value: pattern.id }))
     },
-    sceneItems(): Array<{ title: string; value: string | null }> {
-      return [{ title: 'None', value: null }, ...this.scenes.map((scene) => ({ title: scene.name, value: scene.id }))]
+      sceneItems() {
+        return this.scenes.map(scene => ({ title: scene.name, value: scene.id }));
     },
     currentScene(): Scene | null {
       return this.scenes.find((scene) => scene.id === this.activeSceneId) ?? null

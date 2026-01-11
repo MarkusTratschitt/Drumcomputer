@@ -161,6 +161,7 @@
                       :page-label="pageLabel"
                       :param-slots-left="paramSlotsLeft"
                       :param-slots-right="paramSlotsRight"
+                      @load-to-pad="importSelectedToPad"
                     />
                   </div>
                   <div class="display-param-labels" aria-hidden="true">
@@ -1300,6 +1301,11 @@ computed: {
         keys: SHORTCUT_COMMANDS.PATTERN_CLEAR,
         handler: () => void this.clearPattern(),
         description: 'Clear Pattern'
+      })
+      shortcuts.register('SCENE_NEW', {
+        keys: SHORTCUT_COMMANDS.SCENE_NEW,
+        handler: () => void this.addScene({}),
+        description: 'New Scene'
       })
       // Scene operations
       shortcuts.register('SCENE_PLAY', {
