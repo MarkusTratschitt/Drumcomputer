@@ -35,6 +35,7 @@
               color="primary"
               block
               class="mt-1"
+              :title="shortcutTitle('PATTERN_NEW', 'Add Pattern')"
               @click="addPattern"
             ) Add Pattern
             v-row(class="mt-2" dense)
@@ -42,6 +43,7 @@
                 v-btn(
                   color="secondary"
                   block
+                  :title="shortcutTitle('UNDO', 'Undo')"
                   @click="emitPatternUndo"
                 ) Undo
               v-col(cols="6")
@@ -49,6 +51,7 @@
                   color="secondary"
                   block
                   variant="outlined"
+                  :title="shortcutTitle('REDO', 'Redo')"
                   @click="emitPatternRedo"
                 ) Redo
           v-col(cols="12" md="6")
@@ -88,6 +91,7 @@
               color="secondary"
               block
               class="mt-1"
+              :title="shortcutTitle('SCENE_PLAY', 'Add Scene')"
               @click="addScene"
             ) Add Scene
         v-row(class="mt-2" dense)
@@ -110,6 +114,7 @@
 <script lang="ts">
 import { defineComponent } from 'vue'
 import type { Pattern, Scene } from '@/types/drums'
+import { useShortcuts } from '@/composables/useShortcuts'
 
 export default defineComponent({
   name: 'PatternsPanel',
@@ -205,6 +210,10 @@ export default defineComponent({
     },
     addScene() {
       this.$emit('scene:add', { name: this.sceneName.trim() || 'Scene', patternIds: this.scenePatternIds })
+    },
+    shortcutTitle(commandId: string, label: string): string {
+      const shortcuts = useShortcuts()
+      return shortcuts.title(commandId, label)
     }
   }
 })

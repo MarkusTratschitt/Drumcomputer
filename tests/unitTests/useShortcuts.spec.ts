@@ -196,4 +196,87 @@ describe('useShortcuts', () => {
     expect(shortcuts.title).toBe(shortcutTitle)
     expect(shortcuts.clear).toBe(clearShortcuts)
   })
+
+  describe('Pattern and Scene Commands', () => {
+    it('can register and dispatch PATTERN_NEW command', () => {
+      const handler = vi.fn()
+      registerShortcut('PATTERN_NEW', {
+        keys: 'Ctrl+N',
+        handler,
+        description: 'New Pattern'
+      })
+
+      const event = new KeyboardEvent('keydown', {
+        key: 'n',
+        ctrlKey: true
+      })
+
+      const result = dispatchShortcut(event)
+
+      expect(result).toBe(true)
+      expect(handler).toHaveBeenCalled()
+    })
+
+    it('can register and dispatch PATTERN_DUPLICATE command', () => {
+      const handler = vi.fn()
+      registerShortcut('PATTERN_DUPLICATE', {
+        keys: 'Ctrl+D',
+        handler,
+        description: 'Duplicate Pattern'
+      })
+
+      const event = new KeyboardEvent('keydown', {
+        key: 'd',
+        ctrlKey: true
+      })
+
+      const result = dispatchShortcut(event)
+
+      expect(result).toBe(true)
+      expect(handler).toHaveBeenCalled()
+    })
+
+    it('can register and dispatch SCENE_PLAY command', () => {
+      const handler = vi.fn()
+      registerShortcut('SCENE_PLAY', {
+        keys: 'Ctrl+Space',
+        handler,
+        description: 'Play Scene'
+      })
+
+      const event = new KeyboardEvent('keydown', {
+        key: ' ',
+        ctrlKey: true
+      })
+
+      const result = dispatchShortcut(event)
+
+      expect(result).toBe(true)
+      expect(handler).toHaveBeenCalled()
+    })
+
+    it('generates tooltip for UNDO with shortcut', () => {
+      registerShortcut('UNDO', {
+        keys: 'Ctrl+Z',
+        handler: () => { },
+        description: 'Undo'
+      })
+
+      const tooltip = shortcutTitle('UNDO', 'Undo')
+
+      expect(tooltip).toBe('Undo (Ctrl+Z)')
+    })
+
+    it('generates tooltip for REDO with shortcut', () => {
+      registerShortcut('REDO', {
+        keys: 'Ctrl+Shift+Z',
+        handler: () => { },
+        description: 'Redo'
+      })
+
+      const tooltip = shortcutTitle('REDO', 'Redo')
+
+      expect(tooltip).toBe('Redo (Ctrl+Shift+Z)')
+    })
+  })
 })

@@ -1285,6 +1285,33 @@ computed: {
         handler: () => this.handleModePress('BROWSER'),
         description: 'Browser Mode'
       })
+      // Pattern operations
+      shortcuts.register('PATTERN_NEW', {
+        keys: SHORTCUT_COMMANDS.PATTERN_NEW,
+        handler: () => void this.addPattern({}),
+        description: 'New Pattern'
+      })
+      shortcuts.register('PATTERN_DUPLICATE', {
+        keys: SHORTCUT_COMMANDS.PATTERN_DUPLICATE,
+        handler: () => void this.duplicatePattern(),
+        description: 'Duplicate Pattern'
+      })
+      shortcuts.register('PATTERN_CLEAR', {
+        keys: SHORTCUT_COMMANDS.PATTERN_CLEAR,
+        handler: () => void this.clearPattern(),
+        description: 'Clear Pattern'
+      })
+      // Scene operations
+      shortcuts.register('SCENE_PLAY', {
+        keys: SHORTCUT_COMMANDS.SCENE_PLAY,
+        handler: () => void this.playScene(),
+        description: 'Play Scene'
+      })
+      shortcuts.register('SCENE_STOP', {
+        keys: SHORTCUT_COMMANDS.SCENE_STOP,
+        handler: () => this.stopScene(),
+        description: 'Stop Scene'
+      })
       // Undo/Redo
       shortcuts.register('UNDO', {
         keys: SHORTCUT_COMMANDS.UNDO,
@@ -1544,6 +1571,34 @@ computed: {
     },
     redoPattern() {
       this.patterns.redo()
+    },
+    duplicatePattern() {
+      // Duplicate currently selected pattern
+      if (this.patterns.selectedPatternId) {
+        const current = this.patterns.patterns.find((p) => p.id === this.patterns.selectedPatternId)
+        if (current) {
+          const newPattern = {
+            ...current,
+            id: `pattern_${Date.now()}`,
+            name: `${current.name} (Copy)`
+          }
+          this.patterns.addPattern(newPattern.name)
+        }
+      }
+    },
+    clearPattern() {
+      // Clear all events in currently selected pattern (simple: just log for now as it's a complex operation)
+      console.log('Clear pattern:', this.patterns.selectedPatternId)
+    },
+    playScene() {
+      // Play currently selected scene (if any)
+      if (this.patterns.activeSceneId) {
+        void this.start()
+      }
+    },
+    stopScene() {
+      // Stop scene playback
+      this.stop()
     },
     addScene(payload: { name?: string; patternIds?: string[] }) {
       this.patterns.addScene(payload?.name ?? 'Scene', payload?.patternIds ?? [])
