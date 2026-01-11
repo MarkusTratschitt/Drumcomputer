@@ -46,7 +46,7 @@ export interface LibraryRepository {
   refreshIndex(): Promise<void>
   importDirectory?(
     path: string,
-    options?: { recursive?: boolean },
+    options?: { recursive?: boolean; defaultTags?: string[] },
     onProgress?: (progress: ImportProgress) => void
   ): Promise<void>
 }
@@ -306,6 +306,7 @@ const createLocalRepository = (): LibraryRepository => {
     async importDirectory(path: string, options, onProgress) {
       const repo = getFileSystemRepository()
       const recursive = options?.recursive ?? false
+      const defaultTags = options?.defaultTags ?? []
       const errors: string[] = []
       const filesToImport: string[] = []
 
@@ -337,7 +338,13 @@ const createLocalRepository = (): LibraryRepository => {
       for (const filePath of filesToImport) {
         try {
           const meta = extractMetadataFromPath(filePath)
-          await this.importFile(filePath, meta)
+          const itemId = await this.importFile(filePath, meta)
+          // Apply default tags after import
+          for (const tag of defaultTags) {
+            if (tag && tag.trim() && typeof itemId === 'string') {
+              await this.addTag(itemId, tag.trim())
+            }
+          }
         } catch {
           errors.push(filePath)
         }

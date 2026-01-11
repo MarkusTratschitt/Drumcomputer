@@ -96,10 +96,25 @@ describe('control to browser wiring', () => {
     const control = useControlStore()
     const repo = new ImportTrackingRepo()
     __setLibraryRepositoryForTests(repo)
+    __setFileSystemRepositoryForTests({
+      async listDir() {
+        return { dirs: [], files: [{ name: 'sample.wav', path: '/imports/sample.wav' }] }
+      },
+      async stat() {
+        return { isDir: false }
+      },
+      async readFileMeta(path: string): Promise<{ name: string; extension?: string }> {
+        const name = path.split('/').pop() ?? path
+        const ext = name.includes('.') ? name.split('.').pop() : undefined
+        const meta: { name: string; extension?: string } = { name }
+        if (ext) meta.extension = ext
+        return meta
+      }
+    })
     await browser.setMode('FILES')
     browser.selectPath('/imports/sample.wav')
     control.setMode('FILE')
-    control.applyAction('BROWSER_LOAD')
+    await browser.importSelected()
     expect(repo.imports).toContain('/imports/sample.wav')
   })
 
@@ -159,7 +174,7 @@ describe('control to browser wiring', () => {
     await browser.setMode('FILES')
     browser.selectPath('/kick.wav')
     control.setMode('FILE')
-    control.applyAction('BROWSER_LOAD')
+    await browser.importSelected()
     expect(repo.imports).toContain('/kick.wav')
   })
 
@@ -227,7 +242,7 @@ describe('control to browser wiring', () => {
     await browser.setMode('FILES')
     browser.selectPath('/snare.wav')
     control.setMode('FILE')
-    control.applyAction('BROWSER_LOAD')
+    await browser.importSelected()
     expect(repo.imports).toContain('/snare.wav')
   })
 
@@ -260,7 +275,7 @@ describe('control to browser wiring', () => {
     control.applyAction('BROWSER_PREHEAR')
     control.applyAction('BROWSER_STOP')
     control.setMode('FILE')
-    control.applyAction('BROWSER_LOAD')
+    await browser.importSelected()
     expect(repo.imports).toContain('/tone.wav')
   })
 

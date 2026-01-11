@@ -200,15 +200,15 @@
                 <FourDEncoder class="four-d-encoder" />
               </div>
               <div class="quick-edit-buttons" aria-label="Quick edit controls">
-                <button class="quick-edit-btn control-btn" type="button">
+                <button class="quick-edit-btn control-btn" type="button" :title="shortcutTitle('QUICK_VOLUME', 'VOLUME')" @click="onQuickEdit('volume')">
                   <span class="control-btn__main">VOLUME</span>
                   <span class="control-btn__sub">Velocity</span>
                 </button>
-                <button class="quick-edit-btn control-btn" type="button">
+                <button class="quick-edit-btn control-btn" type="button" :title="shortcutTitle('QUICK_SWING', 'SWING')" @click="onQuickEdit('swing')">
                   <span class="control-btn__main">SWING</span>
                   <span class="control-btn__sub">Position</span>
                 </button>
-                <button class="quick-edit-btn control-btn" type="button">
+                <button class="quick-edit-btn control-btn" type="button" :title="shortcutTitle('QUICK_TEMPO', 'TEMPO')" @click="onQuickEdit('tempo')">
                   <span class="control-btn__main">TEMPO</span>
                   <span class="control-btn__sub">Tune</span>
                 </button>
@@ -392,6 +392,12 @@
         </div>
     </div>
   </div>
+  ImportDialog(
+    v-model="browser.importDialogOpen"
+    :directory-path="browser.importDialogPath || ''"
+    @confirm="onImportConfirm"
+    @cancel="onImportCancel"
+  )
 </template>
 
 
@@ -438,6 +444,7 @@ import KnobControl from './KnobControl.vue'
 import FourDEncoder from './control/FourDEncoder.vue'
 import ModeColumnPlaceholder from './placeholders/ModeColumnPlaceholder.vue'
 import TouchStripPlaceholder from './placeholders/TouchStripPlaceholder.vue'
+import ImportDialog from './ImportDialog.vue'
 
 const slugify = (value: string): string => {
   const cleaned = value
@@ -501,7 +508,8 @@ export default defineComponent({
     KnobControl,
     FourDEncoder,
     ModeColumnPlaceholder,
-    TouchStripPlaceholder
+    TouchStripPlaceholder,
+    ImportDialog
   },
   // ModeColumnPlaceholder currently unused; consider removing or wiring into the layout.
   data() {
@@ -1286,6 +1294,49 @@ computed: {
         handler: () => this.handleModePress('BROWSER'),
         description: 'Browser Mode'
       })
+      shortcuts.register('MODE_CHANNEL', {
+        keys: SHORTCUT_COMMANDS.MODE_CHANNEL,
+        handler: () => this.handleModePress('CHANNEL', 'CHANNEL_MIDI'),
+        description: 'Channel Mode'
+      })
+      shortcuts.register('MODE_PLUGIN', {
+        keys: SHORTCUT_COMMANDS.MODE_PLUGIN,
+        handler: () => this.handleModePress('PLUGIN', 'PLUGIN_INSTANCE'),
+        description: 'Plugin Mode'
+      })
+      shortcuts.register('MODE_ARRANGER', {
+        keys: SHORTCUT_COMMANDS.MODE_ARRANGER,
+        handler: () => this.handleModePress('ARRANGER'),
+        description: 'Arranger Mode'
+      })
+      shortcuts.register('MODE_MIXER', {
+        keys: SHORTCUT_COMMANDS.MODE_MIXER,
+        handler: () => this.handleModePress('MIXER'),
+        description: 'Mixer Mode'
+      })
+      shortcuts.register('MODE_SAMPLING', {
+        keys: SHORTCUT_COMMANDS.MODE_SAMPLING,
+        handler: () => this.handleModePress('SAMPLING'),
+        description: 'Sampling Mode'
+      })
+
+      // Quick Edit
+      shortcuts.register('QUICK_VOLUME', {
+        keys: SHORTCUT_COMMANDS.QUICK_VOLUME,
+        handler: () => this.onQuickEdit('volume'),
+        description: 'Quick Volume'
+      })
+      shortcuts.register('QUICK_SWING', {
+        keys: SHORTCUT_COMMANDS.QUICK_SWING,
+        handler: () => this.onQuickEdit('swing'),
+        description: 'Quick Swing'
+      })
+      shortcuts.register('QUICK_TEMPO', {
+        keys: SHORTCUT_COMMANDS.QUICK_TEMPO,
+        handler: () => this.onQuickEdit('tempo'),
+        description: 'Quick Tempo'
+      })
+
       // Pattern operations
       shortcuts.register('PATTERN_NEW', {
         keys: SHORTCUT_COMMANDS.PATTERN_NEW,
@@ -1562,6 +1613,32 @@ computed: {
     },
     knobTooltip(index: number): string {
       return this.shortcutTitle('KNOB_INC', this.getParamName(index))
+    },
+    findParamIndexByName(namePart: string): number {
+      const params = this.encoderParams ?? []
+      const target = namePart.toLowerCase()
+      const idx = params.findIndex((p) => (p.name ?? '').toLowerCase().includes(target))
+      return idx >= 0 ? idx : 0
+    },
+    onQuickEdit(kind: 'volume' | 'swing' | 'tempo') {
+      const searchMap: Record<typeof kind, string> = {
+        volume: 'Volume',
+        swing: 'Swing',
+        tempo: 'BPM'
+      }
+      const namePart = searchMap[kind] ?? kind
+      const index = this.findParamIndexByName(namePart)
+      this.onKnobFocus(index)
+    },
+    async onImportConfirm(options: { includeSubfolders: boolean; tags: string[] }) {
+      try {
+        await this.browser.confirmImport(options)
+      } catch (err) {
+        console.error('Import failed:', err)
+      }
+    },
+    onImportCancel() {
+      this.browser.closeImportDialog()
     },
     addPattern(payload: { name?: string }) {
       this.patterns.addPattern(payload?.name)

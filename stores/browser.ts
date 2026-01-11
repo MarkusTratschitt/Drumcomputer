@@ -224,6 +224,8 @@ export const useBrowserStore = defineStore('browser', {
     availableTags: [] as string[],
     tagDialogOpen: false,
     tagDialogItemId: null as string | null,
+    importDialogOpen: false,
+    importDialogPath: null as string | null,
     sortMode: loadSortMode(),
     hierarchyCacheVersion: 0,
     hierarchyCache: {
@@ -486,6 +488,34 @@ export const useBrowserStore = defineStore('browser', {
     getAvailableTags(): string[] {
       return this.availableTags
     },
+    openImportDialog(path: string) {
+      this.importDialogOpen = true
+      this.importDialogPath = path
+    },
+    closeImportDialog() {
+      this.importDialogOpen = false
+      this.importDialogPath = null
+    },
+    async confirmImport(options: { includeSubfolders: boolean; tags: string[] }) {
+      const path = this.importDialogPath
+      if (!path) return
+      const repo = getLibraryRepository()
+      if (!repo.importDirectory) {
+        console.error('importDirectory not supported by repository')
+        return
+      }
+      try {
+        await repo.importDirectory(path, {
+          recursive: options.includeSubfolders,
+          defaultTags: options.tags
+        })
+        await this.search()
+        this.closeImportDialog()
+      } catch (err) {
+        console.error('Import failed:', err)
+        throw err
+      }
+    },
     loadRecentFiles() {
       const recent = useRecentFiles()
       const entries = recent.getRecent()
@@ -580,6 +610,21 @@ export const useBrowserStore = defineStore('browser', {
     },
     async importSelected(context?: { contextId?: string; contextType?: BrowseHistoryEntry['contextType'] }) {
       if (!this.files.selectedPath) return null
+
+      // Check if selected path is a directory
+      const fsRepo = getFileSystemRepository()
+      try {
+        const stats = await fsRepo.stat(this.files.selectedPath)
+        if (stats.isDir) {
+          // Open import dialog for directories
+          this.openImportDialog(this.files.selectedPath)
+          return null
+        }
+      } catch {
+        // If stat fails, assume it's a file and proceed
+      }
+
+      // Import single file
       const recent = useRecentFiles()
       const repo = getLibraryRepository()
       const meta = parsePathMeta(this.files.selectedPath)
@@ -664,7 +709,8 @@ export const useBrowserStore = defineStore('browser', {
       if (this.mode === 'FILES') {
         const leftItems: DisplayListItem[] = this.files.entries.dirs.map((dir) => ({
           title: dir.name,
-          subtitle: dir.path
+          subtitle: dir.path,
+          active: dir.path === this.files.currentPath
         }))
         const rightItems: DisplayListItem[] = this.files.entries.files.map((file) => ({
           title: file.name,

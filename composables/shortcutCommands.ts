@@ -75,6 +75,11 @@ export const SHORTCUT_COMMANDS = {
   KNOB_INC_FINE: 'Shift+ArrowUp',
   KNOB_DEC_FINE: 'Shift+ArrowDown',
 
+  // Quick Edit
+  QUICK_VOLUME: 'Ctrl+Alt+V',
+  QUICK_SWING: 'Ctrl+Alt+S',
+  QUICK_TEMPO: 'Ctrl+Alt+T',
+
   // Modes
   MODE_CHANNEL: 'Ctrl+1',
   MODE_PLUGIN: 'Ctrl+2',
