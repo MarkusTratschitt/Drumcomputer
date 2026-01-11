@@ -1,4 +1,4 @@
-import { describe, it, beforeEach, expect } from 'vitest'
+import { describe, it, beforeEach, expect, vi } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useControlStore } from '../../stores/control'
 import { useBrowserStore } from '../../stores/browser'
@@ -394,5 +394,48 @@ describe('control to browser wiring', () => {
     const leftItems = control.browserDisplay?.leftModel.items ?? []
     expect(leftItems[1]?.active).toBe(true)
     expect(leftItems.filter((item) => item?.active).length).toBe(1)
+  })
+
+  it('passes correct contextId when pressing encoder4D after setImportContext', async () => {
+    const control = useControlStore()
+    const browser = useBrowserStore()
+    const repo = new ImportTrackingRepo()
+    __setLibraryRepositoryForTests(repo)
+    __setFileSystemRepositoryForTests({
+      async listDir() {
+        return { dirs: [], files: [{ name: 'sample.wav', path: '/sample.wav' }] }
+      },
+      async stat() {
+        return { isDir: false }
+      },
+      async readFileMeta(path: string): Promise<{ name: string; extension?: string }> {
+        const name = path.split('/').pop() ?? path
+        const ext = name.includes('.') ? name.split('.').pop() : undefined
+        const meta: { name: string; extension?: string } = { name }
+        if (ext) meta.extension = ext
+        return meta
+      }
+    })
+
+    // Set up: import context and FILE mode with selected file
+    control.setImportContext('pad5')
+    await browser.setMode('FILES')
+    browser.selectPath('/sample.wav')
+    control.setMode('FILE')
+    control.encoder4D?.setMode('list-navigate')
+
+    // Spy on importSelected to capture the context argument
+    const importSpy = vi.spyOn(browser, 'importSelected')
+
+    // Press encoder4D in list-navigate mode
+    await control.pressEncoder4D()
+
+    // Verify importSelected was called with correct contextId and contextType
+    expect(importSpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contextId: 'pad5',
+        contextType: 'sample'
+      })
+    )
   })
 })
