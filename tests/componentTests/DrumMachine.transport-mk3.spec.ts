@@ -3,6 +3,7 @@ import { mount } from '@vue/test-utils'
 import { setActivePinia, createPinia } from 'pinia'
 import { nextTick } from 'vue'
 import DrumMachine from '@/components/DrumMachine.vue'
+import { SHORTCUT_COMMANDS } from '@/composables/shortcutCommands'
 
 describe('DrumMachine MK3 transport buttons', () => {
   beforeEach(() => {
@@ -18,9 +19,8 @@ describe('DrumMachine MK3 transport buttons', () => {
     const playBtn = buttons.find((btn) => btn.text().includes('PLAY'))
     const stopBtn = buttons.find((btn) => btn.text().includes('STOP'))
 
-    // Titles should include exact shortcut keys from registry
-    expect(playBtn?.attributes('title')).toContain('(Space)')
-    expect(stopBtn?.attributes('title')).toContain('(Shift+Space)')
+    expect(playBtn?.attributes('title')).toBe(`PLAY (${SHORTCUT_COMMANDS.TRANSPORT_PLAY})`)
+    expect(stopBtn?.attributes('title')).toBe(`STOP (${SHORTCUT_COMMANDS.TRANSPORT_STOP})`)
   })
 
   it('invokes play handler when PLAY is clicked', async () => {

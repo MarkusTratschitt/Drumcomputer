@@ -3,6 +3,7 @@ import { mount } from '@vue/test-utils'
 import { setActivePinia, createPinia } from 'pinia'
 import { nextTick } from 'vue'
 import DrumMachine from '../../components/DrumMachine.vue'
+import { SHORTCUT_COMMANDS } from '@/composables/shortcutCommands'
 
 describe('DrumMachine quick edit buttons', () => {
   beforeEach(() => {
@@ -14,13 +15,14 @@ describe('DrumMachine quick edit buttons', () => {
     const wrapper = mount(DrumMachine)
     await nextTick()
     const buttons = wrapper.findAll('.quick-edit-buttons .quick-edit-btn')
-    const volumeBtn = buttons[0]
-    const swingBtn = buttons[1]
-    const tempoBtn = buttons[2]
 
-    expect(volumeBtn.attributes('title')).toContain('(')
-    expect(swingBtn.attributes('title')).toContain('(')
-    expect(tempoBtn.attributes('title')).toContain('(')
+    const volumeBtn = buttons.find((btn) => btn.text().includes('VOLUME'))
+    const swingBtn = buttons.find((btn) => btn.text().includes('SWING'))
+    const tempoBtn = buttons.find((btn) => btn.text().includes('TEMPO'))
+
+    expect(volumeBtn?.attributes('title')).toBe(`VOLUME (${SHORTCUT_COMMANDS.QUICK_VOLUME})`)
+    expect(swingBtn?.attributes('title')).toBe(`SWING (${SHORTCUT_COMMANDS.QUICK_SWING})`)
+    expect(tempoBtn?.attributes('title')).toBe(`TEMPO (${SHORTCUT_COMMANDS.QUICK_TEMPO})`)
   })
 
   it('focuses appropriate encoder and adjusts on shortcut', async () => {
