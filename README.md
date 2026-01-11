@@ -129,21 +129,36 @@ Copy the exported seed from the metadata panel (or the JSON blob) and supply it 
 
 ## Diagrams
 
-- Transport timing: `diagrams/transport-engine.md`
-- UI sequencer flow: `diagrams/ui-sequencer.md`
-- Persistence + audio pipeline: `diagrams/persistence-and-audio.md`
-- Control area mapping: `diagrams/control-area-mapping.md`
-- Browser 4D encoder wiring: `diagrams/control-4d-encoder-browser.md`
-- Browser file system access: `diagrams/browser-file-system-access.md`
-- Browser import progress: `diagrams/library-import-progress.md`
-- Browser recent files: `diagrams/recent-files.md`
-- Browser favorites: `diagrams/favorites-flow.md`
-- Browser sample preview: `diagrams/sample-preview.md`
-- Browser sorting: `diagrams/browser-sorting.md`
-- Browser quick-browse: `diagrams/quick-browse.md`
-- Browser tag dialog: `diagrams/tag-dialog.md`
-- Browser hierarchy: `diagrams/library-hierarchy.md`
-- Browser performance: `diagrams/browser-performance.md`
+### Overview Diagrams
+- **Workflows overview**: `diagrams/workflows-overview.md` - Main user workflows and interconnections
+- **Shortcuts overview**: `diagrams/shortcuts-overview.md` - Keyboard shortcuts by category
+- **Use cases**: `diagrams/use-cases.md` - Sequence diagrams for documented use cases
+- **Class diagram**: `diagrams/class-diagram.md` - Core component relationships
+
+### Architecture & System
+- **Transport timing**: `diagrams/transport-engine.md` - Scheduler and AudioContext timing
+- **UI sequencer flow**: `diagrams/ui-sequencer.md` - Pattern editing and playback flow
+- **Persistence + audio pipeline**: `diagrams/persistence-and-audio.md` - Storage and audio architecture
+- **Storage architecture**: `diagrams/storage-architecture.md` - IndexedDB, LocalStorage, and persistence strategy
+- **FX chain**: `diagrams/fx-chain.md` - Audio FX pipeline and deterministic rendering
+- **MIDI sync**: `diagrams/midi-sync.md` - MIDI clock synchronization architecture
+
+### Control & UI
+- **Control area mapping**: `diagrams/control-area-mapping.md` - MK3 control surface layout
+- **PadGrid layout**: `diagrams/padgrid-modus-layout.md` - Pad grid and mode button alignment
+
+### Browser & Library
+- **Browser 4D encoder wiring**: `diagrams/control-4d-encoder-browser.md` - Encoder navigation in browser
+- **Browser file system access**: `diagrams/browser-file-system-access.md` - File System Access API integration
+- **Browser import progress**: `diagrams/library-import-progress.md` - Library import workflow
+- **Browser recent files**: `diagrams/recent-files.md` - Recent files tracking
+- **Browser favorites**: `diagrams/favorites-flow.md` - Favorites management
+- **Browser sample preview**: `diagrams/sample-preview.md` - Sample preview/prehear
+- **Browser sorting**: `diagrams/browser-sorting.md` - Sort modes and implementation
+- **Browser quick-browse**: `diagrams/quick-browse.md` - Context-based search history
+- **Browser tag dialog**: `diagrams/tag-dialog.md` - Tag management workflow
+- **Browser hierarchy**: `diagrams/library-hierarchy.md` - Category/Product/Bank structure
+- **Browser performance**: `diagrams/browser-performance.md` - Performance optimizations
 
 ## Current UI / Editing State
 
@@ -165,6 +180,177 @@ Copy the exported seed from the metadata panel (or the JSON blob) and supply it 
 - Offline export now optionally renders per-pad stems (only for pads that have a sample in the current cache) alongside the mixdown; stem file names are slugged from the scene/bank name.
 - `exportAudio` auto-downloads the mixdown WAV, returns metadata + optional debug timeline, and the Export panel exposes buttons for WAV, ZIP bundle (mixdown + render-meta + stems), or individual/all stems.
 - Export duration is derived from the active scene's pattern chain (bars × division) so renders match the current arrangement at the time you press Export.
+
+## Workflows
+
+The application supports several key user workflows:
+
+### 1. Live Pattern Building
+- **Goal**: Create and rehearse drum patterns in real-time
+- **Steps**: 
+  1. Select a pad (via mouse click, touch, or keyboard shortcuts 1-V)
+  2. Tap pads to trigger sounds manually
+  3. Enable recording (Ctrl+R) to capture hits quantized to the grid
+  4. Start transport (Space) with loop enabled (L) to rehearse patterns
+  5. Adjust velocity levels by clicking steps multiple times (0.7 → 1.0 → 1.25 → off)
+- **Diagram**: See `diagrams/use-cases.md` (Live pattern building)
+
+### 2. Scene and Pattern Chaining
+- **Goal**: Arrange song ideas by switching patterns at bar boundaries
+- **Steps**:
+  1. Create multiple patterns with different drum parts
+  2. Create a scene and add patterns to the chain
+  3. Start transport to play through the scene
+  4. Patterns advance automatically at bar boundaries
+  5. Grid specs normalize when divisions change
+- **Diagram**: See `diagrams/use-cases.md` (Scene and pattern chaining)
+
+### 3. Soundbank Customization
+- **Goal**: Build custom drum kits with your own samples
+- **Steps**:
+  1. Select a pad
+  2. Open browser (B or Ctrl+B)
+  3. Navigate to your samples (FILES mode: Shift+B)
+  4. Preview samples (Shift+P)
+  5. Load to selected pad (Ctrl+Enter)
+  6. Samples are persisted to IndexedDB and rehydrated on load
+- **Diagram**: See `diagrams/use-cases.md` (Soundbank customization and persistence)
+
+### 4. MIDI Hardware Integration
+- **Goal**: Map hardware controllers to pads and transport
+- **Steps**:
+  1. Connect MIDI device (requires HTTPS/localhost)
+  2. Enable MIDI learn mode
+  3. Trigger pads or transport controls from hardware
+  4. Mappings are saved and persist across sessions
+  5. Configure MIDI clock sync (master/slave modes)
+  6. MIDI clock output follows AudioContext timing
+- **Diagram**: See `diagrams/use-cases.md` (MIDI/hardware integration)
+
+### 5. Export and Stems
+- **Goal**: Bounce scenes to WAV files with optional per-pad stems
+- **Steps**:
+  1. Configure your scene chain and FX settings
+  2. Click Export in the Export panel
+  3. Offline render runs with deterministic FX and seeded RNG
+  4. Download mixdown WAV, metadata JSON, or ZIP bundle
+  5. Optional: Export individual per-pad stems for DAW mixing
+  6. Seed value in metadata allows reproducible renders
+- **Diagram**: See `diagrams/use-cases.md` (Export mixes and stems)
+
+### 6. Browser Search and Quick-Browse
+- **Goal**: Quickly find and load samples from large libraries
+- **Steps**:
+  1. Open browser (B)
+  2. Focus search field (Ctrl+K)
+  3. Type search query with filters (category, product, bank, tags)
+  4. Navigate results with arrow keys or 4D encoder
+  5. Preview samples (Shift+P)
+  6. Load to pad (Ctrl+Enter)
+  7. Quick-browse restores last search context per pad
+- **Diagrams**: See `diagrams/quick-browse.md`, `diagrams/browser-sorting.md`, `diagrams/control-4d-encoder-browser.md`
+
+### 7. Pattern Import/Export and MIDI Round-Trip
+- **Goal**: Share patterns or integrate with DAWs
+- **Steps**:
+  1. Export pattern to JSON (preserves velocity, grid spec, soundbank refs)
+  2. Export pattern to MIDI file via @tonejs/midi
+  3. Import MIDI files back with velocity mapping
+  4. Soundbank manifests export with sample blobs for portability
+  5. Grid specs normalize on import to handle malformed data
+- **Diagram**: See `diagrams/use-cases.md` (Import and normalization)
+
+## Shortcuts
+
+All keyboard shortcuts are registered globally and shown in tooltips. Shortcuts use the command pattern with conflict detection.
+
+### Transport Controls
+| Shortcut | Action | Description |
+|----------|--------|-------------|
+| `Space` | Play | Start/resume transport playback |
+| `Shift+Space` | Stop | Stop transport (with stop-reset on second press) |
+| `Ctrl+R` | Record | Toggle live recording mode |
+| `T` | Tap Tempo | Tap to set BPM |
+| `M` | Metronome | Toggle metronome click |
+| `C` | Count-In | Toggle count-in bars before recording |
+| `L` | Loop | Toggle loop mode |
+| `F` | Follow | Toggle MIDI clock follow mode |
+
+### Browser Controls
+| Shortcut | Action | Description |
+|----------|--------|-------------|
+| `B` | Toggle Browser | Open/close browser panel |
+| `Ctrl+B` | Browser Mode | Switch to browser mode |
+| `Escape` | Close Browser | Close browser panel |
+| `Ctrl+K` | Search Focus | Focus browser search field |
+| `Ctrl+Backspace` | Clear Search | Clear search query |
+| `Shift+P` | Preview Toggle | Play/stop sample preview |
+| `Ctrl+Enter` | Load to Pad | Import selected sample to current pad |
+| `Enter` | Navigate Into | Enter selected folder/item |
+| `Backspace` | Navigate Back | Go up one folder level |
+| `ArrowUp` | Navigate Up | Move selection up in list |
+| `ArrowDown` | Navigate Down | Move selection down in list |
+| `Shift+L` | Library Mode | Switch browser to LIBRARY mode |
+| `Shift+B` | Files Mode | Switch browser to FILES mode |
+
+### Pad Selection (Grid Layout)
+| Shortcut | Pad | Shortcut | Pad | Shortcut | Pad | Shortcut | Pad |
+|----------|-----|----------|-----|----------|-----|----------|-----|
+| `1` | Pad 1 | `2` | Pad 2 | `3` | Pad 3 | `4` | Pad 4 |
+| `Q` | Pad 5 | `W` | Pad 6 | `E` | Pad 7 | `R` | Pad 8 |
+| `A` | Pad 9 | `S` | Pad 10 | `D` | Pad 11 | `F` | Pad 12 |
+| `Z` | Pad 13 | `X` | Pad 14 | `C` | Pad 15 | `V` | Pad 16 |
+
+**Note**: Pad grid also supports arrow key navigation when focused, plus `Home`, `End`, `PageUp`, `PageDown`.
+
+### Pattern and Scene Management
+| Shortcut | Action | Description |
+|----------|--------|-------------|
+| `Ctrl+N` | New Pattern | Create a new pattern |
+| `Ctrl+D` | Duplicate Pattern | Duplicate current pattern |
+| `Ctrl+Delete` | Clear Pattern | Clear all steps in current pattern |
+| `Ctrl+Shift+N` | New Scene | Create a new scene |
+| `Ctrl+Space` | Scene Play | Play selected scene |
+| `Ctrl+Shift+Space` | Scene Stop | Stop scene playback |
+
+### Undo/Redo
+| Shortcut | Action | Description |
+|----------|--------|-------------|
+| `Ctrl+Z` | Undo | Undo last pattern/scene edit |
+| `Ctrl+Shift+Z` | Redo | Redo last undone edit |
+
+### 4D Encoder and Knobs
+| Shortcut | Action | Description |
+|----------|--------|-------------|
+| `ArrowUp` | Knob Increment | Increase focused knob value |
+| `ArrowDown` | Knob Decrement | Decrease focused knob value |
+| `Shift+ArrowUp` | Fine Increment | Increase focused knob value (fine) |
+| `Shift+ArrowDown` | Fine Decrement | Decrease focused knob value (fine) |
+| `PageUp` | 4D Turn Up | Turn 4D encoder up |
+| `PageDown` | 4D Turn Down | Turn 4D encoder down |
+| `ArrowLeft` | 4D Tilt Left | Tilt 4D encoder left |
+| `ArrowRight` | 4D Tilt Right | Tilt 4D encoder right |
+| `Enter` | 4D Press | Confirm 4D encoder selection |
+
+### Mode Buttons
+| Shortcut | Action | Description |
+|----------|--------|-------------|
+| `Ctrl+1` | Channel Mode | Switch to channel mode |
+| `Ctrl+2` | Plugin Mode | Switch to plugin mode |
+| `Ctrl+3` | Arranger Mode | Switch to arranger mode |
+| `Ctrl+4` | Mixer Mode | Switch to mixer mode |
+| `Ctrl+5` | Sampling Mode | Switch to sampling mode |
+
+### Quick Edit
+| Shortcut | Action | Description |
+|----------|--------|-------------|
+| `Ctrl+Alt+V` | Quick Volume | Open quick volume editor |
+| `Ctrl+Alt+S` | Quick Swing | Open quick swing editor |
+| `Ctrl+Alt+T` | Quick Tempo | Open quick tempo editor |
+
+**Shortcut Documentation**: See `SHORTCUT_AUDIT_REPORT.md` for implementation details and coverage metrics (64.2% registered, all mounted UI controls covered).
+
+**Shortcut Diagram**: See `diagrams/shortcuts-overview.md` for visual reference.
 
 ## Roadmap
 
