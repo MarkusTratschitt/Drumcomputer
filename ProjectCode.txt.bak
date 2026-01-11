@@ -54249,7 +54249,7 @@ export default defineConfig({
 |   |   |-- FourDEncoder.component.spec.ts
 |   |   |-- KnobControl.component.spec.ts
 |   |   |-- PadCell.component.spec.ts
-|   |   `-- PatternsPanel.component.spec.ts
+|   |   `-- PadGrid.component.spec.ts
 |   |-- setup/
 |   |   |-- atobShim.ts
 |   |   `-- indexedDBShim.ts
