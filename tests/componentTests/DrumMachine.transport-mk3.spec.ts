@@ -23,6 +23,47 @@ describe('DrumMachine MK3 transport buttons', () => {
     expect(stopBtn?.attributes('title')).toBe(`STOP (${SHORTCUT_COMMANDS.TRANSPORT_STOP})`)
   })
 
+  it('transport button tooltips contain expected shortcuts in DOM attributes', async () => {
+    const wrapper = mount(DrumMachine)
+    await nextTick()
+
+    const buttons = wrapper.findAll('.transport-grid .control-btn')
+    const playBtn = buttons.find((btn) => btn.text().includes('PLAY'))
+    const stopBtn = buttons.find((btn) => btn.text().includes('STOP'))
+    const restartBtn = buttons.find((btn) => btn.text().includes('RESTART'))
+    const followBtn = buttons.find((btn) => btn.text().includes('FOLLOW'))
+
+    // PLAY button - verify title contains 'Space'
+    expect(playBtn).toBeDefined()
+    const playTitle = playBtn?.attributes('title')
+    expect(playTitle).toBeDefined()
+    expect(playTitle).toContain('PLAY')
+    expect(playTitle).toContain(SHORTCUT_COMMANDS.TRANSPORT_PLAY)
+
+    // STOP button - verify title contains 'Shift+Space'
+    expect(stopBtn).toBeDefined()
+    const stopTitle = stopBtn?.attributes('title')
+    expect(stopTitle).toBeDefined()
+    expect(stopTitle).toContain('STOP')
+    expect(stopTitle).toContain(SHORTCUT_COMMANDS.TRANSPORT_STOP)
+
+    // RESTART button - verify title contains 'L'
+    if (restartBtn) {
+      const restartTitle = restartBtn.attributes('title')
+      expect(restartTitle).toBeDefined()
+      expect(restartTitle).toContain('RESTART')
+      expect(restartTitle).toContain(SHORTCUT_COMMANDS.TRANSPORT_LOOP)
+    }
+
+    // FOLLOW button - verify title contains 'F'
+    if (followBtn) {
+      const followTitle = followBtn.attributes('title')
+      expect(followTitle).toBeDefined()
+      expect(followTitle).toContain('FOLLOW')
+      expect(followTitle).toContain(SHORTCUT_COMMANDS.TRANSPORT_FOLLOW)
+    }
+  })
+
   it('invokes play handler when PLAY is clicked', async () => {
     const wrapper = mount(DrumMachine)
     await nextTick()

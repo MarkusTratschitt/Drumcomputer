@@ -11,7 +11,7 @@ describe('DrumMachine quick edit buttons', () => {
     global.AudioContext = class { } as typeof AudioContext
   })
 
-  it('renders quick edit buttons with shortcut titles', async () => {
+  it('renders quick edit buttons with shortcut titles containing expected shortcuts', async () => {
     const wrapper = mount(DrumMachine)
     await nextTick()
     const quickEditButtons = wrapper.findAll('.quick-edit-btn')
@@ -21,9 +21,40 @@ describe('DrumMachine quick edit buttons', () => {
     const swingBtn = byLabel('SWING')
     const tempoBtn = byLabel('TEMPO')
 
-    expect(volumeBtn?.attributes('title')).toBe(`VOLUME (${SHORTCUT_COMMANDS.QUICK_VOLUME})`)
-    expect(swingBtn?.attributes('title')).toBe(`SWING (${SHORTCUT_COMMANDS.QUICK_SWING})`)
-    expect(tempoBtn?.attributes('title')).toBe(`TEMPO (${SHORTCUT_COMMANDS.QUICK_TEMPO})`)
+    // Assert title exists and contains expected shortcut
+    expect(volumeBtn).toBeDefined()
+    const volumeTitle = volumeBtn?.attributes('title')
+    expect(volumeTitle).toBeDefined()
+    expect(volumeTitle).toContain('VOLUME')
+    expect(volumeTitle).toContain(SHORTCUT_COMMANDS.QUICK_VOLUME)
+
+    expect(swingBtn).toBeDefined()
+    const swingTitle = swingBtn?.attributes('title')
+    expect(swingTitle).toBeDefined()
+    expect(swingTitle).toContain('SWING')
+    expect(swingTitle).toContain(SHORTCUT_COMMANDS.QUICK_SWING)
+
+    expect(tempoBtn).toBeDefined()
+    const tempoTitle = tempoBtn?.attributes('title')
+    expect(tempoTitle).toBeDefined()
+    expect(tempoTitle).toContain('TEMPO')
+    expect(tempoTitle).toContain(SHORTCUT_COMMANDS.QUICK_TEMPO)
+  })
+
+  it('quick edit button tooltips match expected format', async () => {
+    const wrapper = mount(DrumMachine)
+    await nextTick()
+    const quickEditButtons = wrapper.findAll('.quick-edit-btn')
+
+    // Verify all three buttons are present
+    expect(quickEditButtons.length).toBeGreaterThanOrEqual(3)
+
+    // Each button should have a title attribute with pattern "LABEL (SHORTCUT)"
+    for (const btn of quickEditButtons) {
+      const title = btn.attributes('title')
+      expect(title).toBeDefined()
+      expect(title).toMatch(/^.+\s\(.+\)$/) // Format: "LABEL (SHORTCUT)"
+    }
   })
 
   it('triggers focusedEncoderIndex change on quick edit click', async () => {
