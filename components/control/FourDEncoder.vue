@@ -3,8 +3,8 @@
     class="encoder"
     role="button"
     tabindex="0"
-    aria-label="4D encoder: tilt left/right, turn up/down, press to confirm"
-    title="4D encoder: tilt ↕↔, turn to browse, press to confirm"
+    :aria-label="encoderTooltip"
+    :title="encoderTooltip"
     @pointerdown.prevent="onPointerDown"
     @keydown="onKeydown"
   >
@@ -17,6 +17,7 @@
 <script lang="ts">
 import { defineComponent } from 'vue'
 import { useControlStore } from '@/stores/control'
+import { useShortcuts } from '@/composables/useShortcuts'
 
 const VERTICAL_STEP_PX = 6
 const HORIZONTAL_THRESHOLD_PX = 12
@@ -30,12 +31,20 @@ export default defineComponent({
       lastY: 0,
       accumX: 0,
       accumY: 0,
-      pointerId: null as number | null
+      pointerId: null as number | null,
+      shortcuts: useShortcuts()
     }
   },
   computed: {
     control() {
       return useControlStore()
+    },
+    encoderTooltip(): string {
+      const turnUp = this.shortcuts.title('ENC4D_TURN_INC', 'Turn +')
+      const turnDown = this.shortcuts.title('ENC4D_TURN_DEC', 'Turn -')
+      const tilt = this.shortcuts.title('ENC4D_TILT_LEFT', 'Tilt')
+      const press = this.shortcuts.title('ENC4D_PRESS', 'Press')
+      return `${turnUp} • ${turnDown} • ${tilt} • ${press}`
     }
   },
   beforeUnmount() {
@@ -94,21 +103,30 @@ export default defineComponent({
       window.removeEventListener('pointerup', this.onPointerUp)
     },
     onKeydown(event: KeyboardEvent) {
+      let handled = false
       if (event.key === 'ArrowUp') {
         this.control.turnEncoder4D(1)
         event.preventDefault()
+        handled = true
       } else if (event.key === 'ArrowDown') {
         this.control.turnEncoder4D(-1)
         event.preventDefault()
+        handled = true
       } else if (event.key === 'ArrowLeft') {
         this.control.tiltEncoder4D('left')
         event.preventDefault()
+        handled = true
       } else if (event.key === 'ArrowRight') {
         this.control.tiltEncoder4D('right')
         event.preventDefault()
+        handled = true
       } else if (event.key === 'Enter' || event.key === ' ') {
         void this.control.pressEncoder4D()
         event.preventDefault()
+        handled = true
+      }
+      if (handled) {
+        event.stopPropagation()
       }
     }
   }

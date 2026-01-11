@@ -186,7 +186,10 @@
                     :step="param.step"
                     :fine-step="param.fineStep ?? param.step"
                     :shift-held="shiftHeld"
+                    :tooltip="knobTooltip(index)"
                     @turn="onKnobTurn(index, $event)"
+                    @focus="onKnobFocus(index)"
+                    @blur="onKnobBlur(index)"
                   />
                 </div>
               </div>
@@ -622,7 +625,9 @@ export default defineComponent({
       presetDivision: patterns.currentPattern?.gridSpec?.division ?? DEFAULT_GRID_SPEC.division,
       channelTarget: 'sound' as 'sound' | 'group' | 'master',
       midiMode: false,
-      shiftPointerActive: false
+      shiftPointerActive: false,
+      focusedEncoderIndex: 0 as number | null,
+      lastNonBrowserMode: control.activeMode as ControlMode | null
     }
   },
 
@@ -1136,10 +1141,10 @@ computed: {
         description: 'Toggle Follow'
       })
       // Browser
-      shortcuts.register('BROWSER_OPEN', {
-        keys: SHORTCUT_COMMANDS.BROWSER_OPEN,
-        handler: () => this.handleModePress('BROWSER'),
-        description: 'Open Browser'
+      shortcuts.register('BROWSER_TOGGLE', {
+        keys: SHORTCUT_COMMANDS.BROWSER_TOGGLE,
+        handler: () => void this.toggleBrowser(),
+        description: 'Toggle Browser'
       })
       shortcuts.register('BROWSER_MODE_LIBRARY', {
         keys: SHORTCUT_COMMANDS.BROWSER_MODE_LIBRARY,
@@ -1151,10 +1156,114 @@ computed: {
         handler: () => void this.browser.setMode('FILES'),
         description: 'Browser: Files Mode'
       })
+      shortcuts.register('BROWSER_CLOSE', {
+        keys: SHORTCUT_COMMANDS.BROWSER_CLOSE,
+        handler: () => this.closeBrowser(),
+        description: 'Close Browser'
+      })
+      shortcuts.register('BROWSER_SEARCH_FOCUS', {
+        keys: SHORTCUT_COMMANDS.BROWSER_SEARCH_FOCUS,
+        handler: () => void this.focusBrowserSearch(),
+        description: 'Focus Browser Search'
+      })
+      shortcuts.register('BROWSER_CLEAR_SEARCH', {
+        keys: SHORTCUT_COMMANDS.BROWSER_CLEAR_SEARCH,
+        handler: () => this.clearBrowserSearch(),
+        description: 'Clear Browser Search'
+      })
+      shortcuts.register('BROWSER_NAV_UP', {
+        keys: SHORTCUT_COMMANDS.BROWSER_NAV_UP,
+        handler: () => {
+          if (this.control.activeMode === 'BROWSER' || this.control.activeMode === 'FILE') {
+            void this.browserSelectionDelta(-1)
+          } else {
+            this.adjustFocusedEncoder(1, false)
+          }
+        },
+        description: 'Browser: Previous Item'
+      })
+      shortcuts.register('BROWSER_NAV_DOWN', {
+        keys: SHORTCUT_COMMANDS.BROWSER_NAV_DOWN,
+        handler: () => {
+          if (this.control.activeMode === 'BROWSER' || this.control.activeMode === 'FILE') {
+            void this.browserSelectionDelta(1)
+          } else {
+            this.adjustFocusedEncoder(-1, false)
+          }
+        },
+        description: 'Browser: Next Item'
+      })
+      shortcuts.register('BROWSER_NAV_BACK', {
+        keys: SHORTCUT_COMMANDS.BROWSER_NAV_BACK,
+        handler: () => void this.browserNavBack(),
+        description: 'Browser: Up Folder'
+      })
+      shortcuts.register('BROWSER_NAV_INTO', {
+        keys: SHORTCUT_COMMANDS.BROWSER_NAV_INTO,
+        handler: () => void this.browserNavInto(),
+        description: 'Browser: Enter Item'
+      })
+      shortcuts.register('BROWSER_PREVIEW_TOGGLE', {
+        keys: SHORTCUT_COMMANDS.BROWSER_PREVIEW_TOGGLE,
+        handler: () => void this.browser.prehearSelected(),
+        description: 'Browser: Preview Selected'
+      })
       shortcuts.register('BROWSER_IMPORT_TO_PAD', {
         keys: SHORTCUT_COMMANDS.BROWSER_IMPORT_TO_PAD,
         handler: () => void this.importSelectedToPad(),
         description: 'Import selected file to current pad'
+      })
+      shortcuts.register('BROWSER_LOAD_SELECTED_TO_PAD', {
+        keys: SHORTCUT_COMMANDS.BROWSER_LOAD_SELECTED_TO_PAD,
+        handler: () => void this.importSelectedToPad(),
+        description: 'Load selected to pad'
+      })
+      // Encoders / knobs
+      shortcuts.register('KNOB_INC', {
+        keys: SHORTCUT_COMMANDS.KNOB_INC,
+        handler: () => this.adjustFocusedEncoder(1, false),
+        description: 'Increase focused encoder'
+      })
+      shortcuts.register('KNOB_DEC', {
+        keys: SHORTCUT_COMMANDS.KNOB_DEC,
+        handler: () => this.adjustFocusedEncoder(-1, false),
+        description: 'Decrease focused encoder'
+      })
+      shortcuts.register('KNOB_INC_FINE', {
+        keys: SHORTCUT_COMMANDS.KNOB_INC_FINE,
+        handler: () => this.adjustFocusedEncoder(1, true),
+        description: 'Increase focused encoder (fine)'
+      })
+      shortcuts.register('KNOB_DEC_FINE', {
+        keys: SHORTCUT_COMMANDS.KNOB_DEC_FINE,
+        handler: () => this.adjustFocusedEncoder(-1, true),
+        description: 'Decrease focused encoder (fine)'
+      })
+      // 4D encoder
+      shortcuts.register('ENC4D_TURN_INC', {
+        keys: SHORTCUT_COMMANDS.ENC4D_TURN_INC,
+        handler: () => this.control.turnEncoder4D(1),
+        description: '4D Encoder Turn +'
+      })
+      shortcuts.register('ENC4D_TURN_DEC', {
+        keys: SHORTCUT_COMMANDS.ENC4D_TURN_DEC,
+        handler: () => this.control.turnEncoder4D(-1),
+        description: '4D Encoder Turn -'
+      })
+      shortcuts.register('ENC4D_TILT_LEFT', {
+        keys: SHORTCUT_COMMANDS.ENC4D_TILT_LEFT,
+        handler: () => this.control.tiltEncoder4D('left'),
+        description: '4D Encoder Tilt Left'
+      })
+      shortcuts.register('ENC4D_TILT_RIGHT', {
+        keys: SHORTCUT_COMMANDS.ENC4D_TILT_RIGHT,
+        handler: () => this.control.tiltEncoder4D('right'),
+        description: '4D Encoder Tilt Right'
+      })
+      shortcuts.register('ENC4D_PRESS', {
+        keys: SHORTCUT_COMMANDS.ENC4D_PRESS,
+        handler: () => void this.control.pressEncoder4D(),
+        description: '4D Encoder Press'
       })
       // Pads
       const padMap: Record<string, DrumPadId> = {
@@ -1191,12 +1300,20 @@ computed: {
     handleGlobalShortcut(event: KeyboardEvent) {
       // Skip if typing in input/textarea
       const target = event.target as HTMLElement
-      if (target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA') return
+      if (event.defaultPrevented) return
+      if (target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA' || target?.isContentEditable) return
 
       const shortcuts = useShortcuts()
       shortcuts.dispatch(event)
     },
     handleModePress(mode: ControlMode, shiftActionId?: string) {
+      if (mode === 'BROWSER') {
+        if (this.control.activeMode !== 'BROWSER') {
+          this.lastNonBrowserMode = this.control.activeMode as ControlMode
+        }
+      } else {
+        this.lastNonBrowserMode = mode
+      }
       this.control.setMode(mode)
       if (mode === 'BROWSER') {
         void this.browser.setMode('LIBRARY')
@@ -1229,6 +1346,118 @@ computed: {
       const commandId = commandMap[mode]
       const base = secondary ? `${primary} (SHIFT: ${secondary})` : primary
       return commandId ? shortcuts.title(commandId, base) : base
+    },
+    async ensureBrowserMode() {
+      if (this.control.activeMode !== 'BROWSER' && this.control.activeMode !== 'FILE') {
+        this.lastNonBrowserMode = this.control.activeMode as ControlMode
+        this.handleModePress('BROWSER')
+      }
+      this.control.setBrowserDisplay(this.browser.toDisplayModels())
+      await this.$nextTick()
+    },
+    async toggleBrowser() {
+      if (this.control.activeMode === 'BROWSER') {
+        this.closeBrowser()
+        return
+      }
+      await this.ensureBrowserMode()
+    },
+    closeBrowser() {
+      const fallbackMode = this.lastNonBrowserMode ?? 'CHANNEL'
+      this.control.setMode(fallbackMode as ControlMode)
+    },
+    browserEntries(): Array<{ id: string; path?: string; isDir?: boolean }> {
+      if (this.browser.mode === 'FILES') {
+        const dirs = this.browser.files.entries?.dirs ?? []
+        const files = this.browser.files.entries?.files ?? []
+        return [
+          ...dirs.map((entry) => ({ id: entry.path, path: entry.path, isDir: true })),
+          ...files.map((entry) => ({ id: entry.path, path: entry.path, isDir: false }))
+        ]
+      }
+      return (this.browser.library.results ?? []).map((item) => {
+        const result: { id: string; path?: string; isDir?: boolean } = { id: item.id, isDir: false }
+        if (item.path) {
+          result.path = item.path
+        }
+        return result
+      })
+    },
+    setBrowserSelectionByIndex(items: Array<{ id: string; path?: string; isDir?: boolean }>, index: number) {
+      const entry = items[index]
+      if (!entry) return
+      if (this.browser.mode === 'FILES') {
+        this.browser.selectPath(entry.path ?? null)
+      } else {
+        void this.browser.selectResult(entry.id)
+      }
+    },
+    async browserSelectionDelta(delta: number) {
+      await this.ensureBrowserMode()
+      const items = this.browserEntries()
+      if (!items.length) return
+      const currentId = this.browser.mode === 'FILES' ? this.browser.files.selectedPath : this.browser.library.selectedId
+      const currentIndex = items.findIndex((item) => item.id === currentId)
+      const baseIndex = currentIndex >= 0 ? currentIndex : 0
+      const nextIndex = Math.min(Math.max(baseIndex + delta, 0), items.length - 1)
+      this.setBrowserSelectionByIndex(items, nextIndex)
+    },
+    async browserNavBack() {
+      await this.ensureBrowserMode()
+      if (this.browser.mode === 'FILES') {
+        const current = this.browser.files.currentPath || '/'
+        const segments = current.split('/').filter(Boolean)
+        if (segments.length === 0) return
+        segments.pop()
+        const parent = segments.length > 0 ? `/${segments.join('/')}` : '/'
+        await this.browser.listDir(parent)
+        const items = this.browserEntries()
+        if (items.length > 0) {
+          this.setBrowserSelectionByIndex(items, 0)
+        }
+        return
+      }
+      this.browser.selectResult(null)
+    },
+    async browserNavInto() {
+      await this.ensureBrowserMode()
+      if (this.browser.mode === 'FILES') {
+        const selectedPath = this.browser.files.selectedPath
+        if (!selectedPath) return
+        const repo = getFileSystemRepository()
+        const stat = await repo.stat(selectedPath)
+        if (stat?.isDir) {
+          await this.browser.listDir(selectedPath)
+          const items = this.browserEntries()
+          if (items.length > 0) {
+            this.setBrowserSelectionByIndex(items, 0)
+          }
+          return
+        }
+        await this.browser.importSelected({ contextId: this.selectedPadId, contextType: 'sample' })
+        return
+      }
+      if (!this.browser.library.selectedId && this.browser.library.results[0]) {
+        await this.browser.selectResult(this.browser.library.results[0].id)
+        return
+      }
+      await this.browser.importSelected({ contextId: this.selectedPadId, contextType: 'sample' })
+    },
+    async focusBrowserSearch() {
+      await this.ensureBrowserMode()
+      await this.$nextTick()
+      this.focusBrowserSearchInput()
+    },
+    focusBrowserSearchInput() {
+      const searchEl = this.$el.querySelector('.browser-search') as HTMLInputElement | null
+      if (searchEl) {
+        searchEl.focus()
+        searchEl.select?.()
+      }
+    },
+    clearBrowserSearch() {
+      void this.browser.setQuery('')
+      this.focusBrowserSearchInput()
     },
     pageButtonTitle(direction: 'prev' | 'next') {
       return `${direction === 'prev' ? 'Previous' : 'Next'} page (${this.pageLabel})`
@@ -1280,10 +1509,26 @@ computed: {
     onKnobTurn(index: number, payload: { delta: number; fine?: boolean }) {
       const delta = payload?.delta ?? 0
       if (!delta) return
+      this.focusedEncoderIndex = index
       this.control.turnEncoder(index, delta, { fine: payload?.fine ?? this.shiftHeld })
+    },
+    onKnobFocus(index: number) {
+      this.focusedEncoderIndex = index
+    },
+    onKnobBlur(index: number) {
+      this.focusedEncoderIndex = index
+    },
+    adjustFocusedEncoder(delta: number, fine = false) {
+      const index = this.focusedEncoderIndex ?? 0
+      const clamped = Math.min(Math.max(index, 0), Math.max(0, (this.encoderParams?.length ?? 1) - 1))
+      this.focusedEncoderIndex = clamped
+      this.control.turnEncoder(clamped, delta, { fine })
     },
     getParamName(index: number) {
       return this.encoderParams?.[index]?.name ?? `Encoder ${index + 1}`
+    },
+    knobTooltip(index: number): string {
+      return this.shortcutTitle('KNOB_INC', this.getParamName(index))
     },
     addPattern(payload: { name?: string }) {
       this.patterns.addPattern(payload?.name)

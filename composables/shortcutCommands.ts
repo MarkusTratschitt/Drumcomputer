@@ -16,12 +16,20 @@ export const SHORTCUT_COMMANDS = {
 
   // Browser
   BROWSER_OPEN: 'B',
+  BROWSER_TOGGLE: 'B',
   BROWSER_CLOSE: 'Escape',
-  BROWSER_SEARCH_FOCUS: '/',
+  BROWSER_SEARCH_FOCUS: 'Ctrl+K',
+  BROWSER_CLEAR_SEARCH: 'Ctrl+Backspace',
   BROWSER_PREVIEW_PLAY: 'P',
   BROWSER_PREVIEW_STOP: 'Shift+P',
+  BROWSER_PREVIEW_TOGGLE: 'Shift+P',
   BROWSER_LOAD_SELECTED: 'Enter',
+  BROWSER_LOAD_SELECTED_TO_PAD: 'Ctrl+Enter',
   BROWSER_IMPORT_TO_PAD: 'Ctrl+Enter',
+  BROWSER_NAV_UP: 'ArrowUp',
+  BROWSER_NAV_DOWN: 'ArrowDown',
+  BROWSER_NAV_BACK: 'Backspace',
+  BROWSER_NAV_INTO: 'Enter',
   BROWSER_FAVORITE_TOGGLE: 'Shift+F',
   BROWSER_MODE_LIBRARY: 'Shift+L',
   BROWSER_MODE_FILES: 'Shift+B',
@@ -55,6 +63,17 @@ export const SHORTCUT_COMMANDS = {
   ENCODER_TILT_LEFT: 'ArrowLeft',
   ENCODER_TILT_RIGHT: 'ArrowRight',
   ENCODER_PRESS: 'Enter',
+  ENC4D_TURN_INC: 'PageUp',
+  ENC4D_TURN_DEC: 'PageDown',
+  ENC4D_TILT_LEFT: 'ArrowLeft',
+  ENC4D_TILT_RIGHT: 'ArrowRight',
+  ENC4D_PRESS: 'Enter',
+
+  // Encoders / knobs
+  KNOB_INC: 'ArrowUp',
+  KNOB_DEC: 'ArrowDown',
+  KNOB_INC_FINE: 'Shift+ArrowUp',
+  KNOB_DEC_FINE: 'Shift+ArrowDown',
 
   // Modes
   MODE_CHANNEL: 'Ctrl+1',

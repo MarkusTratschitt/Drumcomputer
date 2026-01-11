@@ -51,4 +51,21 @@ describe('KnobControl', () => {
     const emitted = wrapper.emitted('turn') as Array<[{ delta: number; fine: boolean }]>
     expect(emitted?.[0]?.[0]).toMatchObject({ delta: 1, fine: true })
   })
+
+  it('emits focus when pointer is captured', async () => {
+    const wrapper = mount(KnobControl, { props: baseProps })
+    const el = wrapper.element as HTMLElement
+
+    el.dispatchEvent(new PointerEvent('pointerdown', { clientY: 50, pointerId: 2, bubbles: true }))
+    await nextTick()
+
+    expect(wrapper.emitted('focus')).toBeTruthy()
+  })
+
+  it('applies tooltip text to title', () => {
+    const tooltip = 'Volume (ArrowUp/Down)'
+    const wrapper = mount(KnobControl, { props: { ...baseProps, tooltip } })
+
+    expect(wrapper.attributes('title')).toBe(tooltip)
+  })
 })

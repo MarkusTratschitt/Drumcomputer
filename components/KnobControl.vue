@@ -4,11 +4,13 @@
     role="presentation"
     tabindex="0"
     :aria-label="ariaLabel"
-    :title="label"
+    :title="titleText"
     :style="knobStyle"
     @wheel.prevent="onWheel"
     @pointerdown.prevent="onPointerDown"
     @keydown="onKeydown"
+    @focus="onFocus"
+    @blur="onBlur"
   ></div>
 </template>
 
@@ -27,9 +29,10 @@ export default defineComponent({
     max: { type: Number, default: 127 },
     step: { type: Number, default: 1 },
     fineStep: { type: Number, default: undefined },
-    shiftHeld: { type: Boolean, default: false }
+    shiftHeld: { type: Boolean, default: false },
+    tooltip: { type: String, default: '' }
   },
-  emits: ['turn'],
+  emits: ['turn', 'focus', 'blur'],
   data() {
     return {
       dragActive: false,
@@ -53,6 +56,9 @@ export default defineComponent({
     },
     ariaLabel(): string {
       return this.label ? `${this.label}` : `Encoder ${this.index + 1}`
+    },
+    titleText(): string {
+      return this.tooltip || this.label || this.ariaLabel
     }
   },
   beforeUnmount() {
@@ -74,12 +80,18 @@ export default defineComponent({
       this.emitTurn(direction * steps, this.isFine(event))
     },
     onKeydown(event: KeyboardEvent) {
+      let handled = false
       if (event.key === 'ArrowUp' || event.key === 'ArrowRight') {
         this.emitTurn(1, this.isFine(event))
         event.preventDefault()
+        handled = true
       } else if (event.key === 'ArrowDown' || event.key === 'ArrowLeft') {
         this.emitTurn(-1, this.isFine(event))
         event.preventDefault()
+        handled = true
+      }
+      if (handled) {
+        event.stopPropagation()
       }
     },
     onPointerDown(event: PointerEvent) {
@@ -89,6 +101,8 @@ export default defineComponent({
       this.pointerId = event.pointerId
       const target = event.currentTarget as HTMLElement | null
       target?.setPointerCapture?.(event.pointerId)
+      target?.focus?.()
+      this.$emit('focus')
       window.addEventListener('pointermove', this.onPointerMove)
       window.addEventListener('pointerup', this.onPointerUp)
     },
@@ -112,6 +126,12 @@ export default defineComponent({
       this.dragAccumulator = 0
       window.removeEventListener('pointermove', this.onPointerMove)
       window.removeEventListener('pointerup', this.onPointerUp)
+    },
+    onFocus() {
+      this.$emit('focus')
+    },
+    onBlur() {
+      this.$emit('blur')
     }
   }
 })

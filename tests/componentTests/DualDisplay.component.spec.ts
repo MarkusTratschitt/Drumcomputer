@@ -2,10 +2,12 @@ import { describe, it, expect, beforeEach, vi as _vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import DualDisplay from '@/components/control/DualDisplay.vue'
+import { clearShortcuts, registerShortcut } from '@/composables/useShortcuts'
 
 describe('DualDisplay.vue', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
+    clearShortcuts()
   })
 
   it('renders left and right displays', () => {
@@ -131,6 +133,42 @@ describe('DualDisplay.vue', () => {
     expect(fileListWrapper.exists()).toBe(true)
     const visibleItems = wrapper.findAll('.display.right .item-list li')
     expect(visibleItems).toHaveLength(20)
+  })
+
+  it('wraps browser items in scroll container', () => {
+    const items = Array.from({ length: 30 }, (_, i) => ({ title: `Item ${i}`, subtitle: `Path ${i}` }))
+    const wrapper = mount(DualDisplay, {
+      props: {
+        leftModel: { view: 'BROWSER', title: 'Browser', items },
+        rightModel: { view: 'FILE', title: 'Files', items: [] },
+        modeTitle: 'Browser',
+        pageLabel: 'Page 1'
+      }
+    })
+
+    const browserList = wrapper.find('.display.left .browser-list')
+    expect(browserList.exists()).toBe(true)
+    expect(browserList.element).toBeInstanceOf(HTMLDivElement)
+  })
+
+  it('applies shortcut tooltip to browser search when registered', () => {
+    registerShortcut('BROWSER_SEARCH_FOCUS', {
+      keys: 'Ctrl+K',
+      handler: () => { },
+      description: 'Browser search'
+    })
+
+    const wrapper = mount(DualDisplay, {
+      props: {
+        leftModel: { view: 'BROWSER', title: 'Browser', items: [] },
+        rightModel: { view: 'FILE', title: 'Files', items: [] },
+        modeTitle: 'Browser',
+        pageLabel: 'Page 1'
+      }
+    })
+
+    const searchInput = wrapper.find('.display.left input[type="search"]')
+    expect(searchInput.attributes('title')).toContain('(Ctrl+K)')
   })
 
   it('applies active class to selected FILE items', () => {

@@ -15,17 +15,20 @@
               class="browser-search"
               placeholder="Search presets or samples"
               aria-label="Browser search"
+              :title="shortcutTitle('BROWSER_SEARCH_FOCUS', 'Search browser')"
             />
-            <ul class="item-list">
-              <li
-                v-for="item in filteredItems(leftModel)"
-                :key="item.title"
-                :class="{ active: item.active }"
-              >
-                <div class="item-title">{{ item.title }}</div>
-                <div class="item-subtitle">{{ item.subtitle }}</div>
-              </li>
-            </ul>
+            <div class="browser-list">
+              <ul class="item-list">
+                <li
+                  v-for="item in filteredItems(leftModel)"
+                  :key="item.title"
+                  :class="{ active: item.active }"
+                >
+                  <div class="item-title">{{ item.title }}</div>
+                  <div class="item-subtitle">{{ item.subtitle }}</div>
+                </li>
+              </ul>
+            </div>
           </template>
           <template v-else-if="leftModel.view === 'FILE'">
             <div class="panel-header">{{ leftModel.title || 'Files' }}</div>
@@ -35,6 +38,7 @@
               class="browser-search"
               placeholder="Filter files"
               aria-label="File search"
+              :title="shortcutTitle('BROWSER_SEARCH_FOCUS', 'Filter files')"
             />
             <div class="file-list-wrapper">
               <ul class="item-list">
@@ -95,12 +99,14 @@
         <div class="panel" :class="panelClass(rightModel)">
           <template v-if="rightModel.view === 'BROWSER'">
             <div class="panel-header">{{ rightModel.title || 'Results' }}</div>
-            <ul class="item-list">
-              <li v-for="item in filteredItems(rightModel)" :key="item.title" :class="{ active: item.active }">
-                <div class="item-title">{{ item.title }}</div>
-                <div class="item-subtitle">{{ item.subtitle }}</div>
-              </li>
-            </ul>
+            <div class="browser-list">
+              <ul class="item-list">
+                <li v-for="item in filteredItems(rightModel)" :key="item.title" :class="{ active: item.active }">
+                  <div class="item-title">{{ item.title }}</div>
+                  <div class="item-subtitle">{{ item.subtitle }}</div>
+                </li>
+              </ul>
+            </div>
             <div v-if="rightModel.summary" class="panel-hint">{{ rightModel.summary }}</div>
           </template>
           <template v-else-if="rightModel.view === 'MIXER' || rightModel.view === 'ARRANGER' || rightModel.view === 'SETTINGS' || rightModel.view === 'INFO' || rightModel.view === 'FILE'">
@@ -166,6 +172,7 @@
 import { defineComponent, type PropType } from 'vue'
 import { useBrowserStore } from '@/stores/browser'
 import { useControlStore } from '@/stores/control'
+import { useShortcuts } from '@/composables/useShortcuts'
 
 type ListItem = {
   title: string
@@ -221,7 +228,8 @@ export default defineComponent({
       browserQuery: '',
       fileQuery: '',
       browserStore: useBrowserStore(),
-      controlStore: useControlStore()
+      controlStore: useControlStore(),
+      shortcuts: useShortcuts()
     }
   },
   watch: {
@@ -237,6 +245,9 @@ export default defineComponent({
     }
   },
   methods: {
+    shortcutTitle(commandId: string, label: string) {
+      return this.shortcuts.title(commandId, label)
+    },
     formatParam(value: number, param: ParamSlot) {
       if (param.format) {
         return `${value}${param.format}`
@@ -309,6 +320,7 @@ export default defineComponent({
 
 .display-body {
   flex: 1 1 auto;
+  min-height: 0;
   padding: @space-s;
   font-size: @font-size-s;
   opacity: 0.9;
@@ -337,6 +349,13 @@ export default defineComponent({
   overflow-y: auto;
   overflow-x: hidden;
   margin-bottom: @space-xxs;
+}
+
+.browser-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .panel-header {

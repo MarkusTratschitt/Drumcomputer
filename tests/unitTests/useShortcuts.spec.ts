@@ -107,6 +107,25 @@ describe('useShortcuts', () => {
     expect(shortHandler).not.toHaveBeenCalled()
   })
 
+  it('dispatches Shift+ArrowUp combos for fine controls', () => {
+    const handler = vi.fn()
+    registerShortcut('KNOB_INC_FINE', {
+      keys: 'Shift+ArrowUp',
+      handler,
+      description: 'Fine increment'
+    })
+
+    const event = new KeyboardEvent('keydown', {
+      key: 'ArrowUp',
+      shiftKey: true
+    })
+
+    const result = dispatchShortcut(event)
+
+    expect(result).toBe(true)
+    expect(handler).toHaveBeenCalled()
+  })
+
   it('unregisters shortcuts', () => {
     const handler = vi.fn()
     registerShortcut('TEST_CMD', {
