@@ -2533,7 +2533,7 @@ computed: {
   width: var(--control-row-h);
   height: var(--control-row-h);
   transform: translateY(var(--knob-y));
-   --knob-angle: 0deg;
+  --knob-angle: 0deg;
   border-radius: 999px;
   background: radial-gradient(circle at 30% 30%, #3a4150, #151a24 70%);
   border: 1px solid rgba(255,255,255,0.1);
@@ -2699,7 +2699,7 @@ computed: {
 
 .right-column {
   grid-area: right;
-  display: flex;
+  display: grid;
   flex-direction: column;
   gap: var(--device-gap);
   min-height: 0;
@@ -2946,17 +2946,27 @@ computed: {
   grid-column: 1 / 3;
   grid-row: 2;
 }
-
 .performance-vert {
-  grid-column: 4;
-  grid-row: 2;
-  display: grid;
-  grid-template-rows: repeat(3, var(--edit-btn-h, clamp(34px, 4.2vh, 44px)));
-  row-gap: var(--edit-row-gap, @space-xxs);
-  align-self: end;
-  justify-self: stretch;
-  width: 100%;
+    grid-column: 4;
+    grid-row: inherit;
+    display: grid;
+    grid-template-rows: repeat(3, var(--edit-btn-h, clamp(34px, 4.2vh, 44px)));
+    /* row-gap: var(--edit-row-gap, 2px); */
+    /* align-self: end; */
+    /* justify-self: stretch; */
+    width: 100%;
+    justify-content: center;
 }
+/*.performance-vert {
+/*  grid-column: 4;
+/*  grid-row: 2;
+/*  display: grid;
+/*  grid-template-rows: repeat(3, var(--edit-btn-h, clamp(34px, 4.2vh, 44px)));
+/*  row-gap: var(--edit-row-gap, @space-xxs);
+/*  align-self: end;
+/*  justify-self: stretch;
+/*  width: 100%;
+/*}*/
 
 .performance-vert .control-btn {
   width: 100%;
@@ -2976,7 +2986,7 @@ computed: {
   row-gap: var(--edit-row-gap, @space-xxs);
   align-self: start;
   justify-self: stretch;
-  width: 100%;
+  width: 94%;
 }
 
 .performance-btn-row {
@@ -3100,7 +3110,7 @@ computed: {
   grid-template-columns: 1fr;
   grid-template-rows: repeat(8, 1fr);
   gap: @space-xxs;
-  align-self: end;
+  align-self: start;
   height: var(--pads-square-size);
 }
 
@@ -3115,7 +3125,7 @@ computed: {
 }
 
 .mode-buttons .control-btn {
-  min-height: calc(var(--pad-cell-size) * 2);
+  min-height: calc(var(--pad-cell-size) /4 * 2);
 }
 
 .drum-machine-shell :deep(.mode-buttons .control-btn) {
