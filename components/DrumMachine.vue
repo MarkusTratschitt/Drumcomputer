@@ -2714,6 +2714,8 @@ computed: {
   flex-direction: column;
   gap: var(--device-gap);
   min-height: 0;
+  width: 80%;
+  align-self: start;
 }
 
 .drum-machine-shell :deep(.right-column) {
