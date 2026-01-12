@@ -2656,13 +2656,24 @@ computed: {
   min-height: 0;
 }
 
+
 .left-column {
-  grid-area: left;
-  display: flex;
-  flex-direction: column;
-  gap: @space-s;
-  min-height: 0;
+    grid-area: left;
+    display: flex;
+    gap: 12px;
+    min-height: 0;
+    justify-content: flex-end;
+    flex-direction: column;
+    width: max-content;
 }
+
+/*.left-column {
+/*  grid-area: left;
+/*  display: flex;
+/*  flex-direction: column;
+/*  gap: @space-s;
+/*  min-height: 0;
+/*}*/
 
 .transport-cluster {
   background: linear-gradient(180deg, #1f2531, #141924);
@@ -3070,7 +3081,7 @@ computed: {
 }
 
 .right-column {
-  justify-content: flex-end;
+  justify-content: center;
 }
 
 .drum-machine-shell :deep(.right-column) {
