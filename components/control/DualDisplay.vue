@@ -9,14 +9,14 @@
         <div class="panel" :class="panelClass(leftModel)">
           <template v-if="leftModel.view === 'BROWSER'">
             <div class="panel-header">{{ leftModel.title || 'Browser' }}</div>
-            <input
+            <!-- <input
               v-model="browserQuery"
               type="search"
               class="browser-search"
               placeholder="Search presets or samples"
               aria-label="Browser search"
               :title="shortcutTitle('BROWSER_SEARCH_FOCUS', 'Search browser')"
-            />
+            /> -->
             <div class="browser-list">
               <ul class="item-list">
                 <li
@@ -40,14 +40,14 @@
           </template>
           <template v-else-if="leftModel.view === 'FILE'">
             <div class="panel-header">{{ leftModel.title || 'Files' }}</div>
-            <input
+            <!-- <input
               v-model="fileQuery"
               type="search"
               class="browser-search"
               placeholder="Filter files"
               aria-label="File search"
               :title="shortcutTitle('BROWSER_SEARCH_FOCUS', 'Filter files')"
-            />
+            /> -->
             <div class="file-list-wrapper">
               <ul class="item-list">
                 <li v-for="item in filteredItems(leftModel)" :key="item.title">
@@ -120,13 +120,13 @@
           <template v-else-if="rightModel.view === 'MIXER' || rightModel.view === 'ARRANGER' || rightModel.view === 'SETTINGS' || rightModel.view === 'INFO' || rightModel.view === 'FILE'">
             <div class="panel-header">{{ rightModel.title || 'Details' }}</div>
             <template v-if="rightModel.view === 'FILE'">
-              <input
+              <!-- <input
                 v-model="fileQuery"
                 type="search"
                 class="browser-search"
                 placeholder="Filter files"
                 aria-label="File search"
-              />
+              /> -->
               <div class="file-list-wrapper">
                 <ul class="item-list">
                   <li v-for="item in filteredItems(rightModel)" :key="item.title" :class="{ active: item.active }">
@@ -380,7 +380,7 @@ export default defineComponent({
   opacity: 0.8;
 }
 
-.browser-search {
+/* .browser-search {
   width: 100%;
   background: #0b1017;
   border: 1px solid #1f2a3a;
@@ -389,7 +389,7 @@ export default defineComponent({
   color: #cfe9ff;
   margin-bottom: @space-xxs;
   font-size: @font-size-s;
-}
+} */
 
 .item-list {
   list-style: none;

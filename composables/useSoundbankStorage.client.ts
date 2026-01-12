@@ -143,7 +143,9 @@ export function useSoundbankStorage() {
     return new Promise<void>((resolve, reject) => {
       const tx = db.transaction(['patterns'], 'readwrite')
       patterns.forEach((pattern) => {
-        const record: StoredPatternRecord = { id: `${bankId}:${pattern.id}`, bankId, pattern }
+        // Dehydrate Vue Proxy to plain object for IndexedDB serialization
+        const plainPattern = JSON.parse(JSON.stringify(pattern))
+        const record: StoredPatternRecord = { id: `${bankId}:${pattern.id}`, bankId, pattern: plainPattern }
         tx.objectStore('patterns').put(record)
       })
       tx.oncomplete = () => resolve()

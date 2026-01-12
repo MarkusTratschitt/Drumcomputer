@@ -13,5 +13,7 @@
     "Soundbanks",
     "unwatchers"
   ],
-  "jupyter.logKernelOutputSeparately": true
+  "jupyter.logKernelOutputSeparately": true,
+  "notebook.formatOnSave.enabled": true,
+  "editor.formatOnSave": true
 }

@@ -1576,11 +1576,11 @@ computed: {
       this.focusBrowserSearchInput()
     },
     focusBrowserSearchInput() {
-      const searchEl = this.$el.querySelector('.browser-search') as HTMLInputElement | null
-      if (searchEl) {
-        searchEl.focus()
-        searchEl.select?.()
-      }
+      // const searchEl = this.$el.querySelector('.browser-search') as HTMLInputElement | null
+      // if (searchEl) {
+      //   searchEl.focus()
+      //   searchEl.select?.()
+      // }
     },
     clearBrowserSearch() {
       void this.browser.setQuery('')

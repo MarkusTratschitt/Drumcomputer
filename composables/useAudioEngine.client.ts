@@ -20,6 +20,7 @@ const createAudioEngineInstance = () => {
   const audioContext = ref<AudioContext | null>(null)
   const masterGain = ref<GainNode | null>(null)
   const sampleCache = ref<Map<DrumPadId, AudioBuffer>>(new Map())
+  const decodeErrors = ref<Map<string, Error>>(new Map())
   const fxSettings = ref<FxSettings>({
     filter: { enabled: true, frequency: 12000, q: 0.7 },
     drive: { enabled: false, amount: 0.25 },
@@ -86,14 +87,51 @@ const createAudioEngineInstance = () => {
     if (sample.buffer) {
       return sample.buffer
     }
+
     if (sample.blob) {
-      const arrayBuffer = await sample.blob.arrayBuffer()
-      return ctx.decodeAudioData(arrayBuffer.slice(0))
+      try {
+        // Validate blob before attempting to decode
+        if (!sample.blob.size || sample.blob.size === 0) {
+          throw new Error(`Blob for sample ${sample.id} is empty`)
+        }
+
+        const arrayBuffer = await sample.blob.arrayBuffer()
+        if (!arrayBuffer || arrayBuffer.byteLength === 0) {
+          throw new Error(`Blob for sample ${sample.id} produced empty ArrayBuffer`)
+        }
+
+        return await new Promise<AudioBuffer>((resolve, reject) => {
+          ctx.decodeAudioData(arrayBuffer.slice(0), resolve, reject)
+        })
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error)
+        const fullMsg = `Failed to decode audio blob for sample ${sample.id}: ${errorMsg}`
+        console.error(fullMsg, error)
+        decodeErrors.value.set(sample.id, error instanceof Error ? error : new Error(errorMsg))
+        return null
+      }
     }
+
     if (sample.url) {
-      const response = await fetch(sample.url)
-      const arrayBuffer = await response.arrayBuffer()
-      return ctx.decodeAudioData(arrayBuffer)
+      try {
+        const response = await fetch(sample.url)
+        if (!response.ok) {
+          throw new Error(`Failed to fetch audio from URL ${sample.url}: ${response.statusText}`)
+        }
+        const arrayBuffer = await response.arrayBuffer()
+        if (!arrayBuffer || arrayBuffer.byteLength === 0) {
+          throw new Error(`Audio URL ${sample.url} returned empty data`)
+        }
+        return await new Promise<AudioBuffer>((resolve, reject) => {
+          ctx.decodeAudioData(arrayBuffer, resolve, reject)
+        })
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error)
+        const fullMsg = `Failed to decode audio from URL ${sample.url}: ${errorMsg}`
+        console.error(fullMsg, error)
+        decodeErrors.value.set(sample.id, error instanceof Error ? error : new Error(errorMsg))
+        return null
+      }
     }
     return null
   }
@@ -103,17 +141,30 @@ const createAudioEngineInstance = () => {
     if (buffer) {
       sampleCache.value.set(padId, buffer)
     }
+    // Return boolean to indicate success/failure
+    return buffer !== null && buffer !== undefined
   }
 
   const applySoundbank = async (bank: Soundbank) => {
     const entries = Object.entries(bank.pads)
-    await Promise.all(
+    const results = await Promise.all(
       entries.map(async ([padId, sample]) => {
         if (sample) {
-          await setSampleForPad(padId as DrumPadId, sample)
+          const success = await setSampleForPad(padId as DrumPadId, sample)
+          return { padId, success }
         }
+        return { padId, success: false }
       })
     )
+
+    const failedPads = results.filter(r => !r.success).map(r => r.padId)
+    if (failedPads.length > 0) {
+      const msg = `Failed to load samples for pads: ${failedPads.join(', ')}`
+      console.warn(msg)
+    }
+
+    // Return results instead of silently failing
+    return { successCount: results.filter(r => r.success).length, failedPads }
   }
 
   const setFx = (partial: Partial<FxSettings>) => {
@@ -195,6 +246,7 @@ const createAudioEngineInstance = () => {
     audioContext,
     masterGain,
     sampleCache,
+    decodeErrors,
     fxSettings,
     ensureContext,
     resumeContext,
