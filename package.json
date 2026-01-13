@@ -1,56 +1,59 @@
 {
-  "name": "drumcomputer",
-  "version": "0.1.0",
-  "private": true,
-  "type": "module",
-  "scripts": {
-    "dev": "node scripts/dev.mjs",
-    "build": "nuxt build",
-    "generate": "nuxt generate",
-    "preview": "nuxt preview",
-    "lint": "eslint .",
-    "typecheck": "vue-tsc --noEmit",
-    "build:test": "tsc -p tsconfig.test.json",
-    "test:unit": "vitest run tests/unitTests/*.spec.ts",
-    "test:components": "vitest",
-    "test:watch": "mocha --watch --loader ts-node/esm --require jsdom-global/register tests/**/*.spec.ts"
+  "dependencies" : {
+    "pug" : "^3.0.3",
+    "@tonejs\/midi" : "^2.0.27",
+    "file-saver" : "^2.0.5",
+    "@pinia\/nuxt" : "^0.5.4",
+    "vuetify" : "^3.11.4",
+    "@vite-pwa\/nuxt" : "^1.1.0",
+    "nuxt" : "^4.2.2",
+    "pinia" : "^2.2.6"
   },
-  "dependencies": {
-    "@pinia/nuxt": "^0.5.4",
-    "@tonejs/midi": "^2.0.27",
-    "@vite-pwa/nuxt": "^0.10.1",
-    "file-saver": "^2.0.5",
-    "nuxt": "^4.2.2",
-    "pinia": "^2.2.6",
-    "pug": "^3.0.3",
-    "vuetify": "^3.11.4"
+  "volta" : {
+    "node" : "20.19.6"
   },
-  "devDependencies": {
-    "@eslint/eslintrc": "^3.3.3",
-    "@types/chai": "^5.2.3",
-    "@types/mocha": "^10.0.10",
-    "@types/node": "^25.0.3",
-    "@types/vue": "^1.0.31",
-    "@types/webmidi": "^2.0.12",
-    "@types/wicg-file-system-access": "^2023.10.7",
-    "@typescript-eslint/eslint-plugin": "^8.18.1",
-    "@typescript-eslint/parser": "^8.18.1",
-    "@vue/test-utils": "^2.4.6",
-    "chai": "^4.5.0",
-    "eslint": "^9.13.0",
-    "eslint-plugin-vue": "^9.29.0",
-    "fake-indexeddb": "^6.2.5",
-    "jsdom": "^27.3.0",
-    "jsdom-global": "^3.0.2",
-    "less": "^4.2.0",
-    "mocha": "^11.7.5",
-    "ts-node": "^10.9.2",
-    "tsx": "^4.21.0",
-    "typescript": "^5.6.3",
-    "vitest": "^4.0.16",
-    "vue-tsc": "^2.1.10"
+  "version" : "0.1.0",
+  "scripts" : {
+    "build" : "nuxt build",
+    "typecheck" : "vue-tsc --noEmit",
+    "build:test" : "tsc -p tsconfig.test.json",
+    "test:watch" : "mocha --watch --loader ts-node\/esm --require jsdom-global\/register tests\/**\/*.spec.ts",
+    "preview" : "nuxt preview",
+    "lint" : "eslint .",
+    "test:components" : "vitest",
+    "test:unit" : "vitest run tests\/unitTests\/*.spec.ts",
+    "generate" : "nuxt generate",
+    "dev" : "node scripts\/dev.mjs"
   },
-  "volta": {
-    "node": "20.19.6"
+  "name" : "drumcomputer",
+  "private" : true,
+  "type" : "module",
+  "devDependencies" : {
+    "@eslint\/eslintrc" : "^3.3.3",
+    "tsx" : "^4.21.0",
+    "@types\/node" : "^25.0.3",
+    "vitest" : "^4.0.16",
+    "chai" : "^4.5.0",
+    "fake-indexeddb" : "^6.2.5",
+    "jsdom-global" : "^3.0.2",
+    "@types\/vue" : "^1.0.31",
+    "eslint-plugin-vue" : "^9.29.0",
+    "@types\/mocha" : "^10.0.10",
+    "jsdom" : "^27.3.0",
+    "typescript" : "^5.6.3",
+    "vue-tsc" : "^2.1.10",
+    "@typescript-eslint\/parser" : "^8.18.1",
+    "ts-node" : "^10.9.2",
+    "@types\/wicg-file-system-access" : "^2023.10.7",
+    "@typescript-eslint\/eslint-plugin" : "^8.18.1",
+    "eslint" : "^9.13.0",
+    "@vue\/test-utils" : "^2.4.6",
+    "@types\/chai" : "^5.2.3",
+    "@types\/webmidi" : "^2.0.12",
+    "less" : "^4.2.0",
+    "mocha" : "^11.7.5"
+  },
+  "optionalDependencies" : {
+
   }
 }
