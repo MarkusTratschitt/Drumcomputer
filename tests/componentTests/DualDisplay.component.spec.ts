@@ -23,7 +23,7 @@ describe('DualDisplay.vue', () => {
     expect(wrapper.find('.display.right').exists()).toBe(true)
   })
 
-  it('shows file search input in FILE view', () => {
+  it('does not show file search input in FILE view', () => {
     const wrapper = mount(DualDisplay, {
       props: {
         leftModel: { view: 'FILE', title: 'Files', items: [] },
@@ -32,9 +32,8 @@ describe('DualDisplay.vue', () => {
         pageLabel: 'Page 1'
       }
     })
-    const searchInput = wrapper.find('.display.left input[type="search"]')
-    expect(searchInput.exists()).toBe(true)
-    expect(searchInput.attributes('placeholder')).toBe('Filter files')
+    const searchInput = wrapper.find('.display.left input[type="text"]')
+    expect(searchInput.exists()).toBe(false)
   })
 
   it('renders scrollable file list wrapper in FILE view', () => {
@@ -66,12 +65,10 @@ describe('DualDisplay.vue', () => {
         leftModel: { view: 'FILE', title: 'Files', items },
         rightModel: { view: 'BROWSER', title: 'Browser', items: [] },
         modeTitle: 'File Mode',
-        pageLabel: 'Page 1'
+        pageLabel: 'Page 1',
+        fileQuery: 'kick'
       }
     })
-    const searchInput = wrapper.find('.display.left input[type="search"]')
-    await searchInput.setValue('kick')
-    await wrapper.vm.$nextTick()
     const visibleItems = wrapper.findAll('.display.left .item-list li')
     expect(visibleItems).toHaveLength(1)
     expect(visibleItems[0].text()).toContain('kick.wav')
@@ -88,12 +85,10 @@ describe('DualDisplay.vue', () => {
         leftModel: { view: 'BROWSER', title: 'Browser', items },
         rightModel: { view: 'FILE', title: 'Files', items: [] },
         modeTitle: 'Browser Mode',
-        pageLabel: 'Page 1'
+        pageLabel: 'Page 1',
+        browserQuery: 'snare'
       }
     })
-    const searchInput = wrapper.find('.display.left input[type="search"]')
-    await searchInput.setValue('snare')
-    await wrapper.vm.$nextTick()
     const visibleItems = wrapper.findAll('.display.left .item-list li')
     expect(visibleItems).toHaveLength(1)
     expect(visibleItems[0].text()).toContain('Snare Clap')
@@ -167,8 +162,8 @@ describe('DualDisplay.vue', () => {
       }
     })
 
-    const searchInput = wrapper.find('.display.left input[type="search"]')
-    expect(searchInput.attributes('title')).toContain('(Ctrl+K)')
+    const display = wrapper.find('.display.left')
+    expect(display.attributes('title')).toContain('(Ctrl+K)')
   })
 
   it('shows browser search shortcut id when not registered', () => {
@@ -180,9 +175,9 @@ describe('DualDisplay.vue', () => {
         pageLabel: 'Page 1'
       }
     })
-    const searchInput = wrapper.find('.display.left input[type="search"]')
+    const display = wrapper.find('.display.left')
     // When unregistered, the shortcutTitle method returns the label only
-    expect(searchInput.attributes('title')).toBe('Search browser')
+    expect(display.attributes('title')).toBe('Search browser')
   })
 
   it('renders load-to-pad control with shortcut and emits event', async () => {
