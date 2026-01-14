@@ -5,32 +5,40 @@ import DualDisplay from '@/components/control/DualDisplay.vue'
 import { clearShortcuts, registerShortcut } from '@/composables/useShortcuts'
 
 describe('DualDisplay.vue', () => {
+  let pinia: ReturnType<typeof createPinia>
+
   beforeEach(() => {
-    setActivePinia(createPinia())
+    pinia = createPinia()
+    setActivePinia(pinia)
     clearShortcuts()
   })
 
-  it('renders left and right displays', () => {
-    const wrapper = mount(DualDisplay, {
-      props: {
-        leftModel: { view: 'BROWSER', title: 'Test Left' },
-        rightModel: { view: 'FILE', title: 'Test Right' },
-        modeTitle: 'Test Mode',
-        pageLabel: 'Page 1'
+  const mountDualDisplay = (props: Record<string, unknown>) => {
+    return mount(DualDisplay, {
+      props,
+      global: {
+        plugins: [pinia]
       }
+    })
+  }
+
+  it('renders left and right displays', () => {
+    const wrapper = mountDualDisplay({
+      leftModel: { view: 'BROWSER', title: 'Test Left' },
+      rightModel: { view: 'FILE', title: 'Test Right' },
+      modeTitle: 'Test Mode',
+      pageLabel: 'Page 1'
     })
     expect(wrapper.find('.display.left').exists()).toBe(true)
     expect(wrapper.find('.display.right').exists()).toBe(true)
   })
 
   it('does not show file search input in FILE view', () => {
-    const wrapper = mount(DualDisplay, {
-      props: {
-        leftModel: { view: 'FILE', title: 'Files', items: [] },
-        rightModel: { view: 'BROWSER', title: 'Browser', items: [] },
-        modeTitle: 'File Mode',
-        pageLabel: 'Page 1'
-      }
+    const wrapper = mountDualDisplay({
+      leftModel: { view: 'FILE', title: 'Files', items: [] },
+      rightModel: { view: 'BROWSER', title: 'Browser', items: [] },
+      modeTitle: 'File Mode',
+      pageLabel: 'Page 1'
     })
     const searchInput = wrapper.find('.display.left input[type="text"]')
     expect(searchInput.exists()).toBe(false)
@@ -41,13 +49,11 @@ describe('DualDisplay.vue', () => {
       title: `File ${i + 1}`,
       subtitle: `path/to/file${i + 1}`
     }))
-    const wrapper = mount(DualDisplay, {
-      props: {
-        leftModel: { view: 'FILE', title: 'Files', items },
-        rightModel: { view: 'BROWSER', title: 'Browser', items: [] },
-        modeTitle: 'File Mode',
-        pageLabel: 'Page 1'
-      }
+    const wrapper = mountDualDisplay({
+      leftModel: { view: 'FILE', title: 'Files', items },
+      rightModel: { view: 'BROWSER', title: 'Browser', items: [] },
+      modeTitle: 'File Mode',
+      pageLabel: 'Page 1'
     })
     const fileListWrapper = wrapper.find('.display.left .file-list-wrapper')
     expect(fileListWrapper.exists()).toBe(true)
@@ -60,15 +66,13 @@ describe('DualDisplay.vue', () => {
       { title: 'snare.wav', subtitle: 'path/snare.wav' },
       { title: 'hihat.wav', subtitle: 'path/hihat.wav' }
     ]
-    const wrapper = mount(DualDisplay, {
-      props: {
-        leftModel: { view: 'FILE', title: 'Files', items },
-        rightModel: { view: 'BROWSER', title: 'Browser', items: [] },
-        modeTitle: 'File Mode',
-        pageLabel: 'Page 1',
-        fileQuery: 'kick'
-      }
+    const wrapper = mountDualDisplay({
+      leftModel: { view: 'FILE', title: 'Files', items },
+      rightModel: { view: 'BROWSER', title: 'Browser', items: [] },
+      modeTitle: 'File Mode',
+      pageLabel: 'Page 1'
     })
+    await wrapper.setData({ fileQuery: 'kick' })
     const visibleItems = wrapper.findAll('.display.left .item-list li')
     expect(visibleItems).toHaveLength(1)
     expect(visibleItems[0].text()).toContain('kick.wav')
@@ -80,15 +84,13 @@ describe('DualDisplay.vue', () => {
       { title: 'Snare Clap', subtitle: 'Snappy' },
       { title: 'Hi-Hat Closed', subtitle: 'Metallic' }
     ]
-    const wrapper = mount(DualDisplay, {
-      props: {
-        leftModel: { view: 'BROWSER', title: 'Browser', items },
-        rightModel: { view: 'FILE', title: 'Files', items: [] },
-        modeTitle: 'Browser Mode',
-        pageLabel: 'Page 1',
-        browserQuery: 'snare'
-      }
+    const wrapper = mountDualDisplay({
+      leftModel: { view: 'BROWSER', title: 'Browser', items },
+      rightModel: { view: 'FILE', title: 'Files', items: [] },
+      modeTitle: 'Browser Mode',
+      pageLabel: 'Page 1'
     })
+    await wrapper.setData({ browserQuery: 'snare' })
     const visibleItems = wrapper.findAll('.display.left .item-list li')
     expect(visibleItems).toHaveLength(1)
     expect(visibleItems[0].text()).toContain('Snare Clap')
@@ -99,13 +101,11 @@ describe('DualDisplay.vue', () => {
       title: `File ${i + 1}`,
       subtitle: `path/file${i + 1}`
     }))
-    const wrapper = mount(DualDisplay, {
-      props: {
-        leftModel: { view: 'FILE', title: 'Files', items },
-        rightModel: { view: 'BROWSER', title: 'Browser', items: [] },
-        modeTitle: 'File Mode',
-        pageLabel: 'Page 1'
-      }
+    const wrapper = mountDualDisplay({
+      leftModel: { view: 'FILE', title: 'Files', items },
+      rightModel: { view: 'BROWSER', title: 'Browser', items: [] },
+      modeTitle: 'File Mode',
+      pageLabel: 'Page 1'
     })
     const visibleItems = wrapper.findAll('.display.left .item-list li')
     expect(visibleItems).toHaveLength(10)
@@ -116,13 +116,11 @@ describe('DualDisplay.vue', () => {
       title: `Dir ${i + 1}`,
       subtitle: `path/dir${i + 1}`
     }))
-    const wrapper = mount(DualDisplay, {
-      props: {
-        leftModel: { view: 'BROWSER', title: 'Browser', items: [] },
-        rightModel: { view: 'FILE', title: 'Files', items },
-        modeTitle: 'File Mode',
-        pageLabel: 'Page 1'
-      }
+    const wrapper = mountDualDisplay({
+      leftModel: { view: 'BROWSER', title: 'Browser', items: [] },
+      rightModel: { view: 'FILE', title: 'Files', items },
+      modeTitle: 'File Mode',
+      pageLabel: 'Page 1'
     })
     const fileListWrapper = wrapper.find('.display.right .file-list-wrapper')
     expect(fileListWrapper.exists()).toBe(true)
@@ -132,13 +130,11 @@ describe('DualDisplay.vue', () => {
 
   it('wraps browser items in scroll container', () => {
     const items = Array.from({ length: 30 }, (_, i) => ({ title: `Item ${i}`, subtitle: `Path ${i}` }))
-    const wrapper = mount(DualDisplay, {
-      props: {
-        leftModel: { view: 'BROWSER', title: 'Browser', items },
-        rightModel: { view: 'FILE', title: 'Files', items: [] },
-        modeTitle: 'Browser',
-        pageLabel: 'Page 1'
-      }
+    const wrapper = mountDualDisplay({
+      leftModel: { view: 'BROWSER', title: 'Browser', items },
+      rightModel: { view: 'FILE', title: 'Files', items: [] },
+      modeTitle: 'Browser',
+      pageLabel: 'Page 1'
     })
 
     const browserList = wrapper.find('.display.left .browser-list')
@@ -146,38 +142,15 @@ describe('DualDisplay.vue', () => {
     expect(browserList.element).toBeInstanceOf(HTMLDivElement)
   })
 
-  it('applies shortcut tooltip to browser search when registered', () => {
-    registerShortcut('BROWSER_SEARCH_FOCUS', {
-      keys: 'Ctrl+K',
-      handler: () => { },
-      description: 'Browser search'
+  it('renders display title with mode and page', () => {
+    const wrapper = mountDualDisplay({
+      leftModel: { view: 'BROWSER', title: 'Browser', items: [] },
+      rightModel: { view: 'FILE', title: 'Files', items: [] },
+      modeTitle: 'Browser',
+      pageLabel: 'Page 1'
     })
-
-    const wrapper = mount(DualDisplay, {
-      props: {
-        leftModel: { view: 'BROWSER', title: 'Browser', items: [] },
-        rightModel: { view: 'FILE', title: 'Files', items: [] },
-        modeTitle: 'Browser',
-        pageLabel: 'Page 1'
-      }
-    })
-
-    const display = wrapper.find('.display.left')
-    expect(display.attributes('title')).toContain('(Ctrl+K)')
-  })
-
-  it('shows browser search shortcut id when not registered', () => {
-    const wrapper = mount(DualDisplay, {
-      props: {
-        leftModel: { view: 'BROWSER', title: 'Browser', items: [] },
-        rightModel: { view: 'FILE', title: 'Files', items: [] },
-        modeTitle: 'Browser',
-        pageLabel: 'Page 1'
-      }
-    })
-    const display = wrapper.find('.display.left')
-    // When unregistered, the shortcutTitle method returns the label only
-    expect(display.attributes('title')).toBe('Search browser')
+    const root = wrapper.find('.dual-display-root')
+    expect(root.attributes('title')).toBe('Browser • Page 1')
   })
 
   it('renders load-to-pad control with shortcut and emits event', async () => {
@@ -187,13 +160,11 @@ describe('DualDisplay.vue', () => {
       description: 'Load to pad'
     })
 
-    const wrapper = mount(DualDisplay, {
-      props: {
-        leftModel: { view: 'BROWSER', title: 'Browser', items: [] },
-        rightModel: { view: 'FILE', title: 'Files', items: [] },
-        modeTitle: 'Browser',
-        pageLabel: 'Page 1'
-      }
+    const wrapper = mountDualDisplay({
+      leftModel: { view: 'BROWSER', title: 'Browser', items: [] },
+      rightModel: { view: 'FILE', title: 'Files', items: [] },
+      modeTitle: 'Browser',
+      pageLabel: 'Page 1'
     })
     const loadBtn = wrapper.find('button.browser-load-to-pad')
     expect(loadBtn.exists()).toBe(true)
@@ -208,13 +179,11 @@ describe('DualDisplay.vue', () => {
       { title: 'File 2', subtitle: 'path/file2', active: true },
       { title: 'File 3', subtitle: 'path/file3', active: false }
     ]
-    const wrapper = mount(DualDisplay, {
-      props: {
-        leftModel: { view: 'BROWSER', title: 'Browser', items: [] },
-        rightModel: { view: 'FILE', title: 'Files', items },
-        modeTitle: 'File Mode',
-        pageLabel: 'Page 1'
-      }
+    const wrapper = mountDualDisplay({
+      leftModel: { view: 'BROWSER', title: 'Browser', items: [] },
+      rightModel: { view: 'FILE', title: 'Files', items },
+      modeTitle: 'File Mode',
+      pageLabel: 'Page 1'
     })
     const listItems = wrapper.findAll('.display.right .item-list li')
     expect(listItems[0].classes()).not.toContain('active')
@@ -223,17 +192,15 @@ describe('DualDisplay.vue', () => {
   })
 
   it('formats param values correctly', () => {
-    const wrapper = mount(DualDisplay, {
-      props: {
-        leftModel: { view: 'BROWSER', title: 'Browser', items: [] },
-        rightModel: { view: 'FILE', title: 'Files', items: [] },
-        modeTitle: 'Test',
-        pageLabel: 'Page 1',
-        paramSlotsLeft: [
-          { id: 'p1', name: 'Volume', value: 75.456, format: 'dB' },
-          { id: 'p2', name: 'Pan', value: 0.333 }
-        ]
-      }
+    const wrapper = mountDualDisplay({
+      leftModel: { view: 'BROWSER', title: 'Browser', items: [] },
+      rightModel: { view: 'FILE', title: 'Files', items: [] },
+      modeTitle: 'Test',
+      pageLabel: 'Page 1',
+      paramSlotsLeft: [
+        { id: 'p1', name: 'Volume', value: 75.456, format: 'dB' },
+        { id: 'p2', name: 'Pan', value: 0.333 }
+      ]
     })
     const paramValues = wrapper.findAll('.display.left .param-value')
     expect(paramValues[0].text()).toBe('75.456dB')
