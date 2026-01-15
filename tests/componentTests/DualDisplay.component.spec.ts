@@ -13,7 +13,7 @@ describe('DualDisplay.vue', () => {
     clearShortcuts()
   })
 
-  const mountDualDisplay = (props: Record<string, unknown>) => {
+  const mountDualDisplay = (props: any) => {
     return mount(DualDisplay, {
       props,
       global: {

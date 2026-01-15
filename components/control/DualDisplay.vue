@@ -1,156 +1,92 @@
-<template>
-  <div class="dual-display dual-display-root" :title="`${modeTitle} • ${pageLabel}`">
-    <div class="display left">
-      <div class="display-header">
-        <div class="display-title">{{ modeTitle }}</div>
-        <div class="display-subtitle">{{ pageLabel }}</div>
-      </div>
-      <div class="display-body">
-        <div class="panel" :class="panelClass(leftModel)">
-          <template v-if="leftModel.view === 'BROWSER'">
-            <div class="panel-header">{{ leftModel.title || 'Browser' }}</div>
-            <div class="browser-list">
-              <ul class="item-list">
-                <li
-                  v-for="item in filteredItems(leftModel)"
-                  :key="item.title"
-                  :class="{ active: item.active }"
-                >
-                  <div class="item-title">{{ item.title }}</div>
-                  <div class="item-subtitle">{{ item.subtitle }}</div>
-                </li>
-              </ul>
-            </div>
-            <button
-              type="button"
-              class="browser-load-to-pad"
-              :title="shortcutTitle('BROWSER_LOAD_SELECTED_TO_PAD', 'Load to pad')"
-              @click="$emit('load-to-pad')"
-            >
-              Load to pad
-            </button>
-          </template>
-          <template v-else-if="leftModel.view === 'FILE'">
-            <div class="panel-header">{{ leftModel.title || 'Files' }}</div>
-            <div class="file-list-wrapper">
-              <ul class="item-list">
-                <li v-for="item in filteredItems(leftModel)" :key="item.title">
-                  <div class="item-title">{{ item.title }}</div>
-                  <div class="item-subtitle">{{ item.subtitle }}</div>
-                </li>
-              </ul>
-            </div>
-            <div v-if="leftModel.summary" class="panel-hint">{{ leftModel.summary }}</div>
-          </template>
-          <template v-else-if="leftModel.view === 'SAMPLING'">
-            <div class="panel-header">{{ leftModel.title || 'Sampling' }}</div>
-            <ul class="item-list">
-              <li v-for="item in leftModel.items" :key="item.title">
-                <div class="item-title">{{ item.title }}</div>
-                <div class="item-subtitle">{{ item.value || item.subtitle }}</div>
-              </li>
-            </ul>
-            <div v-if="leftModel.summary" class="panel-hint">{{ leftModel.summary }}</div>
-          </template>
-          <template v-else-if="leftModel.view === 'MIXER' || leftModel.view === 'ARRANGER' || leftModel.view === 'SETTINGS' || leftModel.view === 'INFO'">
-            <div class="panel-header">{{ leftModel.title || 'Details' }}</div>
-            <ul class="item-list">
-              <li v-for="item in leftModel.items" :key="item.title" :class="{ active: item.active }">
-                <div class="item-title">
-                  {{ item.title }}
-                  <span v-if="item.value" class="item-value">{{ item.value }}</span>
-                </div>
-                <div class="item-subtitle">{{ item.subtitle }}</div>
-              </li>
-            </ul>
-            <div v-if="leftModel.summary" class="panel-hint">{{ leftModel.summary }}</div>
-          </template>
-          <template v-else>
-            <div class="panel-header">{{ leftModel.title || 'Display L' }}</div>
-            <div class="panel-hint">{{ leftModel.summary || 'Ready' }}</div>
-          </template>
-        </div>
-        <div class="param-slots">
-          <div
-            v-for="(param, index) in paramSlotsLeft"
-            :key="param.id || index"
-            class="param-slot"
-          >
-            <div class="param-name">{{ param.name }}</div>
-            <div class="param-value">{{ formatParam(param.value, param) }}</div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="display right">
-      <div class="display-header">
-        <div class="display-title">{{ rightModel.title || 'Display R' }}</div>
-        <div class="display-subtitle">{{ rightModel.summary || modeTitle }}</div>
-      </div>
-      <div class="display-body">
-        <div class="panel" :class="panelClass(rightModel)">
-          <template v-if="rightModel.view === 'BROWSER'">
-            <div class="panel-header">{{ rightModel.title || 'Results' }}</div>
-            <div class="browser-list">
-              <ul class="item-list">
-                <li v-for="item in filteredItems(rightModel)" :key="item.title" :class="{ active: item.active }">
-                  <div class="item-title">{{ item.title }}</div>
-                  <div class="item-subtitle">{{ item.subtitle }}</div>
-                </li>
-              </ul>
-            </div>
-            <div v-if="rightModel.summary" class="panel-hint">{{ rightModel.summary }}</div>
-          </template>
-          <template v-else-if="rightModel.view === 'MIXER' || rightModel.view === 'ARRANGER' || rightModel.view === 'SETTINGS' || rightModel.view === 'INFO' || rightModel.view === 'FILE'">
-            <div class="panel-header">{{ rightModel.title || 'Details' }}</div>
-            <template v-if="rightModel.view === 'FILE'">
-              <div class="file-list-wrapper">
-                <ul class="item-list">
-                  <li v-for="item in filteredItems(rightModel)" :key="item.title" :class="{ active: item.active }">
-                    <div class="item-title">
-                      {{ item.title }}
-                      <span v-if="item.value" class="item-value">{{ item.value }}</span>
-                    </div>
-                    <div class="item-subtitle">{{ item.subtitle }}</div>
-                  </li>
-                </ul>
-              </div>
-            </template>
-            <template v-else>
-              <ul class="item-list">
-                <li v-for="item in rightModel.items" :key="item.title" :class="{ active: item.active }">
-                  <div class="item-title">
-                    {{ item.title }}
-                    <span v-if="item.value" class="item-value">{{ item.value }}</span>
-                  </div>
-                  <div class="item-subtitle">{{ item.subtitle }}</div>
-                </li>
-              </ul>
-            </template>
-            <div v-if="rightModel.summary" class="panel-hint">{{ rightModel.summary }}</div>
-          </template>
-          <template v-else-if="rightModel.view === 'SAMPLING'">
-            <div class="panel-header">{{ rightModel.title || 'Sampling' }}</div>
-            <div class="panel-hint">{{ rightModel.summary || 'Set slice or record' }}</div>
-          </template>
-          <template v-else>
-            <div class="panel-header">{{ rightModel.title || 'Display R' }}</div>
-            <div class="panel-hint">{{ rightModel.summary || 'Ready' }}</div>
-          </template>
-        </div>
-        <div class="param-slots">
-          <div
-            v-for="(param, index) in paramSlotsRight"
-            :key="param.id || index"
-            class="param-slot"
-          >
-            <div class="param-name">{{ param.name }}</div>
-            <div class="param-value">{{ formatParam(param.value, param) }}</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+<template lang="pug">
+  .dual-display.dual-display-root(:title="`${modeTitle} • ${pageLabel}`")
+    .display.left
+      .display-header
+        .display-title {{ modeTitle }}
+        .display-subtitle {{ pageLabel }}
+      .display-body
+        .panel(:class="panelClass(leftModel)")
+          template(v-if="leftModel.view === 'BROWSER'")
+            .panel-header {{ leftModel.title || 'Browser' }}
+            .browser-list
+              ul.item-list
+                li(v-for="item in filteredItems(leftModel)" :key="item.title" :class="{ active: item.active }")
+                  .item-title {{ item.title }}
+                  .item-subtitle {{ item.subtitle }}
+            button.browser-load-to-pad(type="button" :title="shortcutTitle('BROWSER_LOAD_SELECTED_TO_PAD', 'Load to pad')" @click="$emit('load-to-pad')") Load to pad
+          template(v-else-if="leftModel.view === 'FILE'")
+            .panel-header {{ leftModel.title || 'Files' }}
+            .file-list-wrapper
+              ul.item-list
+                li(v-for="item in filteredItems(leftModel)" :key="item.title")
+                  .item-title {{ item.title }}
+                  .item-subtitle {{ item.subtitle }}
+            .panel-hint(v-if="leftModel.summary") {{ leftModel.summary }}
+          template(v-else-if="leftModel.view === 'SAMPLING'")
+            .panel-header {{ leftModel.title || 'Sampling' }}
+            ul.item-list
+              li(v-for="item in leftModel.items" :key="item.title")
+                .item-title {{ item.title }}
+                .item-subtitle {{ item.value || item.subtitle }}
+            .panel-hint(v-if="leftModel.summary") {{ leftModel.summary }}
+          template(v-else-if="leftModel.view === 'MIXER' || leftModel.view === 'ARRANGER' || leftModel.view === 'SETTINGS' || leftModel.view === 'INFO'")
+            .panel-header {{ leftModel.title || 'Details' }}
+            ul.item-list
+              li(v-for="item in leftModel.items" :key="item.title" :class="{ active: item.active }")
+                .item-title
+                  | {{ item.title }}
+                  span.item-value(v-if="item.value") {{ item.value }}
+                .item-subtitle {{ item.subtitle }}
+            .panel-hint(v-if="leftModel.summary") {{ leftModel.summary }}
+          template(v-else)
+            .panel-header {{ leftModel.title || 'Display L' }}
+            .panel-hint {{ leftModel.summary || 'Ready' }}
+        .param-slots
+          .param-slot(v-for="(param, index) in paramSlotsLeft" :key="param.id || index")
+            .param-name {{ param.name }}
+            .param-value {{ formatParam(param.value, param) }}
+    .display.right
+      .display-header
+        .display-title {{ rightModel.title || 'Display R' }}
+        .display-subtitle {{ rightModel.summary || modeTitle }}
+      .display-body
+        .panel(:class="panelClass(rightModel)")
+          template(v-if="rightModel.view === 'BROWSER'")
+            .panel-header {{ rightModel.title || 'Results' }}
+            .browser-list
+              ul.item-list
+                li(v-for="item in filteredItems(rightModel)" :key="item.title" :class="{ active: item.active }")
+                  .item-title {{ item.title }}
+                  .item-subtitle {{ item.subtitle }}
+            .panel-hint(v-if="rightModel.summary") {{ rightModel.summary }}
+          template(v-else-if="rightModel.view === 'MIXER' || rightModel.view === 'ARRANGER' || rightModel.view === 'SETTINGS' || rightModel.view === 'INFO' || rightModel.view === 'FILE'")
+            .panel-header {{ rightModel.title || 'Details' }}
+            template(v-if="rightModel.view === 'FILE'")
+              .file-list-wrapper
+                ul.item-list
+                  li(v-for="item in filteredItems(rightModel)" :key="item.title" :class="{ active: item.active }")
+                    .item-title
+                      | {{ item.title }}
+                      span.item-value(v-if="item.value") {{ item.value }}
+                    .item-subtitle {{ item.subtitle }}
+            template(v-else)
+              ul.item-list
+                li(v-for="item in rightModel.items" :key="item.title" :class="{ active: item.active }")
+                  .item-title
+                    | {{ item.title }}
+                    span.item-value(v-if="item.value") {{ item.value }}
+                  .item-subtitle {{ item.subtitle }}
+            .panel-hint(v-if="rightModel.summary") {{ rightModel.summary }}
+          template(v-else-if="rightModel.view === 'SAMPLING'")
+            .panel-header {{ rightModel.title || 'Sampling' }}
+            .panel-hint {{ rightModel.summary || 'Set slice or record' }}
+          template(v-else)
+            .panel-header {{ rightModel.title || 'Display R' }}
+            .panel-hint {{ rightModel.summary || 'Ready' }}
+        .param-slots
+          .param-slot(v-for="(param, index) in paramSlotsRight" :key="param.id || index")
+            .param-name {{ param.name }}
+            .param-value {{ formatParam(param.value, param) }}
 </template>
 
 <script lang="ts">
